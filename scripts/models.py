@@ -46,23 +46,28 @@ class Script(models.Model):
         return f"{self.name}{self.get_extension()}"
     
     def get_directory_path(self):
-        """Get the directory path based on os_family and target_type"""
-        base_path = settings.SCRIPTS_ROOT
-        
+        """Get the absolute directory path based on os_family and target_type"""
+        # Use absolute path from MEDIA_ROOT/scripts
+        base_path = os.path.join(str(settings.MEDIA_ROOT), 'scripts')
         
         if self.os_family == 'windows':
             os_dir = 'powershell'
         else:
-            os_dir = self.os_family        
+            os_dir = self.os_family
         
-        return os.path.join(str(base_path), os_dir, self.target_type)
+        # Structure: scripts/{os_family}/{target_type}
+        return os.path.join(base_path, os_dir, self.target_type)
     
     def get_full_path(self):
         """Get the complete file path"""
         return os.path.join(self.get_directory_path(), self.get_full_filename())
     
     def save(self, *args, **kwargs):
-        """Override save to set file_path automatically"""
+        """Override save to set file_path automatically and ensure directory exists"""
+        # Ensure directory exists
+        directory = self.get_directory_path()
+        os.makedirs(directory, exist_ok=True)
+        
         self.file_path = self.get_full_path()
         super().save(*args, **kwargs)
     

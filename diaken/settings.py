@@ -180,10 +180,17 @@ USE_TZ = True
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Use absolute path for MEDIA_ROOT to ensure portability
+MEDIA_ROOT = os.path.join(str(BASE_DIR), 'media')
 
-# Scripts directory configuration
-SCRIPTS_ROOT = MEDIA_ROOT / 'scripts'
+# Structure within MEDIA_ROOT:
+# media/
+#   playbooks/
+#     {os_family}/    # windows, redhat, debian
+#       {target_type}/ # host, group
+#   scripts/
+#     {os_family}/    # powershell, redhat, debian
+#       {target_type}/ # host, group
 
 # Ansible configuration
 ANSIBLE_PLAYBOOK_PATH = str(BASE_DIR / 'venv' / 'bin' / 'ansible-playbook')
