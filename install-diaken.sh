@@ -289,24 +289,41 @@ create_superuser() {
     cd "$INSTALL_DIR"
     source venv/bin/activate
     
-    echo -e "\n${YELLOW}Please provide credentials for the Django admin user:${NC}\n"
+    # Use environment variables if set, otherwise use defaults or prompt
+    if [ -z "$DJANGO_SUPERUSER_USERNAME" ]; then
+        echo -e "\n${YELLOW}Please provide credentials for the Django admin user:${NC}"
+        echo -e "${YELLOW}(Press Enter to use default: admin)${NC}\n"
+        read -p "Username [admin]: " DJANGO_USER
+        DJANGO_USER=${DJANGO_USER:-admin}
+    else
+        DJANGO_USER="$DJANGO_SUPERUSER_USERNAME"
+        print_info "Using username from environment: $DJANGO_USER"
+    fi
     
-    read -p "Username: " DJANGO_USER
+    if [ -z "$DJANGO_SUPERUSER_PASSWORD" ]; then
+        while true; do
+            read -s -p "Password: " DJANGO_PASS
+            echo
+            read -s -p "Password (again): " DJANGO_PASS2
+            echo
+            
+            if [ "$DJANGO_PASS" = "$DJANGO_PASS2" ]; then
+                break
+            else
+                print_error "Passwords don't match. Please try again."
+            fi
+        done
+    else
+        DJANGO_PASS="$DJANGO_SUPERUSER_PASSWORD"
+        print_info "Using password from environment"
+    fi
     
-    while true; do
-        read -s -p "Password: " DJANGO_PASS
-        echo
-        read -s -p "Password (again): " DJANGO_PASS2
-        echo
-        
-        if [ "$DJANGO_PASS" = "$DJANGO_PASS2" ]; then
-            break
-        else
-            print_error "Passwords don't match. Please try again."
-        fi
-    done
-    
-    read -p "Email (optional, press Enter to skip): " DJANGO_EMAIL
+    if [ -z "$DJANGO_SUPERUSER_EMAIL" ]; then
+        read -p "Email (optional, press Enter to skip): " DJANGO_EMAIL
+    else
+        DJANGO_EMAIL="$DJANGO_SUPERUSER_EMAIL"
+        print_info "Using email from environment: $DJANGO_EMAIL"
+    fi
     
     print_info "Creating superuser..."
     
@@ -400,7 +417,7 @@ Group=${INSTALL_USER}
 WorkingDirectory=${INSTALL_DIR}
 Environment="PATH=${INSTALL_DIR}/venv/bin"
 ExecStart=${INSTALL_DIR}/venv/bin/celery -A ${PROJECT_NAME} worker --loglevel=info --detach --logfile=${CELERY_LOG_DIR}/worker.log --pidfile=${CELERY_PID_DIR}/worker.pid
-ExecStop=/bin/kill -s TERM \$MAINPID
+PIDFile=${CELERY_PID_DIR}/worker.pid
 Restart=always
 RestartSec=10s
 
@@ -430,13 +447,7 @@ EOF
 }
 
 create_systemd_service() {
-    print_header "Creating Systemd Service (Optional)"
-    
-    read -p "Do you want to create a systemd service to auto-start Diaken? (y/N): " -r
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Skipping systemd service creation"
-        return 0
-    fi
+    print_header "Creating Systemd Service for Diaken"
     
     print_info "Creating systemd service file..."
     
@@ -542,12 +553,23 @@ EOF
     
     echo -e "\n${YELLOW}This script will install Diaken and all its dependencies.${NC}"
     echo -e "${YELLOW}Installation directory: $INSTALL_DIR${NC}"
-    echo -e "${YELLOW}GitHub repository: $GITHUB_REPO${NC}\n"
+    echo -e "${YELLOW}GitHub repository: $GITHUB_REPO${NC}"
+    echo -e "${YELLOW}Install user: $INSTALL_USER${NC}\n"
     
-    read -p "Do you want to continue? (y/N): " -r
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Installation cancelled"
-        exit 0
+    echo -e "${BLUE}For unattended installation, set these environment variables:${NC}"
+    echo -e "  ${GREEN}DJANGO_SUPERUSER_USERNAME${NC}=admin"
+    echo -e "  ${GREEN}DJANGO_SUPERUSER_PASSWORD${NC}=yourpassword"
+    echo -e "  ${GREEN}DJANGO_SUPERUSER_EMAIL${NC}=admin@example.com\n"
+    
+    # Check if running in unattended mode
+    if [ -n "$UNATTENDED" ] || [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
+        print_info "Running in unattended mode..."
+    else
+        read -p "Do you want to continue? (y/N): " -r
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_info "Installation cancelled"
+            exit 0
+        fi
     fi
     
     # Run installation steps
