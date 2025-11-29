@@ -31,6 +31,22 @@ INSTALL_DIR="/opt/diaken"
 PYTHON_VERSION="3.12"
 PORT="9090"
 
+# Detect the user who invoked sudo (or current user if not using sudo)
+if [ -n "$SUDO_USER" ]; then
+    INSTALL_USER="$SUDO_USER"
+else
+    INSTALL_USER="$(whoami)"
+fi
+
+# Get user's home directory
+INSTALL_USER_HOME=$(eval echo ~$INSTALL_USER)
+
+# Dynamic paths (no hardcoded usernames)
+LOG_DIR="/var/log/${PROJECT_NAME}"
+RUN_DIR="/var/run/${PROJECT_NAME}"
+CELERY_LOG_DIR="${LOG_DIR}/celery"
+CELERY_PID_DIR="${RUN_DIR}/celery"
+
 ################################################################################
 # Helper Functions
 ################################################################################
@@ -113,6 +129,7 @@ install_dependencies() {
         "curl"
         "vim"
         "firewalld"
+        "redis"
     )
     
     # Try dnf first, fallback to yum
@@ -340,6 +357,78 @@ configure_firewall() {
     sudo firewall-cmd --list-ports
 }
 
+configure_redis() {
+    print_header "Configuring Redis"
+    
+    print_info "Starting and enabling Redis service..."
+    sudo systemctl start redis
+    sudo systemctl enable redis
+    
+    # Wait a moment for Redis to start
+    sleep 2
+    
+    # Test Redis connection
+    if redis-cli ping &> /dev/null; then
+        print_success "Redis is running and responding"
+    else
+        print_error "Redis failed to start properly"
+        print_info "You may need to check Redis logs: sudo journalctl -u redis"
+    fi
+}
+
+configure_celery() {
+    print_header "Configuring Celery Worker"
+    
+    # Create log and pid directories with dynamic paths
+    print_info "Creating Celery directories..."
+    sudo mkdir -p "${CELERY_LOG_DIR}" "${CELERY_PID_DIR}"
+    sudo chown -R "${INSTALL_USER}:${INSTALL_USER}" "${LOG_DIR}" "${RUN_DIR}"
+    print_success "Celery directories created"
+    
+    # Create systemd service for Celery
+    print_info "Creating Celery systemd service..."
+    
+    sudo tee /etc/systemd/system/celery.service > /dev/null << EOF
+[Unit]
+Description=Celery Service for Diaken
+After=network.target redis.service
+
+[Service]
+Type=forking
+User=${INSTALL_USER}
+Group=${INSTALL_USER}
+WorkingDirectory=${INSTALL_DIR}
+Environment="PATH=${INSTALL_DIR}/venv/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/celery -A ${PROJECT_NAME} worker --loglevel=info --detach --logfile=${CELERY_LOG_DIR}/worker.log --pidfile=${CELERY_PID_DIR}/worker.pid
+ExecStop=/bin/kill -s TERM \$MAINPID
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    print_success "Celery service file created"
+    
+    # Reload systemd and enable Celery
+    print_info "Enabling Celery service..."
+    sudo systemctl daemon-reload
+    sudo systemctl enable celery
+    sudo systemctl start celery
+    
+    # Wait a moment for Celery to start
+    sleep 3
+    
+    # Check Celery status
+    if sudo systemctl is-active --quiet celery; then
+        print_success "Celery worker is running"
+    else
+        print_error "Celery worker failed to start"
+        print_info "Check logs: sudo journalctl -u celery"
+        print_info "Or: sudo tail -f ${CELERY_LOG_DIR}/worker.log"
+    fi
+}
+
 create_systemd_service() {
     print_header "Creating Systemd Service (Optional)"
     
@@ -351,17 +440,18 @@ create_systemd_service() {
     
     print_info "Creating systemd service file..."
     
-    cat > /etc/systemd/system/diaken.service << EOF
+    sudo tee /etc/systemd/system/diaken.service > /dev/null << EOF
 [Unit]
 Description=Diaken Django Application
-After=network.target
+After=network.target redis.service celery.service
 
 [Service]
 Type=simple
-User=root
-WorkingDirectory=$INSTALL_DIR
-Environment="PATH=$INSTALL_DIR/venv/bin"
-ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/manage.py runserver 0.0.0.0:$PORT
+User=${INSTALL_USER}
+Group=${INSTALL_USER}
+WorkingDirectory=${INSTALL_DIR}
+Environment="PATH=${INSTALL_DIR}/venv/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver 0.0.0.0:${PORT}
 Restart=always
 RestartSec=10
 
@@ -391,6 +481,9 @@ ${BLUE}Installation Details:${NC}
   • Database: ${GREEN}SQLite (db.sqlite3)${NC}
   • Port: ${GREEN}$PORT${NC}
   • Admin User: ${GREEN}$DJANGO_USER${NC}
+  • Install User: ${GREEN}$INSTALL_USER${NC}
+  • Redis: ${GREEN}Running on localhost:6379${NC}
+  • Celery Worker: ${GREEN}Running as systemd service${NC}
 
 ${BLUE}To Start the Application:${NC}
 
@@ -411,6 +504,10 @@ ${BLUE}Useful Commands:${NC}
   • Check firewall status: ${YELLOW}sudo firewall-cmd --list-all${NC}
   • View logs: ${YELLOW}tail -f $INSTALL_DIR/logs/*.log${NC}
   • Restart firewall: ${YELLOW}sudo systemctl restart firewalld${NC}
+  • Check Redis status: ${YELLOW}sudo systemctl status redis${NC}
+  • Check Celery status: ${YELLOW}sudo systemctl status celery${NC}
+  • View Celery logs: ${YELLOW}sudo tail -f ${CELERY_LOG_DIR}/worker.log${NC}
+  • Restart Celery: ${YELLOW}sudo systemctl restart celery${NC}
 
 ${BLUE}Production Deployment:${NC}
   For production, consider using:
@@ -468,6 +565,8 @@ EOF
     initialize_default_settings
     create_superuser
     configure_firewall
+    configure_redis
+    configure_celery
     create_systemd_service
     print_completion_message
     
