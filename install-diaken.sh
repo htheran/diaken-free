@@ -242,6 +242,18 @@ run_migrations() {
     print_success "Database migrations completed"
 }
 
+initialize_default_settings() {
+    print_header "Initializing Default Settings"
+    
+    cd "$INSTALL_DIR"
+    source venv/bin/activate
+    
+    print_info "Creating default system settings..."
+    python manage.py init_default_settings
+    
+    print_success "Default settings initialized"
+}
+
 collect_static() {
     print_header "Collecting Static Files"
     
@@ -453,6 +465,7 @@ EOF
     create_directories
     run_migrations
     collect_static
+    initialize_default_settings
     create_superuser
     configure_firewall
     create_systemd_service
