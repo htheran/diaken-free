@@ -237,7 +237,7 @@ LOGGING = {
         'file_django': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/opt/www/logs/django.log',
+            'filename': os.environ.get('DJANGO_LOG_FILE', str(BASE_DIR / 'logs' / 'django.log')),
             'maxBytes': 1024 * 1024 * 10,  # 10 MB
             'backupCount': 10,
             'formatter': 'verbose',
@@ -245,7 +245,7 @@ LOGGING = {
         'file_deployment': {
             'level': 'INFO',  # Changed from DEBUG for production
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/opt/www/logs/deployment.log',
+            'filename': os.environ.get('DEPLOYMENT_LOG_FILE', str(BASE_DIR / 'logs' / 'deployment.log')),
             'maxBytes': 1024 * 1024 * 15,  # 15 MB
             'backupCount': 20,
             'formatter': 'verbose',
@@ -253,7 +253,7 @@ LOGGING = {
         'file_security': {
             'level': 'WARNING',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/opt/www/logs/security.log',
+            'filename': os.environ.get('SECURITY_LOG_FILE', str(BASE_DIR / 'logs' / 'security.log')),
             'maxBytes': 1024 * 1024 * 10,  # 10 MB
             'backupCount': 10,
             'formatter': 'verbose',

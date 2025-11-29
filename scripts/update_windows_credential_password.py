@@ -8,8 +8,9 @@ import sys
 import os
 import django
 
-# Setup Django
-sys.path.insert(0, '/opt/www/app')
+# Setup Django - use dynamic path
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'diaken.settings')
 django.setup()
 

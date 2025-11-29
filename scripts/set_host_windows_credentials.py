@@ -8,8 +8,9 @@ import sys
 import os
 import django
 
-# Setup Django
-sys.path.insert(0, '/opt/www/app')
+# Setup Django - use dynamic path
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'diaken.settings')
 django.setup()
 
@@ -74,7 +75,7 @@ def set_credentials(identifier, username, password):
         print(f"{'='*60}")
         print(f"Test Connection Command")
         print(f"{'='*60}")
-        print(f"python /opt/www/app/scripts/test_winrm_connection.py \\")
+        print(f"python {os.path.join(BASE_DIR, 'scripts', 'test_winrm_connection.py')} \\")
         print(f"  {host.ip} \\")
         print(f"  {username} \\")
         print(f"  '{password}' \\")
