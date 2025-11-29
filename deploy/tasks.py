@@ -918,8 +918,9 @@ def provision_linux_vm_async(self, history_id, template_ip, new_ip, new_hostname
                     try:
                         # Create temporary inventory file with [target_host] group
                         import tempfile
+                        # Use hostname as inventory name but connect via IP using ansible_host
                         inventory_content = f"""[target_host]
-{new_ip} ansible_user={ssh_user} ansible_ssh_private_key_file={ssh_key_path} ansible_python_interpreter={python_interpreter} ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+{new_hostname} ansible_host={new_ip} ansible_user={ssh_user} ansible_ssh_private_key_file={ssh_key_path} ansible_python_interpreter={python_interpreter} ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
 """
                         
                         # Create temp file
