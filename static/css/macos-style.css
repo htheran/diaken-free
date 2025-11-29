@@ -1,0 +1,468 @@
+/* ============================================================================
+   DIAKEN - macOS Style Design System
+   Inspirado en el diseño de macOS con tipografía SF Pro y elementos modernos
+   ============================================================================ */
+
+/* ========== TIPOGRAFÍA macOS ========== */
+:root {
+    /* SF Pro Display / SF Pro Text - macOS system fonts */
+    --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", 
+                   "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    
+    /* Colores macOS */
+    --macos-blue: #007AFF;
+    --macos-blue-hover: #0051D5;
+    --macos-gray-100: #F5F5F7;
+    --macos-gray-200: #E8E8ED;
+    --macos-gray-300: #D2D2D7;
+    --macos-gray-400: #86868B;
+    --macos-gray-500: #6E6E73;
+    --macos-gray-600: #48484A;
+    --macos-gray-700: #3A3A3C;
+    --macos-gray-800: #2C2C2E;
+    --macos-gray-900: #1C1C1E;
+    
+    /* Sombras macOS */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
+    
+    /* Bordes redondeados macOS */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    
+    /* Transiciones suaves */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Aplicar tipografía a todo el documento */
+body, html {
+    font-family: var(--font-system) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--macos-gray-100);
+}
+
+/* ========== NAVBAR ESTILO macOS ========== */
+.main-header {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid var(--macos-gray-200) !important;
+    box-shadow: var(--shadow-sm) !important;
+    height: 52px !important;
+}
+
+.main-header .navbar-nav .nav-link {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    transition: var(--transition-fast);
+}
+
+/* ========== SIDEBAR ESTILO macOS ========== */
+.main-sidebar {
+    background: rgba(248, 248, 248, 0.95) !important;
+    backdrop-filter: blur(30px) saturate(150%);
+    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    border-right: 1px solid var(--macos-gray-200) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.sidebar-dark-primary {
+    background: rgba(248, 248, 248, 0.95) !important;
+}
+
+/* Logo sidebar */
+.brand-link {
+    background: transparent !important;
+    border-bottom: 1px solid var(--macos-gray-200) !important;
+    padding: 12px 16px !important;
+}
+
+.brand-text {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.02em !important;
+    color: var(--macos-gray-900) !important;
+}
+
+/* Menu items */
+.nav-sidebar .nav-item .nav-link {
+    border-radius: var(--radius-md) !important;
+    margin: 4px 8px !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--macos-gray-700) !important;
+    transition: var(--transition-base) !important;
+}
+
+.nav-sidebar .nav-item .nav-link:hover {
+    background-color: var(--macos-gray-200) !important;
+    color: var(--macos-gray-900) !important;
+}
+
+.nav-sidebar .nav-item .nav-link.active {
+    background-color: var(--macos-blue) !important;
+    color: white !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.nav-sidebar .nav-item .nav-link i {
+    font-size: 16px !important;
+    margin-right: 12px !important;
+}
+
+/* Submenu */
+.nav-treeview {
+    padding-left: 0 !important;
+}
+
+.nav-treeview .nav-item .nav-link {
+    padding-left: 46px !important;
+    font-size: 12px !important;
+}
+
+/* ========== CONTENT WRAPPER ========== */
+.content-wrapper {
+    background-color: var(--macos-gray-100) !important;
+    padding: 20px !important;
+}
+
+/* ========== CARDS ESTILO macOS ========== */
+.card {
+    border: none !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-md) !important;
+    background: white !important;
+    overflow: hidden;
+    transition: var(--transition-base) !important;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg) !important;
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--macos-gray-200) !important;
+    padding: 16px 20px !important;
+    font-weight: 600 !important;
+    font-size: 17px !important;
+    letter-spacing: -0.02em !important;
+    color: var(--macos-gray-900) !important;
+}
+
+.card-body {
+    padding: 20px !important;
+}
+
+.card-footer {
+    background: var(--macos-gray-100) !important;
+    border-top: 1px solid var(--macos-gray-200) !important;
+    padding: 12px 20px !important;
+}
+
+/* ========== BOTONES ESTILO macOS ========== */
+.btn {
+    border-radius: var(--radius-md) !important;
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.01em !important;
+    border: none !important;
+    transition: var(--transition-fast) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md) !important;
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.btn-primary {
+    background: var(--macos-blue) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background: var(--macos-blue-hover) !important;
+}
+
+.btn-success {
+    background: #34C759 !important;
+    color: white !important;
+}
+
+.btn-danger {
+    background: #FF3B30 !important;
+    color: white !important;
+}
+
+.btn-warning {
+    background: #FF9500 !important;
+    color: white !important;
+}
+
+.btn-info {
+    background: #5AC8FA !important;
+    color: white !important;
+}
+
+.btn-secondary {
+    background: var(--macos-gray-300) !important;
+    color: var(--macos-gray-700) !important;
+}
+
+/* ========== FORMULARIOS ESTILO macOS ========== */
+.form-control {
+    border: 1px solid var(--macos-gray-300) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    background: white !important;
+    transition: var(--transition-fast) !important;
+}
+
+.form-control:focus {
+    border-color: var(--macos-blue) !important;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1) !important;
+    background: white !important;
+}
+
+.form-group label {
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    color: var(--macos-gray-700) !important;
+    margin-bottom: 6px !important;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236E6E73' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px !important;
+}
+
+/* ========== TABLAS ESTILO macOS ========== */
+.table {
+    font-size: 13px !important;
+}
+
+.table thead th {
+    background: var(--macos-gray-100) !important;
+    border-bottom: 2px solid var(--macos-gray-300) !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--macos-gray-600) !important;
+    padding: 12px 16px !important;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--macos-gray-200) !important;
+    transition: var(--transition-fast) !important;
+}
+
+.table tbody tr:hover {
+    background-color: var(--macos-gray-100) !important;
+}
+
+.table tbody td {
+    padding: 14px 16px !important;
+    vertical-align: middle !important;
+}
+
+/* ========== BADGES ESTILO macOS ========== */
+.badge {
+    border-radius: var(--radius-sm) !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+}
+
+/* ========== MODALES ESTILO macOS ========== */
+.modal-content {
+    border: none !important;
+    border-radius: var(--radius-xl) !important;
+    box-shadow: var(--shadow-xl) !important;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--macos-gray-200) !important;
+    padding: 18px 24px !important;
+}
+
+.modal-title {
+    font-weight: 600 !important;
+    font-size: 18px !important;
+    letter-spacing: -0.02em !important;
+    color: var(--macos-gray-900) !important;
+}
+
+.modal-body {
+    padding: 24px !important;
+}
+
+.modal-footer {
+    background: var(--macos-gray-100) !important;
+    border-top: 1px solid var(--macos-gray-200) !important;
+    padding: 16px 24px !important;
+}
+
+/* ========== BREADCRUMBS ESTILO macOS ========== */
+.breadcrumb {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 13px !important;
+}
+
+.breadcrumb-item {
+    color: var(--macos-gray-500) !important;
+}
+
+.breadcrumb-item a {
+    color: var(--macos-blue) !important;
+    text-decoration: none;
+    transition: var(--transition-fast) !important;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--macos-blue-hover) !important;
+}
+
+/* ========== ALERTS ESTILO macOS ========== */
+.alert {
+    border: none !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 14px 18px !important;
+    font-size: 14px !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+.alert-success {
+    background: rgba(52, 199, 89, 0.1) !important;
+    color: #248A3D !important;
+}
+
+.alert-danger {
+    background: rgba(255, 59, 48, 0.1) !important;
+    color: #C91A25 !important;
+}
+
+.alert-warning {
+    background: rgba(255, 149, 0, 0.1) !important;
+    color: #C65F00 !important;
+}
+
+.alert-info {
+    background: rgba(90, 200, 250, 0.1) !important;
+    color: #0077CC !important;
+}
+
+/* ========== PAGINATION ESTILO macOS ========== */
+.pagination .page-link {
+    border: 1px solid var(--macos-gray-300) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--macos-gray-700) !important;
+    margin: 0 4px !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    transition: var(--transition-fast) !important;
+}
+
+.pagination .page-link:hover {
+    background: var(--macos-gray-100) !important;
+    border-color: var(--macos-gray-300) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--macos-blue) !important;
+    border-color: var(--macos-blue) !important;
+    color: white !important;
+}
+
+/* ========== FOOTER ESTILO macOS ========== */
+.main-footer {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--macos-gray-200) !important;
+    padding: 16px 20px !important;
+    font-size: 12px !important;
+    color: var(--macos-gray-500) !important;
+}
+
+/* ========== SCROLLBAR ESTILO macOS ========== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--macos-gray-300);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--macos-gray-400);
+    background-clip: padding-box;
+}
+
+/* ========== ANIMACIONES SUAVES ========== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-base) ease-out;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 12px !important;
+    }
+    
+    .card-body {
+        padding: 16px !important;
+    }
+    
+    .btn {
+        font-size: 12px !important;
+        padding: 6px 16px !important;
+    }
+}
+
+/* ========== UTILIDADES ========== */
+.text-macos-blue { color: var(--macos-blue) !important; }
+.bg-macos-blue { background-color: var(--macos-blue) !important; }
+.shadow-macos { box-shadow: var(--shadow-md) !important; }
+.rounded-macos { border-radius: var(--radius-lg) !important; }

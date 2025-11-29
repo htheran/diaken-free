@@ -7,33 +7,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Diaken{% endblock %}</title>
 
-  <!-- Google Font: Source Sans Pro (CDN) -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-  <!-- Font Awesome (CDN) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <!-- AdminLTE CSS (CDN) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <!-- Font Awesome Icons (CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Bootstrap CSS (CDN) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
-  <!-- Dark Mode CSS -->
+  <!-- AdminLTE CSS (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <!-- macOS Style Design System -->
+  <link rel="stylesheet" href="{% static 'css/macos-style.css' %}?v=1">
+  <!-- Dark Mode CSS (optional) -->
   <link rel="stylesheet" href="{% static 'css/dark.css' %}?v=5">
-  <!-- Elimina cualquier otro CSS local innecesario -->
   
-  <!-- Color personalizado para sidebar -->
+  <!-- Estilos adicionales específicos de layout -->
   <style>
-    .sidebar-dark-primary {
-      background-color: #1e3a5f !important;
-    }
-    .nav-sidebar .nav-item>.nav-link.active {
-      background-color: rgba(255,255,255,.1) !important;
-    }
-    .sidebar-dark-primary .nav-sidebar>.nav-item>.nav-link.active {
-      background-color: rgba(255,255,255,.2) !important;
-    }
-    [class*=sidebar-dark] .nav-treeview>.nav-item>.nav-link.active {
-      background-color: rgba(255,255,255,.1) !important;
-    }
-    /* Asegurar que el contenido principal ocupe el 100% de la altura */
     html, body {
       height: 100%;
     }
@@ -44,27 +30,20 @@
     }
     .content-wrapper {
       flex: 1;
-      margin-left: 250px; /* Ajustar según el ancho del sidebar */
-      padding-bottom: 60px; /* Ajustar según la altura del footer */
+      margin-left: 250px;
+      padding-bottom: 60px;
     }
     .main-sidebar {
       position: fixed;
       height: 100vh;
       overflow-y: auto;
     }
-    .content {
-      padding-bottom: 60px; /* Ajustar según la altura del footer */
-    }
-    /* Estilos originales de AdminLTE para el footer */
     .main-footer {
-      background: #fff;
-      padding: 1rem;
-      color: #6c757d;
-      border-top: 1px solid #dee2e6;
       margin-left: 250px;
       transition: margin-left .3s ease-in-out;
     }
     @media (max-width: 767.98px) {
+      .content-wrapper,
       .main-footer {
         margin-left: 0;
       }
