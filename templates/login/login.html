@@ -1,0 +1,137 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Login - Diaken" %}{% endblock %}
+{% block auth_content %}
+<style>
+  body {
+    background: #f8f9fc !important;
+    min-height: 100vh;
+  }
+  .login-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .login-card {
+    background: #1e3a5f;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 420px;
+    padding: 45px 40px;
+  }
+  .diaken-logo {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .diaken-logo h1 {
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    margin: 0;
+    margin-bottom: 8px;
+  }
+  .diaken-logo p {
+    color: #95a5a6;
+    font-size: 13px;
+    margin: 0;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .login-title {
+    color: #ecf0f1;
+    font-size: 22px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .form-group label {
+    color: #bdc3c7;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-control {
+    background: #2c4a6b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    width: 100%;
+  }
+  .form-control:focus {
+    background: #355073;
+    border-color: #5dade2;
+    box-shadow: 0 0 0 3px rgba(93, 173, 226, 0.2);
+    color: #ffffff;
+    outline: none;
+  }
+  .form-control::placeholder {
+    color: #7f8c8d;
+  }
+  .btn-login {
+    background: #3498db;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 13px;
+    width: 100%;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .btn-login:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  }
+  .btn-login:active {
+    transform: translateY(0);
+  }
+  .alert-danger {
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: 8px;
+    color: #e74c3c;
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+</style>
+
+<div class="login-container">
+  <div class="login-card">
+    <div class="diaken-logo">
+      <h1>DIAKEN</h1>
+      <p>Centralized Deployments</p>
+    </div>
+    
+    <h3 class="login-title">{% trans "Login" %}</h3>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      <div class="form-group mb-3">
+        <label for="username">{% trans "User" %}</label>
+        <input type="text" name="username" class="form-control" id="id_username" required autofocus>
+      </div>
+      <div class="form-group mb-4">
+        <label for="password">{% trans "Password" %}</label>
+        <input type="password" name="password" class="form-control" id="id_password" required>
+      </div>
+      <button type="submit" class="btn btn-login">{% trans "Login" %}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

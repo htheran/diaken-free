@@ -1,0 +1,708 @@
+---
+- name: Windows Server Update with native PowerShell and elevated privileges (improved)
+  hosts: windows_hosts
+  gather_facts: no
+  vars:
+    update_folder: 'C:\\Ansible_Update'
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: SYSTEM
+    # Variables de timeout desde Global Settings (con valores por defecto)
+    max_update_cycles: "{{ windows_update_max_cycles | default(10) }}"
+    reboot_timeout: "{{ windows_update_reboot_timeout | default(900) }}"
+    post_reboot_delay: "{{ windows_update_post_reboot_delay | default(180) }}"
+    install_timeout: "{{ windows_update_install_timeout | default(7200) }}"
+  tasks:
+
+  - name: Get server hostname
+    ansible.windows.win_shell: hostname
+    register: hostname_result
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+# Corrección 1: Obtener IP correctamente
+  - name: Get primary IPv4 address for the server (non-loopback)
+    ansible.windows.win_shell: |
+      $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.PrefixOrigin -ne 'WellKnown' } | Select-Object -First 1).IPAddress
+      if ([string]::IsNullOrEmpty($ip)) {
+        $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne '127.0.0.1' } | Select-Object -First 1).IPAddress
+      }
+      if ([string]::IsNullOrEmpty($ip)) {
+        $ip = 'N/A'
+      }
+      Write-Output $ip
+    register: ip_result
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+# Corrección 2: Formato del reporte inicial mejorado
+  - name: Get current date and time from Windows server
+    ansible.windows.win_shell: Get-Date -Format yyyyMMdd_HHmmss
+    register: datetime_result
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Create Ansible_Update folder if it doesn't exist
+    ansible.windows.win_file:
+      path: "{{ update_folder }}"
+      state: directory
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+
+
+  - name: Initial report - Enhanced diagnostic (native PowerShell) and save BEFORE file
+    ansible.windows.win_shell: |
+      $ErrorActionPreference = "Continue"
+      $serverHost = "{{ hostname_result.stdout | trim }}"
+      $ip = "{{ ip_result.stdout | trim }}"
+      $when = "{{ datetime_result.stdout | trim }}"
+      $reportPath = "{{ update_folder }}\\$($serverHost)_$($ip)_$($when)_BEFORE.txt"
+
+      $sep = "=" * 80
+      $subsep = "-" * 80
+      $content = @()
+      $content += $sep
+      $content += "INITIAL REPORT - BEFORE UPDATE"
+      $content += $sep
+      $content += "Server: $serverHost"
+      $content += "IP Address: $ip"
+      $content += "Process start: $when"
+      $content += "Report generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+      $content += ""
+      
+      # Basic system info
+      $content += $subsep
+      $content += "SYSTEM INFORMATION"
+      $content += $subsep
+      try {
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem
+        $content += "OS: $($os.Caption)"
+        $content += "Version: $($os.Version)"
+        $content += "Build: $($os.BuildNumber)"
+        $content += "Last Boot: $($os.LastBootUpTime)"
+      } catch {
+        $content += "Error retrieving OS information: $($_.Exception.Message)"
+      }
+      $content += "Current User: $env:USERNAME"
+      $content += "Running as: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+      $content += ""
+
+      # Windows Update service check
+      $content += $subsep
+      $content += "WINDOWS UPDATE SERVICE STATUS"
+      $content += $subsep
+      try {
+        $wu = Get-Service -Name wuauserv -ErrorAction Stop
+        $content += "Service Status: $($wu.Status)"
+        $content += "Startup Type: $($wu.StartType)"
+      } catch {
+        $content += "Windows Update Service: NOT FOUND or error retrieving status."
+      }
+      $content += ""
+
+      # Check DNS root hints presence (if DNS role available)
+      $content += $subsep
+      $content += "DNS ROOT HINTS CHECK"
+      $content += $subsep
+      try {
+        Import-Module -Name DnsServer -ErrorAction SilentlyContinue
+        if (Get-Command -Name Get-DnsServerRootHint -ErrorAction SilentlyContinue) {
+          $rh = Get-DnsServerRootHint -ErrorAction SilentlyContinue
+          if ($rh) {
+            $rhNames = $rh | ForEach-Object { $_.Name }
+            $content += "DNS Root Hints FOUND: $($rhNames -join ', ')"
+          } else {
+            $content += "DNS Root Hints: none found"
+          }
+        } else {
+          $content += "DNS Server module not available; skipping root hints check."
+        }
+      } catch {
+        $content += "Error checking DNS Root Hints: $($_.Exception.Message)"
+      }
+      $content += ""
+
+      # Search for updates (online forced)
+      $content += $subsep
+      $content += "PENDING UPDATES (PRE-RUN)"
+      $content += $subsep
+      try {
+        $us = New-Object -ComObject Microsoft.Update.Session
+        $searcher = $us.CreateUpdateSearcher()
+        $searcher.Online = $true
+        $sr = $searcher.Search("IsInstalled=0")
+        $content += "Total pending updates: $($sr.Updates.Count)"
+        $content += ""
+        if ($sr.Updates.Count -gt 0) {
+          foreach ($u in $sr.Updates) {
+            $kb = if ($u.KBArticleIDs.Count -gt 0) { $u.KBArticleIDs -join ',' } else { 'N/A' }
+            $content += " - $($u.Title)"
+            $content += "   KB: $kb | Downloaded: $($u.IsDownloaded) | Hidden: $($u.IsHidden)"
+          }
+        }
+      } catch {
+        $content += "Error searching updates: $($_.Exception.Message)"
+      }
+      $content += ""
+      $content += $sep
+
+      $content -join "`n" | Out-File -FilePath $reportPath -Encoding UTF8
+      Write-Output "Initial diagnostic saved to: $reportPath"
+    register: initial_report
+    changed_when: true
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+  - name: Ensure Windows Update service is running
+    ansible.windows.win_service:
+      name: wuauserv
+      state: started
+      start_mode: auto
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Run update cycles (search/download/install) with reboot handling and root-hints removal
+    ansible.windows.win_shell: |
+      <#
+        Script summary:
+        - Runs up to {{ max_update_cycles }} cycles of search/download/install.
+        - After each install cycle, checks if reboot required; if so, reboots and waits, then continues.
+        - Removes DNS root hints if present (and reports what was removed).
+        - Produces a detailed log in a temp file which will be copied back by Ansible.
+      #>
+
+      $ErrorActionPreference = "Stop"
+      $serverHost = "{{ hostname_result.stdout | trim }}"
+      $ip = "{{ ip_result.stdout | trim }}"
+      $when = "{{ datetime_result.stdout | trim }}"
+      $logTemp = "C:\Windows\Temp\ansible_update_process_log.txt"
+      Remove-Item -Path $logTemp -ErrorAction SilentlyContinue -Force
+
+      Add-Content -Path $logTemp -Value ("=" * 80)
+      Add-Content -Path $logTemp -Value "UPDATE PROCESS LOG"
+      Add-Content -Path $logTemp -Value ("=" * 80)
+      Add-Content -Path $logTemp -Value ("Server: {0}    IP: {1}    Start: {2}" -f $serverHost, $ip, $when)
+      Add-Content -Path $logTemp -Value ("Report generated: {0}" -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))
+      Add-Content -Path $logTemp -Value ""
+
+      # --- Root Hints removal (if any) ---
+      Add-Content -Path $logTemp -Value ("-" * 80)
+      Add-Content -Path $logTemp -Value "ROOT HINTS CHECK / REMOVAL"
+      Add-Content -Path $logTemp -Value ("-" * 80)
+      try {
+        Import-Module -Name DnsServer -ErrorAction SilentlyContinue
+        if (Get-Command -Name Get-DnsServerRootHint -ErrorAction SilentlyContinue) {
+          $rh = Get-DnsServerRootHint -ErrorAction SilentlyContinue
+          if ($rh -and $rh.Count -gt 0) {
+            Add-Content -Path $logTemp -Value ("Found {0} root hint entries: {1}" -f $rh.Count, ($rh | ForEach-Object { $_.Name } -join ', '))
+            # Remove each root hint entry and record
+            $removed = @()
+            foreach ($r in $rh) {
+              try {
+                Remove-DnsServerRootHint -Name $r.Name -Force -Confirm:$false -ErrorAction Stop
+                $removed += $r.Name
+              } catch {
+                Add-Content -Path $logTemp -Value ("Error removing root hint {0}: {1}" -f $r.Name, $_.Exception.Message)
+              }
+            }
+            if ($removed.Count -gt 0) {
+              Add-Content -Path $logTemp -Value ("Removed root hints: " + ($removed -join ', '))
+            } else {
+              Add-Content -Path $logTemp -Value "No root hints were removed (errors occurred while attempting removal)."
+            }
+          } else {
+            Add-Content -Path $logTemp -Value "No DNS Root Hints found to remove."
+          }
+        } else {
+          Add-Content -Path $logTemp -Value "DNS Server module or commands not available; skipping root hints removal."
+        }
+      } catch {
+        Add-Content -Path $logTemp -Value ("Root hints check failed: {0}" -f $_.Exception.Message)
+      }
+      Add-Content -Path $logTemp -Value ""
+
+      # --- Update cycles ---
+      $cycle = 0
+      $max = {{ max_update_cycles }}
+      $overallInstalled = @()
+      $overallFailed = @()
+      $overallWarnings = @()
+
+      while ($cycle -lt $max) {
+        $cycle++
+        Add-Content -Path $logTemp -Value ("=" * 40)
+        Add-Content -Path $logTemp -Value ("BEGIN CYCLE {0} of {1}" -f $cycle, $max)
+        Add-Content -Path $logTemp -Value ("=" * 40)
+        $cycleStart = Get-Date
+
+        # Create update session and force online search
+        $us = New-Object -ComObject Microsoft.Update.Session
+        $searcher = $us.CreateUpdateSearcher()
+        $searcher.Online = $true
+
+        Add-Content -Path $logTemp -Value "Searching for non-installed updates (online)..."
+        try {
+          $sr = $searcher.Search("IsInstalled=0")
+        } catch {
+          Add-Content -Path $logTemp -Value ("ERROR during search: {0}" -f $_.Exception.Message)
+          break
+        }
+
+        Add-Content -Path $logTemp -Value ("Pending updates found: {0}" -f $sr.Updates.Count)
+
+        if ($sr.Updates.Count -eq 0) {
+          Add-Content -Path $logTemp -Value "No pending updates. Ending cycles."
+          break
+        }
+
+        # Build collections
+        $toDownload = New-Object -ComObject Microsoft.Update.UpdateColl
+        $toInstall = New-Object -ComObject Microsoft.Update.UpdateColl
+        $hiddenCount = 0
+
+        foreach ($u in $sr.Updates) {
+          $title = $u.Title
+          $kb = ($u.KBArticleIDs -join ',') -replace '^$','N/A'
+          if ($u.IsHidden) { $hidden = $true; $hiddenCount++ } else { $hidden = $false }
+
+          # Accept EULA automatically if necessary
+          if (-not $u.EulaAccepted) {
+            try {
+              $u.AcceptEula() | Out-Null
+            } catch {
+              Add-Content -Path $logTemp -Value ("Warning: Could not auto-accept EULA for {0} - {1}" -f $kb, $_.Exception.Message)
+            }
+          }
+
+          if ($u.IsDownloaded) {
+            $toInstall.Add($u) | Out-Null
+            Add-Content -Path $logTemp -Value ("Queued for INSTALL: {0} | KB: {1} | Hidden: {2}" -f $title, $kb, $hidden)
+          } else {
+            $toDownload.Add($u) | Out-Null
+            Add-Content -Path $logTemp -Value ("Queued for DOWNLOAD: {0} | KB: {1} | Hidden: {2}" -f $title, $kb, $hidden)
+          }
+        }
+
+        if ($hiddenCount -gt 0) {
+          Add-Content -Path $logTemp -Value ("Note: {0} updates are marked HIDDEN but will be processed if not installed." -f $hiddenCount)
+        }
+
+        # Download phase (if needed)
+        if ($toDownload.Count -gt 0) {
+          Add-Content -Path $logTemp -Value ("Starting download of {0} updates..." -f $toDownload.Count)
+          $downloader = $us.CreateUpdateDownloader()
+          $downloader.Updates = $toDownload
+          $dres = $downloader.Download()
+
+          Add-Content -Path $logTemp -Value ("Download result code: {0}" -f $dres.ResultCode)
+          # Add downloaded ones to install list
+          foreach ($u in $toDownload) {
+            if ($u.IsDownloaded) {
+              $toInstall.Add($u) | Out-Null
+            } else {
+              Add-Content -Path $logTemp -Value ("Not downloaded: {0}" -f $u.Title)
+            }
+          }
+        } else {
+          Add-Content -Path $logTemp -Value "No download phase required (all updates are already downloaded)."
+        }
+
+        # Install phase
+        if ($toInstall.Count -gt 0) {
+          Add-Content -Path $logTemp -Value ("Starting installation of {0} updates..." -f $toInstall.Count)
+          $installer = $us.CreateUpdateInstaller()
+          $installer.Updates = $toInstall
+          $instStart = Get-Date
+          $iResult = $installer.Install()
+          $instEnd = Get-Date
+          $dur = $instEnd - $instStart
+
+          Add-Content -Path $logTemp -Value ("Installation duration: {0} minutes {1} seconds" -f $dur.Minutes, $dur.Seconds)
+          Add-Content -Path $logTemp -Value ("Install result code: {0}" -f $iResult.ResultCode)
+          Add-Content -Path $logTemp -Value ("Reboot required: {0}" -f $iResult.RebootRequired)
+
+          # Per-update results
+          for ($i = 0; $i -lt $toInstall.Count; $i++) {
+            $u = $toInstall.Item($i)
+            $r = $iResult.GetUpdateResult($i)
+            $status = Switch ($r.ResultCode) { 2 { "SUCCESS" } 3 { "SUCCESS_WITH_ERRORS" } 4 { "FAILED" } Default { "OTHER($($r.ResultCode))" } }
+            Add-Content -Path $logTemp -Value (" - {0} | KB: {1} | Result: {2} | HResult: {3}" -f $u.Title, ($u.KBArticleIDs -join ','), $status, $r.HResult)
+
+            if ($r.ResultCode -eq 2 -or $r.ResultCode -eq 3) {
+              $overallInstalled += @{ Title = $u.Title; KB = ($u.KBArticleIDs -join ','); Status = $status }
+            } elseif ($r.ResultCode -eq 4) {
+              $overallFailed += @{ Title = $u.Title; KB = ($u.KBArticleIDs -join ','); HResult = $r.HResult }
+            } elseif ($r.ResultCode -eq 3) {
+              $overallWarnings += @{ Title = $u.Title; KB = ($u.KBArticleIDs -join ','); Status = $status }
+            }
+          }
+
+          # If reboot required -> mark it and exit to let Ansible handle the reboot
+          if ($iResult.RebootRequired) {
+            Add-Content -Path $logTemp -Value "Reboot is required. Exiting to let Ansible handle reboot..."
+            # Create a marker file to indicate reboot is needed
+            New-Item -Path "C:\Windows\Temp\ansible_update_reboot_required.txt" -ItemType File -Force | Out-Null
+            # Exit the loop to return control to Ansible
+            break
+          } else {
+            Add-Content -Path $logTemp -Value "No reboot required after this cycle."
+          }
+        } else {
+          Add-Content -Path $logTemp -Value "No updates ready to install in this cycle."
+        }
+
+        $cycleEnd = Get-Date
+        $elapsed = $cycleEnd - $cycleStart
+        Add-Content -Path $logTemp -Value ("END CYCLE {0} | Duration: {1}m {2}s" -f $cycle, $elapsed.Minutes, $elapsed.Seconds)
+        Add-Content -Path $logTemp -Value ""
+      } # end while cycles
+
+      # Final summary
+      Add-Content -Path $logTemp -Value ("=" * 80)
+      Add-Content -Path $logTemp -Value "OVERALL SUMMARY"
+      Add-Content -Path $logTemp -Value ("=" * 80)
+      Add-Content -Path $logTemp -Value ("Total installed (this run): {0}" -f $overallInstalled.Count)
+      if ($overallInstalled.Count -gt 0) {
+        foreach ($it in $overallInstalled) {
+          Add-Content -Path $logTemp -Value (" - {0} | KB: {1} | Status: {2}" -f $it.Title, $it.KB, $it.Status)
+        }
+      }
+      Add-Content -Path $logTemp -Value ("Total failed: {0}" -f $overallFailed.Count)
+      if ($overallFailed.Count -gt 0) {
+        foreach ($f in $overallFailed) {
+          Add-Content -Path $logTemp -Value (" - {0} | KB: {1} | HResult: {2}" -f $f.Title, $f.KB, $f.HResult)
+        }
+      }
+      Add-Content -Path $logTemp -Value ("Total warnings: {0}" -f $overallWarnings.Count)
+      Add-Content -Path $logTemp -Value ""
+      Add-Content -Path $logTemp -Value ("Log finished at: {0}" -f (Get-Date).ToString('yyyy-MM-dd HH:mm:ss'))
+      Add-Content -Path $logTemp -Value ("=" * 80)
+
+      Write-Output "Update process finished. Log: $logTemp"
+    register: update_process
+    ignore_errors: yes
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Copy update process log to Ansible control (temp file created by script)
+    ansible.builtin.fetch:
+      src: 'C:\Windows\Temp\ansible_update_process_log.txt'
+      dest: '/tmp/ansible_update_process_log_{{ inventory_hostname }}.txt'
+      flat: yes
+    when: update_process is defined
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Show update process stdout
+    ansible.builtin.debug:
+      msg: "{{ update_process.stdout_lines | default(['Update process completed']) }}"
+    when: update_process is defined and update_process.stdout_lines is defined
+
+  # If reboot marker exists, reboot task will be performed by Ansible to handle waiting/timeout properly
+  - name: Check if reboot marker exists (created by the update script when a reboot is required)
+    ansible.windows.win_stat:
+      path: 'C:\Windows\Temp\ansible_update_reboot_required.txt'
+    register: reboot_marker
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Reboot server to complete update (if marker exists)
+    ansible.windows.win_reboot:
+      msg: "Rebooting to complete Windows updates installed by Ansible (controlled reboot)"
+      pre_reboot_delay: 60
+      post_reboot_delay: "{{ post_reboot_delay }}"
+      reboot_timeout: "{{ reboot_timeout }}"
+      test_command: whoami
+    when: reboot_marker.stat.exists
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Remove reboot marker if exists (cleanup)
+    ansible.windows.win_file:
+      path: 'C:\Windows\Temp\ansible_update_reboot_required.txt'
+      state: absent
+    when: reboot_marker.stat.exists
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Wait extra time for services and update system stabilization after reboot (if reboot occurred)
+    ansible.builtin.pause:
+      seconds: "{{ post_reboot_wait }}"
+    when: reboot_marker.stat.exists
+
+  - name: Final validation - Check status AFTER last cycle / reboot
+    ansible.windows.win_shell: |
+      $ErrorActionPreference = "Continue"
+      $serverHost = "{{ hostname_result.stdout | trim }}"
+      $ip = "{{ ip_result.stdout | trim }}"
+      $when = "{{ datetime_result.stdout | trim }}"
+      $reportPath = "{{ update_folder }}\$($serverHost)_$($ip)_$($when)_AFTER.txt"
+      $sep = "=" * 80
+      $sub = "-" * 80
+
+      # Header
+      $content = $sep + "`n"
+      $content += "FINAL REPORT - AFTER UPDATE CYCLES`n"
+      $content += $sep + "`n"
+      $content += "Server: $serverHost`n"
+      $content += "IP: $ip`n"
+      $content += "Process start: $when`n"
+      $content += "Report generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`n"
+
+      # Last reboot and uptime
+      try {
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem
+        $lastBoot = $os.LastBootUpTime
+        $content += "Last Boot: $lastBoot`n"
+        $uptime = (Get-Date) - $lastBoot
+        $content += ("Uptime: {0} days, {1} hours, {2} minutes`n`n" -f ([int]$uptime.TotalDays), $uptime.Hours, $uptime.Minutes)
+      } catch { $content += "Could not retrieve Last Boot or Uptime.`n`n" }
+
+      # Include process log if exists
+      $logTemp = "C:\Windows\Temp\ansible_update_process_log.txt"
+      if (Test-Path -Path $logTemp) {
+        $content += $sub + "`n"
+        $content += "UPDATE PROCESS LOG (excerpt)`n"
+        $content += $sub + "`n"
+        $content += (Get-Content -Path $logTemp -Raw)
+        $content += "`n`n"
+      } else {
+        $content += "No process log found at $logTemp`n`n"
+      }
+
+      # Final pending updates check (visible not hidden)
+      try {
+        $us = New-Object -ComObject Microsoft.Update.Session
+        $searcher = $us.CreateUpdateSearcher()
+        $searcher.Online = $true
+        $sr = $searcher.Search("IsInstalled=0 and IsHidden=0")
+        $content += $sub + "`n"
+        $content += "PENDING (visible) UPDATES AFTER RUN: $($sr.Updates.Count)`n"
+        $content += $sub + "`n"
+        if ($sr.Updates.Count -gt 0) {
+          foreach ($u in $sr.Updates) {
+            $content += (" - {0} | KB: {1} | Downloaded: {2}`n" -f $u.Title, ($u.KBArticleIDs -join ','), $u.IsDownloaded)
+          }
+          $content += "`nACTION: If pending updates remain, the playbook attempted up to {{ max_update_cycles }} cycles."
+        } else {
+          $content += "No visible pending updates detected. System should be fully updated.`n"
+        }
+      } catch {
+        $content += "Error retrieving pending updates after run: $($_.Exception.Message)`n"
+      }
+
+      # Reboot status
+      try {
+        $systemInfo = New-Object -ComObject Microsoft.Update.SystemInfo
+        $content += "`n" + $sub + "`n"
+        $content += "REBOOT REQUIRED: " + ($systemInfo.RebootRequired -eq $true) + "`n"
+      } catch {
+        $content += "Could not determine reboot required status.`n"
+      }
+
+      # Save final report
+      $content | Out-File -FilePath $reportPath -Encoding UTF8
+
+      # Also copy process log into update folder (if exists) for easy access
+      if (Test-Path -Path $logTemp) {
+        $logDest = "{{ update_folder }}\\$($serverHost)_$($ip)_$($when)_process_log.txt"
+        Copy-Item -Path $logTemp -Destination $logDest -Force -ErrorAction SilentlyContinue
+      }
+
+      Write-Output "Final report saved to: $reportPath"
+    register: final_report
+    ignore_errors: yes
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Fetch final AFTER report to control host (optional)
+    ansible.builtin.fetch:
+      src: "{{ update_folder }}\\{{ hostname_result.stdout | trim }}_{{ ip_result.stdout | trim }}_{{ datetime_result.stdout | trim }}_AFTER.txt"
+      dest: "/tmp/{{ inventory_hostname }}_after_report.txt"
+      flat: yes
+    when: final_report is defined
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Show location of BEFORE/AFTER reports and process log (local paths on Windows server)
+    ansible.builtin.debug:
+      msg:
+        - "Initial report (BEFORE) saved: {{ update_folder }}\\{{ hostname_result.stdout | trim }}_{{ ip_result.stdout | trim }}_{{ datetime_result.stdout | trim }}_BEFORE.txt"
+        - "Final report (AFTER) saved: {{ update_folder }}\\{{ hostname_result.stdout | trim }}_{{ ip_result.stdout | trim }}_{{ datetime_result.stdout | trim }}_AFTER.txt"
+        - "Process log on server (temp copy): C:\\Windows\\Temp\\ansible_update_process_log.txt"
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+- name: Generar informe de auditoría mejorado
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Obtener nombre del host nuevamente
+      win_shell: hostname
+      register: hostname_audit
+      changed_when: false
+
+    - name: Obtener dirección IP nuevamente
+      win_shell: |
+        $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne '127.0.0.1' } | Select-Object -First 1).IPAddress
+        if ([string]::IsNullOrEmpty($ip)) { $ip = 'No disponible' }
+        Write-Output $ip
+      register: ip_address_audit
+      changed_when: false
+
+    - name: Obtener fecha y hora de inicio desde archivo
+      win_shell: |
+        $files = Get-ChildItem -Path "C:\Ansible_Update" -Filter "*_AFTER.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($files) {
+          $filename = $files.Name
+          if ($filename -match '_(\d{8}_\d{6})_') {
+            Write-Output $matches[1]
+          } else {
+            Write-Output "N/A"
+          }
+        } else {
+          Write-Output "N/A"
+        }
+      register: process_start_time
+      changed_when: false
+      ignore_errors: true
+
+    - name: Obtener fecha y hora actual
+      shell: date '+%Y-%m-%d %H:%M:%S'
+      register: current_time
+      delegate_to: localhost
+      run_once: true
+      changed_when: false
+
+    - name: Obtener información de actualizaciones instaladas
+      win_shell: |
+        $session = [activator]::CreateInstance([type]::GetTypeFromProgID("Microsoft.Update.Session"))
+        $searcher = $session.CreateUpdateSearcher()
+        $updates = $searcher.GetTotalHistoryCount()
+        $last_updates = $searcher.QueryHistory(0, 10) | Where-Object { $_.Operation -eq 1 } | Select-Object Title, Date, @{Name="ResultCode";Expression={$_.ResultCode}}
+        [PSCustomObject]@{
+          TotalUpdates = $updates
+          LastUpdates = $last_updates
+        } | ConvertTo-Json -Depth 5 -Compress
+      register: updates_info
+      ignore_errors: true
+      changed_when: false
+
+    - name: Obtener información del sistema
+      win_shell: |
+        $os = Get-WmiObject -Class Win32_OperatingSystem
+        $cs = Get-WmiObject -Class Win32_ComputerSystem
+        [PSCustomObject]@{
+          OSName = $os.Caption
+          OSVersion = $os.Version
+          OSBuild = $os.BuildNumber
+          SystemManufacturer = $cs.Manufacturer
+          SystemModel = $cs.Model
+          TotalPhysicalMemory = [math]::Round($cs.TotalPhysicalMemory / 1GB, 2)
+        } | ConvertTo-Json -Depth 5 -Compress
+      register: system_info
+      ignore_errors: true
+      changed_when: false
+
+    - name: Obtener espacio en disco
+      win_shell: |
+        Get-PSDrive -PSProvider 'FileSystem' | Select-Object Name, @{Name="UsedGB";Expression={[math]::Round($_.Used/1GB,2)}}, @{Name="FreeGB";Expression={[math]::Round($_.Free/1GB,2)}}, @{Name="TotalGB";Expression={[math]::Round(($_.Used + $_.Free)/1GB,2)}} | ConvertTo-Json -Depth 5 -Compress
+      register: disk_space
+      ignore_errors: true
+      changed_when: false
+
+    - name: Verificar si hubo errores en el proceso de actualización
+      win_shell: |
+        $logFile = "C:\Windows\Temp\ansible_update_process_log.txt"
+        if (Test-Path $logFile) {
+          $content = Get-Content $logFile -Raw
+          if ($content -match "Total failed: (\d+)") {
+            Write-Output $matches[1]
+          } else {
+            Write-Output "0"
+          }
+        } else {
+          Write-Output "unknown"
+        }
+      register: failed_updates_count
+      changed_when: false
+      ignore_errors: true
+
+    - name: Mostrar informe de auditoría completo
+      debug:
+        msg: |
+          
+          ===================== INFORME DE AUDITORÍA DE ACTUALIZACIONES =====================
+          
+          [INFORMACIÓN GENERAL]
+          Servidor: {{ hostname_audit.stdout | trim }}
+          Dirección IP: {{ ip_address_audit.stdout | trim }}
+          Fecha de auditoría: {{ current_time.stdout | trim }}
+          
+          {% if system_info is defined and system_info.stdout is defined %}
+          [INFORMACIÓN DEL SISTEMA]
+          - SO: {{ (system_info.stdout | from_json).OSName | default('N/A') }}
+          - Versión: {{ (system_info.stdout | from_json).OSVersion | default('N/A') }} (Build {{ (system_info.stdout | from_json).OSBuild | default('N/A') }})
+          - Fabricante: {{ (system_info.stdout | from_json).SystemManufacturer | default('N/A') }}
+          - Modelo: {{ (system_info.stdout | from_json).SystemModel | default('N/A') }}
+          - Memoria Total: {{ (system_info.stdout | from_json).TotalPhysicalMemory | default('N/A') }} GB
+          {% endif %}
+          
+          [RESUMEN EJECUTIVO]
+          - Inicio del proceso: {{ process_start_time.stdout | trim | regex_replace('(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})', '\1-\2-\3 \4:\5:\6') }}
+          - Finalización: {{ current_time.stdout }}
+          - Estado: {{ 'COMPLETADO' if failed_updates_count.stdout | trim == '0' else 'CON ERRORES' }}
+          {% if updates_info is defined and updates_info.stdout is defined %}
+          - Total de actualizaciones en el sistema: {{ (updates_info.stdout | from_json).TotalUpdates | default('N/A') }}
+          {% endif %}
+          
+          {% if updates_info is defined and updates_info.stdout is defined and (updates_info.stdout | from_json).LastUpdates %}
+          [DETALLE DE ACTUALIZACIONES RECIENTES]
+            {% for update in (updates_info.stdout | from_json).LastUpdates %}
+          - {{ update.Date }} | {{ update.Title | truncate(80) }} | Código: {{ update.ResultCode }}
+            {% endfor %}
+          {% endif %}
+          
+          {% if disk_space is defined and disk_space.stdout is defined %}
+          [ESPACIO EN DISCO]
+            {% set disk_json = disk_space.stdout | from_json %}
+            {% if disk_json is mapping %}
+          - Unidad {{ disk_json.Name }}: Usado {{ disk_json.UsedGB }}GB | Libre {{ disk_json.FreeGB }}GB | Total {{ disk_json.TotalGB }}GB
+            {% elif disk_json is iterable and disk_json is not string %}
+              {% for disk in disk_json %}
+          - Unidad {{ disk.Name }}: Usado {{ disk.UsedGB }}GB | Libre {{ disk.FreeGB }}GB | Total {{ disk.TotalGB }}GB
+              {% endfor %}
+            {% else %}
+          No se pudo obtener información del espacio en disco
+            {% endif %}
+          {% endif %}
+          
+          [ARCHIVOS DE REGISTRO]
+          - Registro del proceso: /tmp/ansible_update_process_log_{{ inventory_hostname }}.txt
+          - Informe completo: /tmp/{{ inventory_hostname }}_after_report.txt
+          
+          [HALLAZGOS DE AUDITORÍA]
+          1. {% if failed_updates_count.stdout | trim == '0' %}Todas las actualizaciones se aplicaron correctamente{% else %}Se encontraron {{ failed_updates_count.stdout | trim }} actualizaciones fallidas{% endif %}
+          2. Revise los archivos de registro para más detalles
+          
+          [PRÓXIMOS PASOS]
+          1. Revisar el informe completo en los archivos de registro
+          2. Documentar la finalización en el registro de cambios
+          3. Realizar copia de seguridad del estado actual del sistema
+          4. Verificar que todos los servicios críticos estén funcionando correctamente
+          
+          ===================================================================================

@@ -1,0 +1,99 @@
+---
+- name: Customize Linux VM (RedHat/CentOS)
+  hosts: all
+  become: yes
+  vars:
+    new_hostname: "{{ hostname }}"
+    new_ip: "{{ ip }}"
+    new_gateway: "{{ gateway | default('') }}"
+    net_if: "{{ interface | default('ens192') }}"
+  tasks:
+    - name: Change hostname
+      hostname:
+        name: "{{ new_hostname }}"
+
+    - name: Detect if using NetworkManager
+      stat:
+        path: /etc/NetworkManager/system-connections
+      register: nm_dir
+
+    - block:
+        - name: Auto-detect primary network interface
+          shell: ip route | grep default | awk '{print $5}' | head -1
+          register: detected_interface
+          changed_when: false
+
+        - name: Set network interface to use
+          set_fact:
+            net_if_to_use: "{{ detected_interface.stdout if detected_interface.stdout != '' else net_if }}"
+
+        - name: Detect real connection name for interface
+          shell: nmcli -g NAME,DEVICE connection show | grep ":{{ net_if_to_use }}$" | cut -d':' -f1 | head -1
+          register: net_connection_name
+          changed_when: false
+          ignore_errors: yes
+
+        - name: Fallback detect active connection if not found
+          shell: nmcli -g NAME,DEVICE connection show --active | grep ":{{ net_if_to_use }}$" | cut -d':' -f1 | head -1
+          register: net_connection_name_active
+          changed_when: false
+          when: net_connection_name.stdout == ""
+          ignore_errors: yes
+
+        - name: Set connection name with fallback
+          set_fact:
+            real_net_connection: "{{ net_connection_name.stdout if net_connection_name.stdout != '' else (net_connection_name_active.stdout if net_connection_name_active is defined and net_connection_name_active.stdout != '' else '') }}"
+
+        - name: Fail if no connection found
+          fail:
+            msg: "No se pudo detectar la conexión NetworkManager para {{ net_if_to_use }}. Cree una conexión manualmente."
+          when: real_net_connection == ""
+
+        - name: Modify IP with nmcli
+          command: nmcli connection modify "{{ real_net_connection }}" ipv4.addresses "{{ new_ip }}/24"
+          ignore_errors: yes
+
+        - name: Modify gateway with nmcli
+          command: nmcli connection modify "{{ real_net_connection }}" ipv4.gateway "{{ new_gateway }}"
+          ignore_errors: yes
+
+        - name: Set manual method
+          command: nmcli connection modify "{{ real_net_connection }}" ipv4.method manual
+          ignore_errors: yes
+
+        - name: Reload NetworkManager connection
+          command: nmcli connection reload
+          ignore_errors: yes
+
+      when: nm_dir.stat.exists
+
+    - block:
+        - name: Auto-detect primary network interface for ifcfg
+          shell: ip route | grep default | awk '{print $5}' | head -1
+          register: detected_interface_trad
+          changed_when: false
+
+        - name: Set network interface to use for ifcfg
+          set_fact:
+            net_if_to_use: "{{ detected_interface_trad.stdout if detected_interface_trad.stdout != '' else net_if }}"
+
+        - name: Configure traditional network file
+          template:
+            src: /opt/www/app/diaken-pdn/ansible/redhat-ifcfg.j2
+            dest: "/etc/sysconfig/network-scripts/ifcfg-{{ net_if_to_use }}"
+            owner: root
+            group: root
+            mode: '0644'
+            backup: yes
+
+      when: not nm_dir.stat.exists
+
+    - name: Final message
+      debug:
+        msg: "Hostname y red configurados correctamente. Se reiniciará el sistema en 30 segundos."
+    
+    - name: Schedule system reboot
+      shell: shutdown -r +0.5 "Rebooting to apply hostname and network changes" || shutdown -r 1 "Rebooting to apply hostname and network changes"
+      async: 1
+      poll: 0
+      ignore_errors: yes

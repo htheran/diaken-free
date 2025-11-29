@@ -1,0 +1,204 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Microsoft Teams Webhooks - Diaken{% endblock %}
+
+{% block extra_css %}
+<style>
+    .webhook-card {
+        transition: all 0.3s ease;
+    }
+    .webhook-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .webhook-url {
+        font-family: monospace;
+        font-size: 0.85rem;
+        word-break: break-all;
+    }
+    .badge-notification {
+        font-size: 0.75rem;
+        margin-right: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-bell"></i> Microsoft Teams Webhooks</h2>
+                    <p class="text-muted">Manage Microsoft Teams incoming webhooks for notifications</p>
+                </div>
+                <div>
+                    <a href="{% url 'notifications:notification_logs' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-history"></i> Notification Logs
+                    </a>
+                    <a href="{% url 'notifications:webhook_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Webhook
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if webhooks %}
+    <div class="row">
+        {% for webhook in webhooks %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card webhook-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fab fa-microsoft"></i> {{ webhook.name }}
+                    </h5>
+                    <span class="badge {% if webhook.active %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if webhook.active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-muted">Webhook URL:</h6>
+                    <p class="webhook-url text-truncate" title="{{ webhook.webhook_url }}">
+                        {{ webhook.webhook_url }}
+                    </p>
+
+                    <h6 class="text-muted mt-3">Notification Preferences:</h6>
+                    <div class="mb-2">
+                        {% if webhook.notify_deployments %}
+                        <span class="badge badge-notification bg-info">
+                            <i class="fas fa-server"></i> Deployments
+                        </span>
+                        {% endif %}
+                        {% if webhook.notify_playbook_executions %}
+                        <span class="badge badge-notification bg-primary">
+                            <i class="fas fa-play"></i> Playbooks
+                        </span>
+                        {% endif %}
+                        {% if webhook.notify_scheduled_tasks %}
+                        <span class="badge badge-notification bg-warning">
+                            <i class="fas fa-clock"></i> Scheduled
+                        </span>
+                        {% endif %}
+                        {% if webhook.notify_failures_only %}
+                        <span class="badge badge-notification bg-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Failures Only
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small class="text-muted">Notifications Sent</small>
+                            <h4>{{ webhook.notification_count }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Last Notification</small>
+                            <h6>
+                                {% if webhook.last_notification_at %}
+                                {{ webhook.last_notification_at|date:"M d, H:i" }}
+                                {% else %}
+                                <span class="text-muted">Never</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group btn-group-sm w-100 mb-2" role="group">
+                        <a href="{% url 'notifications:webhook_test' webhook.pk %}" 
+                           class="btn btn-outline-info" title="Send Test">
+                            <i class="fas fa-paper-plane"></i> Test
+                        </a>
+                        <a href="{% url 'notifications:webhook_edit' webhook.pk %}" 
+                           class="btn btn-outline-primary" title="Edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button type="button" 
+                                class="btn btn-outline-{% if webhook.active %}warning{% else %}success{% endif %} toggle-active-btn"
+                                data-webhook-id="{{ webhook.pk }}"
+                                data-active="{{ webhook.active|yesno:'true,false' }}"
+                                title="{% if webhook.active %}Deactivate{% else %}Activate{% endif %}">
+                            <i class="fas fa-{% if webhook.active %}pause{% else %}play{% endif %}"></i>
+                        </button>
+                    </div>
+                    <a href="{% url 'notifications:webhook_configure' webhook.pk %}" 
+                       class="btn btn-sm btn-success w-100" title="Configure Notifications">
+                        <i class="fas fa-cog"></i> Configure Notifications
+                    </a>
+                        <a href="{% url 'notifications:webhook_delete' webhook.pk %}" 
+                           class="btn btn-outline-danger" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <h4><i class="fas fa-info-circle"></i> No Webhooks Configured</h4>
+                <p>You haven't configured any Microsoft Teams webhooks yet.</p>
+                <a href="{% url 'notifications:webhook_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Your First Webhook
+                </a>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-question-circle"></i> How to Get a Webhook URL</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Open Microsoft Teams and navigate to the channel where you want to receive notifications</li>
+                        <li>Click the <strong>•••</strong> (More options) next to the channel name</li>
+                        <li>Select <strong>Connectors</strong></li>
+                        <li>Search for <strong>Incoming Webhook</strong> and click <strong>Configure</strong></li>
+                        <li>Give your webhook a name (e.g., "Diaken Notifications")</li>
+                        <li>Optionally upload an image</li>
+                        <li>Click <strong>Create</strong></li>
+                        <li>Copy the webhook URL and paste it here</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Toggle active status
+    $('.toggle-active-btn').click(function() {
+        const btn = $(this);
+        const webhookId = btn.data('webhook-id');
+        const isActive = btn.data('active') === 'true';
+        
+        $.ajax({
+            url: `/notifications/${webhookId}/toggle-active/`,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Reload page to update UI
+                    location.reload();
+                }
+            },
+            error: function() {
+                alert('Failed to toggle webhook status');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+<VirtualHost *:{{ https_port }}>
+    ServerName {{ subdomain }}.{{ domain }}
+    ServerAlias www.{{ subdomain }}.{{ domain }}
+    
+    DocumentRoot {{ server_root }}/{{ subdomain }}
+    
+    # SSL Configuration
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/httpd/{{ subdomain }}.certificado.crt
+    SSLCertificateKeyFile /etc/ssl/httpd/{{ subdomain }}.certificado.key
+    SSLCertificateChainFile /etc/ssl/httpd/{{ subdomain }}-provider.crt
+    
+    # SSL Protocol and Cipher Configuration
+    SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+    SSLCipherSuite HIGH:!aNULL:!MD5:!3DES
+    SSLHonorCipherOrder on
+    
+    # HSTS (HTTP Strict Transport Security)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    
+    # Directory Configuration
+    <Directory {{ server_root }}/{{ subdomain }}>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    # Logging
+    ErrorLog {{ log_root }}/{{ subdomain }}-ssl-error.log
+    CustomLog {{ log_root }}/{{ subdomain }}-ssl-access.log combined
+    
+    # Security Headers
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Disable server signature
+    ServerSignature Off
+</VirtualHost>

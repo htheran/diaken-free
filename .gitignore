@@ -1,0 +1,96 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# Django
+*.log
+*.pot
+db.sqlite3
+db.sqlite3-journal
+media/*
+!media/playbooks/
+!media/j2/
+staticfiles/
+
+# Secrets and sensitive files
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+media/ssh/
+.env
+.env.local
+.env.*.local
+secrets.py
+local_settings.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+.hypothesis/
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+*~
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific
+media/playbooks/temp_*
+media/scripts/temp_*
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Deployment
+deploy_production.sh.backup
+deployment_config.json
+
+# Logs
+logs/
+*.log.*
+
+# Docker deployment (kept locally, not in git)
+docker/

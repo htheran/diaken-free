@@ -1,0 +1,379 @@
+{% extends 'base/base.html' %}
+{% block title %}Deployment Detail{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Deployment Detail #{{ deployment.id }}</h3>
+      <div class="card-tools">
+        <a href="{% url 'history:history_list' %}" class="btn btn-sm btn-secondary">
+          <i class="fas fa-arrow-left"></i> Back to History
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Deployment Information -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <table class="table table-bordered">
+            <tr>
+              <th width="40%">User:</th>
+              <td>{{ deployment.user.username }}</td>
+            </tr>
+            <tr>
+              <th>Target Type:</th>
+              <td>
+                {% if deployment.target_type == 'host' %}
+                  <span class="badge badge-info">Host</span>
+                {% else %}
+                  <span class="badge badge-primary">Group</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Target:</th>
+              <td>{{ deployment.target }}</td>
+            </tr>
+            <tr>
+              <th>Playbook:</th>
+              <td>{{ deployment.playbook }}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-bordered">
+            <tr>
+              <th width="40%">Executed At:</th>
+              <td>{{ deployment.created_at|date:"Y-m-d H:i:s" }}</td>
+            </tr>
+            <tr>
+              <th>Status:</th>
+              <td>
+                {% if deployment.status == 'success' %}
+                  <span class="badge badge-success">Success</span>
+                {% else %}
+                  <span class="badge badge-danger">Failed</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Snapshot:</th>
+              <td>{{ deployment.snapshot_name|default:"-" }}</td>
+            </tr>
+            <tr>
+              <th>Environment:</th>
+              <td>{{ deployment.environment|default:"-" }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Filter Buttons -->
+      <div class="mb-3" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary filter-btn active" data-filter="all">
+          <i class="fas fa-list"></i> All
+        </button>
+        <button class="btn btn-primary filter-btn" data-filter="tasks">
+          <i class="fas fa-tasks"></i> Tasks
+        </button>
+        <button class="btn btn-success filter-btn" data-filter="success">
+          <i class="fas fa-check-circle"></i> Success (<span id="count-success">0</span>)
+        </button>
+        <button class="btn btn-warning filter-btn" data-filter="changed">
+          <i class="fas fa-sync-alt"></i> Changed (<span id="count-changed">0</span>)
+        </button>
+        <button class="btn btn-info filter-btn" data-filter="skipped">
+          <i class="fas fa-forward"></i> Skipped (<span id="count-skipped">0</span>)
+        </button>
+        <button class="btn btn-danger filter-btn" data-filter="errors">
+          <i class="fas fa-exclamation-circle"></i> Errors (<span id="count-errors">0</span>)
+        </button>
+      </div>
+      
+      <!-- Ansible Output -->
+      <div class="card" id="output-card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h5 class="card-title" style="margin: 0;">Ansible Output</h5>
+          <button id="expand-btn" class="btn btn-sm btn-secondary" title="Expand output">
+            <i class="fas fa-expand"></i> Expand
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <pre id="ansible-output" class="bg-dark text-light p-3 m-0" style="max-height: 600px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.4;">{{ deployment.ansible_output|default:"No output available" }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #ansible-output {
+    color: #e0e0e0;
+  }
+  .ansible-task { color: #87CEEB; font-weight: bold; }
+  .ansible-play { color: #FF69B4; font-weight: bold; }
+  .ansible-changed { color: #FFA500; }
+  .ansible-ok { color: #90EE90; }
+  .ansible-failed { color: #FF6B6B; }
+  .ansible-skipped { color: #87CEEB; }
+  .ansible-recap { color: #FF69B4; font-weight: bold; }
+  .ansible-warning { color: #FFD700; }
+  .ansible-path { color: #98C379; }
+  .ansible-timestamp { color: #61AFEF; }
+  
+  .filter-btn {
+    transition: all 0.3s ease;
+  }
+  .filter-btn.active {
+    box-shadow: 0 0 10px rgba(0,123,255,0.5);
+    transform: scale(1.05);
+  }
+  
+  .output-line {
+    display: block;
+  }
+  .output-line.hidden {
+    display: none !important;
+  }
+  
+  /* Fullscreen styles */
+  #output-card.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+  }
+  
+  #output-card.fullscreen .card-body {
+    height: calc(100vh - 60px);
+  }
+  
+  #output-card.fullscreen #ansible-output {
+    max-height: 100%;
+    height: 100%;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const output = document.getElementById('ansible-output');
+  if (!output) return;
+  
+  let html = output.innerHTML;
+  let lines = html.split('\n');
+  let processedLines = [];
+  
+  // Counters
+  let counts = {
+    success: 0,
+    changed: 0,
+    skipped: 0,
+    errors: 0
+  };
+  
+  // Process each line
+  lines.forEach((line, index) => {
+    let lineClass = 'output-line';
+    let lineType = '';
+    
+    // Detect line type
+    if (line.match(/TASK \[/)) {
+      lineType = 'task';
+      line = line.replace(/TASK \[(.*?)\]/g, '<span class="ansible-task">TASK [$1]</span>');
+    } else if (line.match(/PLAY \[/)) {
+      lineType = 'play';
+      line = line.replace(/PLAY \[(.*?)\]/g, '<span class="ansible-play">PLAY [$1]</span>');
+    } else if (line.match(/PLAY RECAP/)) {
+      lineType = 'recap';
+      line = line.replace(/PLAY RECAP (\*+)/g, '<span class="ansible-recap">PLAY RECAP $1</span>');
+    } else if (line.match(/changed: \[/)) {
+      lineType = 'changed';
+      counts.changed++;
+      line = line.replace(/changed: \[(.*?)\]/g, '<span class="ansible-changed">changed: [$1]</span>');
+    } else if (line.match(/ok: \[/)) {
+      lineType = 'success';
+      counts.success++;
+      line = line.replace(/ok: \[(.*?)\]/g, '<span class="ansible-ok">ok: [$1]</span>');
+    } else if (line.match(/failed: \[|fatal: \[|FAILED!/)) {
+      lineType = 'error';
+      counts.errors++;
+      line = line.replace(/failed: \[(.*?)\]/g, '<span class="ansible-failed">failed: [$1]</span>');
+      line = line.replace(/fatal: \[(.*?)\]/g, '<span class="ansible-failed">fatal: [$1]</span>');
+    } else if (line.match(/skipping: \[/)) {
+      lineType = 'skipped';
+      counts.skipped++;
+      line = line.replace(/skipping: \[(.*?)\]/g, '<span class="ansible-skipped">skipping: [$1]</span>');
+    }
+    
+    // Color summary numbers
+    line = line.replace(/changed=(\d+)/g, '<span class="ansible-changed">changed=$1</span>');
+    line = line.replace(/ok=(\d+)/g, '<span class="ansible-ok">ok=$1</span>');
+    line = line.replace(/failed=(\d+)/g, '<span class="ansible-failed">failed=$1</span>');
+    line = line.replace(/skipped=(\d+)/g, '<span class="ansible-skipped">skipped=$1</span>');
+    line = line.replace(/unreachable=(\d+)/g, '<span class="ansible-failed">unreachable=$1</span>');
+    
+    // Color paths
+    line = line.replace(/task path: (.*?)$/gm, 'task path: <span class="ansible-path">$1</span>');
+    
+    // Color timestamps
+    line = line.replace(/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/g, '[<span class="ansible-timestamp">$1</span>]');
+    
+    processedLines.push(`<span class="${lineClass}" data-type="${lineType}">${line}</span>`);
+  });
+  
+  output.innerHTML = processedLines.join('\n');
+  
+  // Update counters
+  document.getElementById('count-success').textContent = counts.success;
+  document.getElementById('count-changed').textContent = counts.changed;
+  document.getElementById('count-skipped').textContent = counts.skipped;
+  document.getElementById('count-errors').textContent = counts.errors;
+  
+  // Filter functionality
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const outputLines = document.querySelectorAll('.output-line');
+  
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const filter = this.dataset.filter;
+      
+      // Update active button
+      filterButtons.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Filter lines
+      outputLines.forEach(line => {
+        const lineType = line.dataset.type;
+        
+        if (filter === 'all') {
+          line.classList.remove('hidden');
+        } else if (filter === 'tasks') {
+          if (lineType === 'task' || lineType === 'play' || lineType === 'recap') {
+            line.classList.remove('hidden');
+          } else {
+            line.classList.add('hidden');
+          }
+        } else if (filter === 'success') {
+          if (lineType === 'success') {
+            line.classList.remove('hidden');
+          } else {
+            line.classList.add('hidden');
+          }
+        } else if (filter === 'changed') {
+          if (lineType === 'changed') {
+            line.classList.remove('hidden');
+          } else {
+            line.classList.add('hidden');
+          }
+        } else if (filter === 'skipped') {
+          if (lineType === 'skipped') {
+            line.classList.remove('hidden');
+          } else {
+            line.classList.add('hidden');
+          }
+        } else if (filter === 'errors') {
+          if (lineType === 'error') {
+            line.classList.remove('hidden');
+          } else {
+            line.classList.add('hidden');
+          }
+        }
+      });
+    });
+  });
+  
+  // Expand/Collapse functionality
+  const expandBtn = document.getElementById('expand-btn');
+  const outputCard = document.getElementById('output-card');
+  
+  expandBtn.addEventListener('click', function() {
+    outputCard.classList.toggle('fullscreen');
+    
+    if (outputCard.classList.contains('fullscreen')) {
+      expandBtn.innerHTML = '<i class="fas fa-compress"></i> Collapse';
+      expandBtn.title = 'Collapse output';
+    } else {
+      expandBtn.innerHTML = '<i class="fas fa-expand"></i> Expand';
+      expandBtn.title = 'Expand output';
+    }
+  });
+  
+  // ESC key to exit fullscreen
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && outputCard.classList.contains('fullscreen')) {
+      outputCard.classList.remove('fullscreen');
+      expandBtn.innerHTML = '<i class="fas fa-expand"></i> Expand';
+      expandBtn.title = 'Expand output';
+    }
+  });
+});
+
+// AJAX Polling para tareas asíncronas (Celery) - Sistema completo como playbooks
+{% if deployment.status == 'pending' or deployment.status == 'running' %}
+(function() {
+  var pollInterval = 3000; // Poll every 3 seconds (same as playbooks)
+  var pollCount = 0;
+  var maxPolls = 1000; // Max 50 minutes
+  
+  function checkStatus() {
+    pollCount++;
+    
+    $.ajax({
+      url: '/deploy/history-status/{{ deployment.pk }}/',
+      type: 'GET',
+      success: function(data) {
+        console.log('Deployment status:', data);
+        
+        // Update output in real-time
+        if (data.output && data.output.trim()) {
+          var outputElement = $('#ansible-output');
+          outputElement.text(data.output);
+          
+          // Auto-scroll to bottom
+          var pre = outputElement[0];
+          if (pre) {
+            pre.scrollTop = pre.scrollHeight;
+          }
+        }
+        
+        // Check if task is complete
+        if (data.status === 'success' || data.status === 'failed') {
+          console.log('Deployment completed! Status:', data.status);
+          // Reload page to show final status and badges
+          setTimeout(function() {
+            location.reload();
+          }, 1000);
+        } else if (pollCount >= maxPolls) {
+          console.log('Max polls reached, stopping...');
+        } else {
+          // Continue polling
+          setTimeout(checkStatus, pollInterval);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error checking deployment status:', error);
+        // On error, continue polling (maybe temporary network issue)
+        if (pollCount < maxPolls) {
+          setTimeout(checkStatus, pollInterval);
+        }
+      }
+    });
+  }
+  
+  // Show indicator that it's auto-updating
+  var statusBadge = $('.card-body table td .badge');
+  if (statusBadge.length > 0) {
+    statusBadge.parent().append('<i class="fas fa-spinner fa-spin ml-2" title="Auto-updating..."></i>');
+  }
+  
+  // Start polling
+  console.log('Starting deployment status polling...');
+  setTimeout(checkStatus, pollInterval);
+})();
+{% endif %}
+</script>
+{% endblock %}

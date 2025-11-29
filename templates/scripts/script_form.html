@@ -1,0 +1,160 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Script{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-file-code"></i> {{ action }} Script</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'script_list' %}">Scripts</a></li>
+                    <li class="breadcrumb-item active">{{ action }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Script Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="scriptForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        Script Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.active.id_for_label }}" class="form-label">
+                                        Status
+                                    </label>
+                                    <div class="form-check">
+                                        {{ form.active }}
+                                        <label class="form-check-label" for="{{ form.active.id_for_label }}">
+                                            Active
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.target_type.id_for_label }}" class="form-label">
+                                        Target Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.target_type }}
+                                    {% if form.target_type.errors %}
+                                        <div class="text-danger">{{ form.target_type.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.target_type.help_text }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.os_family.id_for_label }}" class="form-label">
+                                        OS Family <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.os_family }}
+                                    {% if form.os_family.errors %}
+                                        <div class="text-danger">{{ form.os_family.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.os_family.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.script_content.id_for_label }}" class="form-label">
+                                Script Content <span class="text-danger">*</span>
+                            </label>
+                            {{ form.script_content }}
+                            {% if form.script_content.errors %}
+                                <div class="text-danger">{{ form.script_content.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.script_content.help_text }}</small>
+                        </div>
+
+                        {% if script %}
+                            <div class="alert alert-info">
+                                <strong>File Path:</strong> {{ script.file_path }}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'script_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Script
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show file extension hint based on OS family
+document.getElementById('{{ form.os_family.id_for_label }}').addEventListener('change', function() {
+    const osFamily = this.value;
+    let extension = '';
+    if (osFamily === 'windows') {
+        extension = '.ps1';
+    } else if (osFamily === 'redhat' || osFamily === 'debian') {
+        extension = '.sh';
+    }
+    
+    if (extension) {
+        const nameField = document.getElementById('{{ form.name.id_for_label }}');
+        const currentValue = nameField.value;
+        // Remove any existing extension
+        const baseName = currentValue.replace(/\.(sh|ps1)$/, '');
+        // Don't auto-add extension, just show hint
+        console.log('Script will be saved as: ' + baseName + extension);
+    }
+});
+</script>
+{% endblock %}

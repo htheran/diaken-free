@@ -1,0 +1,134 @@
+---
+- name: Customize Linux VM (Debian/Ubuntu)
+  hosts: all
+  become: yes
+  vars:
+    new_hostname: "{{ hostname }}"
+    new_ip: "{{ ip }}"
+    new_gateway: "{{ gateway | default('') }}"
+    net_if: "{{ interface | default('ens192') }}"
+  tasks:
+    - name: Change hostname
+      hostname:
+        name: "{{ new_hostname }}"
+
+    - name: Detect if using NetworkManager
+      stat:
+        path: /etc/NetworkManager/system-connections
+      register: nm_dir
+
+    #################################
+    # Lógica NetworkManager (nmcli)
+    #################################
+    - block:
+        - name: Auto-detect primary network interface
+          shell: ip route | grep default | awk '{print $5}' | head -1
+          register: detected_interface
+          changed_when: false
+
+        - name: Set network interface to use
+          set_fact:
+            net_if_to_use: "{{ detected_interface.stdout if detected_interface.stdout != '' else net_if }}"
+
+        - name: Detect real connection name for interface
+          shell: nmcli -g NAME,DEVICE connection show | grep ":{{ net_if_to_use }}$" | cut -d':' -f1 | head -1
+          register: net_connection_name
+          changed_when: false
+          ignore_errors: yes
+
+        - name: Fallback detect active connection if not found
+          shell: nmcli -g NAME,DEVICE connection show --active | grep ":{{ net_if_to_use }}$" | cut -d':' -f1 | head -1
+          register: net_connection_name_active
+          changed_when: false
+          when: net_connection_name.stdout == ""
+          ignore_errors: yes
+
+        - name: Set connection name with fallback
+          set_fact:
+            real_net_connection: "{{ net_connection_name.stdout if net_connection_name.stdout != '' else (net_connection_name_active.stdout if net_connection_name_active is defined and net_connection_name_active.stdout != '' else '') }}"
+
+        - name: Fail if no connection found
+          fail:
+            msg: "No se pudo detectar la conexión NetworkManager para {{ net_if_to_use }}. Cree una conexión manualmente."
+          when: real_net_connection == ""
+
+        - name: Modify IP with nmcli
+          command: nmcli connection modify "{{ real_net_connection }}" ipv4.addresses "{{ new_ip }}/24"
+          ignore_errors: yes
+
+        - name: Modify gateway with nmcli
+          command: nmcli connection modify "{{ real_net_connection }}" ipv4.gateway "{{ new_gateway }}"
+          ignore_errors: yes
+
+        - name: Set manual method
+          command: nmcli connection modify "{{ real_net_connection }}" ipv4.method manual
+          ignore_errors: yes
+
+        - name: Reload NetworkManager connection
+          command: nmcli connection reload
+          ignore_errors: yes
+
+      when: nm_dir.stat.exists
+
+    #################################
+    # Lógica Netplan (sin NetworkManager)
+    #################################
+    - block:
+        - name: Auto-detect primary network interface
+          shell: ip route | grep default | awk '{print $5}' | head -1
+          register: detected_interface_netplan
+          changed_when: false
+
+        - name: Set network interface to use
+          set_fact:
+            net_if_to_use: "{{ detected_interface_netplan.stdout if detected_interface_netplan.stdout != '' else net_if }}"
+
+        - name: Find existing Netplan configuration
+          find:
+            paths: /etc/netplan
+            patterns: '*.yaml'
+          register: netplan_files
+
+        - name: Set netplan config file path
+          set_fact:
+            netplan_config_file: "{{ netplan_files.files[0].path if netplan_files.files|length > 0 else '/etc/netplan/01-netcfg.yaml' }}"
+
+        - name: Calculate gateway if not provided
+          set_fact:
+            calculated_gateway: "{{ new_gateway if new_gateway != '' else (new_ip.split('.')[0:3] | join('.')) + '.1' }}"
+
+        - name: Create Netplan configuration for static IP
+          copy:
+            dest: "{{ netplan_config_file }}"
+            content: |
+              network:
+                version: 2
+                renderer: networkd
+                ethernets:
+                  {{ net_if_to_use }}:
+                    dhcp4: no
+                    addresses:
+                      - {{ new_ip }}/24
+                    gateway4: {{ calculated_gateway }}
+                    nameservers:
+                      addresses: [8.8.8.8,8.8.4.4]
+            mode: '0644'
+
+        # NO aplicar netplan antes del reboot
+        # El reboot aplicará la configuración automáticamente
+        # Esto evita pérdida de conexión SSH durante el playbook
+
+      when: not nm_dir.stat.exists
+
+    #################################
+    # Final - mensaje y reinicio
+    #################################
+    - name: Final message
+      debug:
+        msg: "Hostname y red configurados correctamente. Se reiniciará el sistema en 30 segundos."
+
+    - name: Schedule system reboot
+      shell: shutdown -r +0.5 "Rebooting to apply hostname and network changes" || shutdown -r 1 "Rebooting to apply hostname and network changes"
+      async: 1
+      poll: 0
+      ignore_errors: yes

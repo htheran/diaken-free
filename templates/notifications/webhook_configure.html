@@ -1,0 +1,160 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Configure Notifications - {{ webhook.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cog"></i> Configure Notifications
+                    </h4>
+                    <small>{{ webhook.name }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- General Settings -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0"><i class="fas fa-sliders-h"></i> General Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notify_failures_only" 
+                                           name="notify_failures_only" {% if webhook.notify_failures_only %}checked{% endif %}>
+                                    <label class="form-check-label" for="notify_failures_only">
+                                        <strong>Failures Only</strong>
+                                        <br><small class="text-muted">Only send notifications for failed executions (applies to all types)</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VM Deployments -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-server"></i> VM Deployments</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notify_deployments" 
+                                           name="notify_deployments" {% if webhook.notify_deployments %}checked{% endif %}
+                                           onchange="toggleDeploymentOptions(this)">
+                                    <label class="form-check-label" for="notify_deployments">
+                                        <strong>Enable VM Deployment Notifications</strong>
+                                        <br><small class="text-muted">Master switch for all VM deployment notifications</small>
+                                    </label>
+                                </div>
+                                
+                                <div id="deployment-options" class="ms-4" {% if not webhook.notify_deployments %}style="display:none"{% endif %}>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_linux_deployments" 
+                                               name="notify_linux_deployments" {% if webhook.notify_linux_deployments %}checked{% endif %}>
+                                        <label class="form-check-label" for="notify_linux_deployments">
+                                            <i class="fab fa-linux text-dark"></i> Linux VM Deployments
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_windows_deployments" 
+                                               name="notify_windows_deployments" {% if webhook.notify_windows_deployments %}checked{% endif %}>
+                                        <label class="form-check-label" for="notify_windows_deployments">
+                                            <i class="fab fa-windows text-primary"></i> Windows VM Deployments
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Playbook Executions -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-play-circle"></i> Playbook Executions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notify_playbook_executions" 
+                                           name="notify_playbook_executions" {% if webhook.notify_playbook_executions %}checked{% endif %}
+                                           onchange="togglePlaybookOptions(this)">
+                                    <label class="form-check-label" for="notify_playbook_executions">
+                                        <strong>Enable Playbook Execution Notifications</strong>
+                                        <br><small class="text-muted">Master switch for all playbook execution notifications</small>
+                                    </label>
+                                </div>
+                                
+                                <div id="playbook-options" class="ms-4" {% if not webhook.notify_playbook_executions %}style="display:none"{% endif %}>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_linux_playbooks" 
+                                               name="notify_linux_playbooks" {% if webhook.notify_linux_playbooks %}checked{% endif %}>
+                                        <label class="form-check-label" for="notify_linux_playbooks">
+                                            <i class="fab fa-linux text-dark"></i> Linux Playbook Executions
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="notify_windows_playbooks" 
+                                               name="notify_windows_playbooks" {% if webhook.notify_windows_playbooks %}checked{% endif %}>
+                                        <label class="form-check-label" for="notify_windows_playbooks">
+                                            <i class="fab fa-windows text-primary"></i> Windows Playbook Executions
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scheduled Tasks -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-clock"></i> Scheduled Tasks</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="notify_scheduled_tasks" 
+                                           name="notify_scheduled_tasks" {% if webhook.notify_scheduled_tasks %}checked{% endif %}>
+                                    <label class="form-check-label" for="notify_scheduled_tasks">
+                                        <strong>Enable Scheduled Task Notifications</strong>
+                                        <br><small class="text-muted">Send notifications when scheduled tasks execute</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'notifications:webhook_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleDeploymentOptions(checkbox) {
+    const options = document.getElementById('deployment-options');
+    if (checkbox.checked) {
+        options.style.display = 'block';
+    } else {
+        options.style.display = 'none';
+    }
+}
+
+function togglePlaybookOptions(checkbox) {
+    const options = document.getElementById('playbook-options');
+    if (checkbox.checked) {
+        options.style.display = 'block';
+    } else {
+        options.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

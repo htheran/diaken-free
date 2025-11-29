@@ -1,0 +1,24 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Delete Environment" %}{% endblock %}
+{% block content %}
+<div class="card shadow-sm mx-auto" style="max-width: 500px; margin-top:40px; border-radius:12px;">
+  <div class="card-header bg-white border-bottom-0" style="border-radius:12px 12px 0 0;">
+    <h3 class="mb-0" style="font-weight:600;">{% trans "Delete Environment" %}</h3>
+  </div>
+  <div class="card-body p-4 text-center">
+    <p class="mb-2">{% trans "Are you sure you want to deactivate this environment?" %}</p>
+    
+    <!-- Environment Information -->
+    <div class="alert alert-warning my-3" role="alert">
+      <i class="fas fa-exclamation-triangle"></i> <strong>{% trans "Environment to deactivate:" %}</strong><br>
+      <span class="h5 text-dark">{{ environment.name }}</span>
+    </div>
+    
+    <form method="post" class="d-inline">{% csrf_token %}
+      <button class="btn btn-danger mr-2"><i class="fas fa-ban"></i> {% trans "Deactivate" %}</button>
+      <a href="{% url 'environment_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> {% trans "Cancel" %}</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+---
+- name: Customize Windows Server VM
+  hosts: windows_hosts
+  gather_facts: no
+  vars:
+    ansible_connection: winrm
+    ansible_winrm_transport: "{{ winrm_transport | default('ntlm') }}"
+    ansible_winrm_server_cert_validation: ignore
+    ansible_port: "{{ winrm_port | default(5985) }}"
+    
+    new_hostname: "{{ hostname }}"
+    new_ip: "{{ ip }}"
+    new_gateway: "{{ gateway }}"
+    new_netmask: "{{ netmask | default('255.255.255.0') }}"
+
+  tasks:
+    - name: Wait for WinRM to be available
+      wait_for_connection:
+        timeout: 120
+        delay: 5
+
+    - name: Get current system information
+      win_shell: |
+        @{
+          Hostname = $env:COMPUTERNAME
+          IP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.InterfaceAlias -notlike '*Loopback*'}).IPAddress
+          OS = (Get-WmiObject Win32_OperatingSystem).Caption
+        } | ConvertTo-Json
+      register: current_info
+
+    - name: Display current configuration
+      debug:
+        msg: "{{ current_info.stdout | from_json }}"
+    
+    - name: Schedule system reboot FIRST (40 seconds)
+      win_command: shutdown /r /t 40 /f /c "Rebooting to apply hostname and network changes"
+      ignore_errors: yes
+      register: reboot_scheduled
+    
+    - name: Display reboot scheduled
+      debug:
+        msg: "Reboot scheduled in 40 seconds. Continuing with configuration..."
+    
+    - name: Change hostname using PowerShell
+      win_shell: |
+        $currentHostname = $env:COMPUTERNAME
+        Write-Output "Current hostname: $currentHostname"
+        
+        if ($currentHostname -ne "{{ new_hostname }}") {
+          Rename-Computer -NewName "{{ new_hostname }}" -Force
+          Write-Output "Hostname will change from $currentHostname to {{ new_hostname }} after reboot"
+        } else {
+          Write-Output "Hostname is already {{ new_hostname }}"
+        }
+      register: hostname_change
+      ignore_errors: yes
+
+    - name: Configure static IP and gateway (NO DNS changes)
+      win_shell: |
+        # Get adapter name
+        $adapter = Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object -First 1
+        $adapterName = $adapter.Name
+        Write-Output "Configuring adapter: $adapterName"
+        
+        # Configure ONLY IP, subnet mask and gateway using netsh
+        # DNS servers are NOT changed - they remain as configured in the template
+        $result = netsh interface ip set address name="$adapterName" source=static addr={{ new_ip }} mask={{ new_netmask }} gateway={{ new_gateway }}
+        Write-Output "IP Config result: $result"
+        
+        # Verify configuration
+        $config = Get-NetIPConfiguration -InterfaceAlias $adapterName
+        Write-Output "Current IP: $($config.IPv4Address.IPAddress)"
+        Write-Output "Current Gateway: $($config.IPv4DefaultGateway.NextHop)"
+        Write-Output "DNS Servers (unchanged): $((Get-DnsClientServerAddress -InterfaceAlias $adapterName -AddressFamily IPv4).ServerAddresses -join ', ')"
+        Write-Output "Network configuration completed"
+      register: network_config
+      ignore_errors: yes
+
+    - name: Display network configuration result
+      debug:
+        var: network_config.stdout_lines
+      when: network_config is defined
+    
+    - name: Final message
+      debug:
+        msg: "Network configuration applied. System will reboot in 40 seconds. Hostname: {{ new_hostname }}, IP: {{ new_ip }}"

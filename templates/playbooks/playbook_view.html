@@ -1,0 +1,149 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}View Playbook - {{ playbook.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-code"></i> Playbook Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Playbook Info -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="200">Name:</th>
+                                <td>{{ playbook.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Filename:</th>
+                                <td>{{ playbook.name }}.yml</td>
+                            </tr>
+                            <tr>
+                                <th>Description:</th>
+                                <td>{{ playbook.description|default:"No description" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Type:</th>
+                                <td>
+                                    {% if playbook.playbook_type == 'host' %}
+                                        <span class="badge bg-info">Host</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Group</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>OS Family:</th>
+                                <td>
+                                    {% if playbook.os_family == 'redhat' %}
+                                        <span class="badge bg-danger">RedHat</span>
+                                    {% elif playbook.os_family == 'debian' %}
+                                        <span class="badge bg-warning">Debian</span>
+                                    {% elif playbook.os_family == 'windows' %}
+                                        <span class="badge bg-primary">Windows</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ playbook.get_os_family_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td>{{ playbook.created_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Updated:</th>
+                                <td>{{ playbook.updated_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Playbook Content -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5><i class="fas fa-code"></i> Playbook Content</h5>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard()">
+                                <i class="fas fa-copy"></i> Copy to Clipboard
+                            </button>
+                        </div>
+                        <pre id="playbookContent" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; max-height: 600px; overflow-y: auto;"><code class="language-yaml">{{ playbook_content }}</code></pre>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'playbook_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <div>
+                            <a href="{% url 'playbook_edit' playbook.pk %}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'playbook_download' playbook.pk %}" class="btn btn-success">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the playbook <strong>{{ playbook.name }}</strong>?</p>
+                <p class="text-danger"><i class="fas fa-exclamation-circle"></i> This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'playbook_delete' playbook.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Playbook
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const content = document.getElementById('playbookContent').innerText;
+    navigator.clipboard.writeText(content).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }, function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+</script>
+{% endblock %}

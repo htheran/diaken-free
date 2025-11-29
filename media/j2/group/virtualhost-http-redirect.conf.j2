@@ -1,0 +1,15 @@
+# Redirección HTTP a HTTPS para {{ subdomain }}.{{ domain }}
+<VirtualHost *:{{ http_port }}>
+    ServerName {{ subdomain }}.{{ domain }}
+    ServerAlias www.{{ subdomain }}.{{ domain }}
+    ServerAdmin webmaster@{{ domain }}
+    
+    # Configuración de logs
+    CustomLog {{ log_root }}/{{ subdomain }}-http-redirect.access.log combined
+    ErrorLog {{ log_root }}/{{ subdomain }}-http-redirect.error.log
+    
+    # Redirección permanente a HTTPS
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+</VirtualHost>

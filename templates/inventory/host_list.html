@@ -1,0 +1,162 @@
+{% extends 'base/base.html' %}
+{% block title %}Hosts{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Hosts</h3>
+      <div class="card-tools">
+        <a href="{% url 'host_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Host</a>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Django Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      <!-- Search and Filter Form -->
+      <form method="get" class="form-inline mb-3">
+        <div class="input-group input-group-sm mr-2 mb-2" style="width: 250px;">
+          <input type="text" name="search" class="form-control" placeholder="Search by name, IP, group, env, OS..." value="{{ search_query }}">
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+        <select name="environment" class="form-control form-control-sm mr-2 mb-2" style="width: 150px;">
+          <option value="">All Environments</option>
+          {% for env in environments %}
+            <option value="{{ env.id }}" {% if request.GET.environment == env.id|stringformat:"s" %}selected{% endif %}>{{ env.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="group" class="form-control form-control-sm mr-2 mb-2" style="width: 150px;">
+          <option value="">All Groups</option>
+          {% for grp in groups %}
+            <option value="{{ grp.id }}" {% if request.GET.group == grp.id|stringformat:"s" %}selected{% endif %}>{{ grp.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="operating_system" class="form-control form-control-sm mr-2 mb-2" style="width: 150px;">
+          <option value="">All OS</option>
+          {% for os_choice in os_choices %}
+            <option value="{{ os_choice.0 }}" {% if request.GET.operating_system == os_choice.0 %}selected{% endif %}>{{ os_choice.1 }}</option>
+          {% endfor %}
+        </select>
+        <select name="vcenter_server" class="form-control form-control-sm mr-2 mb-2" style="width: 200px;">
+          <option value="">All vCenter Servers</option>
+          {% for vcenter in vcenter_servers %}
+            <option value="{{ vcenter }}" {% if request.GET.vcenter_server == vcenter %}selected{% endif %}>{{ vcenter }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-success mr-2 mb-2"><i class="fas fa-filter"></i> Filter</button>
+        <a href="{% url 'host_list' %}" class="btn btn-sm btn-secondary mb-2"><i class="fas fa-redo"></i> Clear</a>
+      </form>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="thead-light">
+          <tr>
+            <th style="width: 15%">Name</th>
+            <th style="width: 12%">IP Address</th>
+            <th style="width: 15%">vCenter Server</th>
+            <th style="width: 12%">Environment</th>
+            <th style="width: 12%">Group</th>
+            <th style="width: 10%">OS</th>
+            <th style="width: 8%" class="text-center">Active</th>
+            <th style="width: 8%" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for host in hosts %}
+          <tr>
+            <td><strong>{{ host.name }}</strong></td>
+            <td><code>{{ host.ip }}</code></td>
+            <td>
+              {% if host.vcenter_server %}
+                <i class="fas fa-server text-primary"></i> {{ host.get_vcenter_name }}
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+            <td><span class="badge badge-info">{{ host.environment.name }}</span></td>
+            <td>{% if host.group %}<span class="badge badge-secondary">{{ host.group.name }}</span>{% else %}-{% endif %}</td>
+            <td>
+              {% if host.operating_system == 'redhat' %}
+                <span class="badge" style="background-color: #EE0000; color: white;">
+                  <i class="fab fa-redhat"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% elif host.operating_system == 'debian' %}
+                <span class="badge" style="background-color: #A80030; color: white;">
+                  <i class="fab fa-debian"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% elif host.operating_system == 'ubuntu' %}
+                <span class="badge" style="background-color: #E95420; color: white;">
+                  <i class="fab fa-ubuntu"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% elif host.operating_system == 'windows' %}
+                <span class="badge" style="background-color: #0078D4; color: white;">
+                  <i class="fab fa-windows"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% elif host.operating_system == 'centos' %}
+                <span class="badge" style="background-color: #932279; color: white;">
+                  <i class="fab fa-centos"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% elif host.operating_system == 'suse' %}
+                <span class="badge" style="background-color: #73BA25; color: white;">
+                  <i class="fab fa-suse"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% else %}
+                <span class="badge badge-secondary">
+                  <i class="fas fa-server"></i> {{ host.get_operating_system_display }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if host.active %}
+                <span class="badge badge-success">Yes</span>
+              {% else %}
+                <span class="badge badge-secondary">No</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'host_update' host.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="fas fa-edit"></i></a>
+              <a href="{% url 'host_delete' host.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted">No hosts found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if hosts.has_other_pages %}
+    <div class="card-footer clearfix">
+      <ul class="pagination pagination-sm m-0 float-right">
+        {% if hosts.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.operating_system %}&operating_system={{ request.GET.operating_system }}{% endif %}">&laquo; First</a></li>
+          <li class="page-item"><a class="page-link" href="?page={{ hosts.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.operating_system %}&operating_system={{ request.GET.operating_system }}{% endif %}">Previous</a></li>
+        {% endif %}
+        
+        <li class="page-item active"><span class="page-link">Page {{ hosts.number }} of {{ hosts.paginator.num_pages }}</span></li>
+        
+        {% if hosts.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ hosts.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.operating_system %}&operating_system={{ request.GET.operating_system }}{% endif %}">Next</a></li>
+          <li class="page-item"><a class="page-link" href="?page={{ hosts.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if request.GET.environment %}&environment={{ request.GET.environment }}{% endif %}{% if request.GET.group %}&group={{ request.GET.group }}{% endif %}{% if request.GET.operating_system %}&operating_system={{ request.GET.operating_system }}{% endif %}">Last &raquo;</a></li>
+        {% endif %}
+      </ul>
+      <div class="float-left mt-2">
+        <small class="text-muted">Showing {{ hosts.start_index }} to {{ hosts.end_index }} of {{ hosts.paginator.count }} hosts</small>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

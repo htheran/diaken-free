@@ -1,0 +1,106 @@
+{% extends 'base/base.html' %}
+{% load ansible_filters %}
+{% load static %}
+{% block title %}Deployment Details{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ansible-output.css' %}?v=2">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-terminal"></i> Execution Output</h3>
+      <div class="card-tools">
+        <a href="{% url 'history_list' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+    </div>
+    
+    <!-- Información general -->
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-sm table-bordered">
+            <tr>
+              <th style="width: 30%">User:</th>
+              <td><i class="fas fa-user"></i> {{ deployment.user.username|default:"Unknown" }}</td>
+            </tr>
+            <tr>
+              <th>Environment:</th>
+              <td><span class="badge badge-info">{{ deployment.environment }}</span></td>
+            </tr>
+            <tr>
+              <th>Target:</th>
+              <td><strong>{{ deployment.target }}</strong> <span class="badge badge-secondary">{{ deployment.target_type }}</span></td>
+            </tr>
+            <tr>
+              <th>Playbook:</th>
+              <td><code>{{ deployment.playbook }}</code></td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-sm table-bordered">
+            <tr>
+              <th style="width: 30%">Status:</th>
+              <td>
+                {% if deployment.status == 'success' %}
+                  <span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>
+                {% elif deployment.status == 'failed' %}
+                  <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+                {% else %}
+                  <span class="badge badge-warning"><i class="fas fa-spinner fa-spin"></i> Running</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Started:</th>
+              <td><i class="far fa-calendar"></i> {{ deployment.created_at|date:"d/m/Y H:i:s" }}</td>
+            </tr>
+            <tr>
+              <th>Completed:</th>
+              <td>
+                {% if deployment.completed_at %}
+                  <i class="far fa-calendar"></i> {{ deployment.completed_at|date:"d/m/Y H:i:s" }}
+                {% else %}
+                  <span class="text-muted">In progress...</span>
+                {% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Duration:</th>
+              <td><i class="far fa-clock"></i> {{ deployment.duration }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      {% if deployment.hostname or deployment.ip_address %}
+      <div class="row mt-3">
+        <div class="col-md-12">
+          <h5>Deployment Details:</h5>
+          <table class="table table-sm table-bordered">
+            {% if deployment.hostname %}<tr><th style="width: 15%">Hostname:</th><td>{{ deployment.hostname }}</td></tr>{% endif %}
+            {% if deployment.ip_address %}<tr><th>IP Address:</th><td><code>{{ deployment.ip_address }}</code></td></tr>{% endif %}
+            {% if deployment.mac_address %}<tr><th>MAC Address:</th><td><code>{{ deployment.mac_address }}</code></td></tr>{% endif %}
+            {% if deployment.datacenter %}<tr><th>Datacenter:</th><td>{{ deployment.datacenter }}</td></tr>{% endif %}
+            {% if deployment.cluster %}<tr><th>Cluster:</th><td>{{ deployment.cluster }}</td></tr>{% endif %}
+            {% if deployment.template %}<tr><th>Template:</th><td>{{ deployment.template }}</td></tr>{% endif %}
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    
+    <!-- Output de Ansible -->
+    <div class="card-body">
+      <h5><i class="fas fa-file-code"></i> Ansible Output:</h5>
+      <pre class="ansible-output">{{ deployment.ansible_output|format_ansible_output|safe }}</pre>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

@@ -1,0 +1,202 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Script{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-upload"></i> {{ action }} Script File</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'script_list' %}">Scripts</a></li>
+                    <li class="breadcrumb-item active">{{ action }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Upload Script File</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Supported file types:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>.sh</strong> - Bash scripts for RedHat/Debian Linux</li>
+                            <li><strong>.ps1</strong> - PowerShell scripts for Windows</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        Script Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.active.id_for_label }}" class="form-label">
+                                        Status
+                                    </label>
+                                    <div class="form-check">
+                                        {{ form.active }}
+                                        <label class="form-check-label" for="{{ form.active.id_for_label }}">
+                                            Active
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.target_type.id_for_label }}" class="form-label">
+                                        Target Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.target_type }}
+                                    {% if form.target_type.errors %}
+                                        <div class="text-danger">{{ form.target_type.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.target_type.help_text }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.os_family.id_for_label }}" class="form-label">
+                                        OS Family <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.os_family }}
+                                    {% if form.os_family.errors %}
+                                        <div class="text-danger">{{ form.os_family.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.os_family.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.description.help_text }}</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.script_file.id_for_label }}" class="form-label">
+                                Script File <span class="text-danger">*</span>
+                            </label>
+                            {{ form.script_file }}
+                            {% if form.script_file.errors %}
+                                <div class="text-danger">{{ form.script_file.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.script_file.help_text }}</small>
+                        </div>
+
+                        <div id="filePreview" class="mb-3" style="display: none;">
+                            <div class="alert alert-secondary">
+                                <strong>Selected file:</strong> <span id="fileName"></span>
+                                <br>
+                                <strong>Size:</strong> <span id="fileSize"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'script_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload"></i> Upload Script
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Show file preview when file is selected
+document.getElementById('{{ form.script_file.id_for_label }}').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = formatBytes(file.size);
+        document.getElementById('filePreview').style.display = 'block';
+        
+        // Auto-fill name if empty
+        const nameField = document.getElementById('{{ form.name.id_for_label }}');
+        if (!nameField.value) {
+            // Remove extension from filename
+            const baseName = file.name.replace(/\.(sh|ps1)$/, '');
+            nameField.value = baseName;
+        }
+    }
+});
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Validate file extension based on OS family
+document.getElementById('{{ form.os_family.id_for_label }}').addEventListener('change', validateFileExtension);
+document.getElementById('{{ form.script_file.id_for_label }}').addEventListener('change', validateFileExtension);
+
+function validateFileExtension() {
+    const osFamily = document.getElementById('{{ form.os_family.id_for_label }}').value;
+    const fileInput = document.getElementById('{{ form.script_file.id_for_label }}');
+    const file = fileInput.files[0];
+    
+    if (file && osFamily) {
+        const fileName = file.name;
+        let expectedExt = '';
+        
+        if (osFamily === 'windows') {
+            expectedExt = '.ps1';
+        } else if (osFamily === 'redhat' || osFamily === 'debian') {
+            expectedExt = '.sh';
+        }
+        
+        if (expectedExt && !fileName.endsWith(expectedExt)) {
+            alert(`Warning: For ${osFamily}, the file should have ${expectedExt} extension`);
+        }
+    }
+}
+</script>
+{% endblock %}

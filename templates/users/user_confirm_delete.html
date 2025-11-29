@@ -1,0 +1,92 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Delete User{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <h2>
+        <i class="fas fa-trash mr-2"></i>
+        Delete User
+      </h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
+        </div>
+        <div class="card-body">
+          <div class="alert alert-danger">
+            <h5><i class="fas fa-exclamation-circle mr-2"></i>Warning!</h5>
+            <p class="mb-0">
+              You are about to permanently delete the user <strong>{{ user_obj.username }}</strong>.
+              This action cannot be undone.
+            </p>
+          </div>
+
+          <h6>User Information:</h6>
+          <ul>
+            <li><strong>Username:</strong> {{ user_obj.username }}</li>
+            <li><strong>Name:</strong> {{ user_obj.get_full_name|default:"N/A" }}</li>
+            <li><strong>Email:</strong> {{ user_obj.email|default:"N/A" }}</li>
+            <li><strong>Status:</strong> 
+              {% if user_obj.is_active %}
+                <span class="badge badge-success">Active</span>
+              {% else %}
+                <span class="badge badge-secondary">Inactive</span>
+              {% endif %}
+            </li>
+            <li><strong>Permissions:</strong>
+              {% if user_obj.is_superuser %}
+                <span class="badge badge-danger">Superuser</span>
+              {% elif user_obj.is_staff %}
+                <span class="badge badge-warning">Staff</span>
+              {% else %}
+                <span class="badge badge-secondary">User</span>
+              {% endif %}
+            </li>
+          </ul>
+
+          <form method="post" class="mt-4">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-trash mr-2"></i>Yes, Delete This User
+            </button>
+            <a href="{% url 'user_list' %}" class="btn btn-secondary">
+              <i class="fas fa-times mr-2"></i>Cancel
+            </a>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-warning text-dark">
+          <i class="fas fa-info-circle mr-2"></i>Important Notes
+        </div>
+        <div class="card-body">
+          <h6>What happens when you delete a user?</h6>
+          <ul class="small">
+            <li>The user account will be permanently removed</li>
+            <li>The user will no longer be able to log in</li>
+            <li>Historical records may still reference this user</li>
+            <li>This action cannot be undone</li>
+          </ul>
+          <hr>
+          <h6>Alternative:</h6>
+          <p class="small">
+            Consider <strong>deactivating</strong> the user instead of deleting.
+            This preserves the account and historical data while preventing login.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

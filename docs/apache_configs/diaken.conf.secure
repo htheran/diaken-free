@@ -1,0 +1,160 @@
+# ============================================================================
+# Apache httpd Configuration for Diaken Project - SECURE VERSION
+# ============================================================================
+# File: /etc/httpd/conf.d/diaken.conf
+# 
+# SECURITY NOTES:
+# - NO hardcoded secrets (Django loads from .env)
+# - Security headers enabled
+# - File permissions restricted
+# - Directory listing disabled
+# 
+# Installation:
+#   sudo cp docs/apache_configs/diaken.conf.secure /etc/httpd/conf.d/diaken.conf
+#   sudo httpd -t
+#   sudo systemctl restart httpd
+# ============================================================================
+
+# Load mod_wsgi compiled for Python 3.12
+LoadModule wsgi_module "/opt/www/app/diaken-pdn/venv/lib64/python3.12/site-packages/mod_wsgi/server/mod_wsgi-py312.cpython-312-x86_64-linux-gnu.so"
+
+<VirtualHost *:80>
+    ServerName your-server.example.com
+    ServerAdmin admin@example.com
+    
+    # ========================================================================
+    # SECURITY NOTE: Environment Variables
+    # ========================================================================
+    # Django loads environment variables from /opt/www/app/diaken-pdn/.env
+    # using python-dotenv. NO need to set them here in Apache.
+    # 
+    # If you MUST set them in Apache (not recommended), create a separate
+    # file /etc/httpd/conf.d/diaken-env.conf with permissions 600:
+    #   sudo touch /etc/httpd/conf.d/diaken-env.conf
+    #   sudo chmod 600 /etc/httpd/conf.d/diaken-env.conf
+    #   sudo chown root:root /etc/httpd/conf.d/diaken-env.conf
+    # 
+    # Then add SetEnv directives there (NOT here)
+    # ========================================================================
+    
+    # WSGI Configuration
+    WSGIDaemonProcess diaken \
+        python-home=/opt/www/app/diaken-pdn/venv \
+        python-path=/opt/www/app/diaken-pdn \
+        user=apache \
+        group=apache \
+        processes=2 \
+        threads=15 \
+        display-name=%{GROUP} \
+        maximum-requests=10000 \
+        deadlock-timeout=60 \
+        inactivity-timeout=300
+        
+    WSGIProcessGroup diaken
+    WSGIScriptAlias / /opt/www/app/diaken-pdn/diaken/wsgi.py process-group=diaken
+    WSGIPassAuthorization On
+    
+    # Prevent access to .pyc files
+    <FilesMatch "\.pyc$">
+        Require all denied
+    </FilesMatch>
+    
+    # Static Files
+    Alias /static /opt/www/app/diaken-pdn/staticfiles
+    <Directory /opt/www/app/diaken-pdn/staticfiles>
+        Require all granted
+        Options -Indexes -ExecCGI
+        AllowOverride None
+        
+        # Cache static files
+        <IfModule mod_expires.c>
+            ExpiresActive On
+            ExpiresDefault "access plus 1 year"
+        </IfModule>
+        
+        # Compress static files
+        <IfModule mod_deflate.c>
+            AddOutputFilterByType DEFLATE text/css application/javascript
+        </IfModule>
+    </Directory>
+    
+    # Media Files
+    Alias /media /opt/www/app/diaken-pdn/media
+    <Directory /opt/www/app/diaken-pdn/media>
+        Require all granted
+        Options -Indexes -ExecCGI
+        AllowOverride None
+        
+        # Prevent execution of scripts in media directory
+        <FilesMatch "\.(php|py|pl|cgi|sh)$">
+            Require all denied
+        </FilesMatch>
+    </Directory>
+    
+    # WSGI Script Directory
+    <Directory /opt/www/app/diaken-pdn/diaken>
+        <Files wsgi.py>
+            Require all granted
+        </Files>
+        
+        # Deny access to other Python files
+        <FilesMatch "^(?!wsgi\.py$).*\.py$">
+            Require all denied
+        </FilesMatch>
+    </Directory>
+    
+    # Protect sensitive files
+    <DirectoryMatch "^/opt/www/app/diaken-pdn/(\.git|\.env|venv|__pycache__|.*\.egg-info)">
+        Require all denied
+    </DirectoryMatch>
+    
+    <FilesMatch "(\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env|pyc|pyo)|~)$">
+        Require all denied
+    </FilesMatch>
+    
+    # Security Headers
+    <IfModule mod_headers.c>
+        # Prevent XSS attacks
+        Header always set X-XSS-Protection "1; mode=block"
+        
+        # Prevent clickjacking
+        Header always set X-Frame-Options "SAMEORIGIN"
+        
+        # Prevent MIME-sniffing
+        Header always set X-Content-Type-Options "nosniff"
+        
+        # Referrer policy
+        Header always set Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # Content Security Policy
+        # Adjust this based on your actual needs
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'self';"
+        
+        # Permissions Policy (formerly Feature-Policy)
+        Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+        
+        # Remove server information
+        Header always unset X-Powered-By
+        Header always unset Server
+    </IfModule>
+    
+    # Logging
+    ErrorLog /opt/www/logs/apache_error.log
+    CustomLog /opt/www/logs/apache_access.log combined
+    LogLevel info
+    
+    # Timeouts
+    Timeout 300
+    ProxyTimeout 300
+</VirtualHost>
+
+# ============================================================================
+# HTTPS Configuration (Recommended)
+# ============================================================================
+# To enable HTTPS:
+# 1. Obtain SSL certificate (Let's Encrypt or institutional)
+# 2. Copy diaken-pdn-ssl.conf.disabled to diaken-pdn-ssl.conf
+# 3. Update certificate paths
+# 4. Enable HTTP to HTTPS redirect
+# 5. Update Django settings for HTTPS
+# ============================================================================

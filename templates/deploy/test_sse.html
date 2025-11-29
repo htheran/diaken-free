@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SSE Test</title>
+</head>
+<body>
+    <h1>SSE Test for Deployment #409</h1>
+    <div id="status">Connecting...</div>
+    <pre id="output" style="background: #000; color: #0f0; padding: 10px; height: 400px; overflow-y: scroll;"></pre>
+    
+    <script>
+        console.log('Starting SSE test...');
+        var eventSource = new EventSource('/deploy/stream/409/');
+        var output = document.getElementById('output');
+        var status = document.getElementById('status');
+        
+        eventSource.addEventListener('connected', function(e) {
+            var data = JSON.parse(e.data);
+            console.log('Connected:', data);
+            status.textContent = 'Connected! Status: ' + data.status;
+            output.textContent += 'CONNECTED: ' + JSON.stringify(data) + '\n\n';
+        });
+        
+        eventSource.addEventListener('update', function(e) {
+            var data = JSON.parse(e.data);
+            console.log('Update:', data.status);
+            status.textContent = 'Status: ' + data.status + ' (update #' + data.poll_count + ')';
+            if (data.output) {
+                output.textContent += data.output;
+                output.scrollTop = output.scrollHeight;
+            }
+        });
+        
+        eventSource.addEventListener('complete', function(e) {
+            var data = JSON.parse(e.data);
+            console.log('Complete:', data);
+            status.textContent = 'COMPLETED: ' + data.status;
+            output.textContent += '\n\nCOMPLETED: ' + JSON.stringify(data) + '\n';
+            eventSource.close();
+        });
+        
+        eventSource.addEventListener('error', function(e) {
+            console.error('SSE Error:', e);
+            status.textContent = 'ERROR: Connection failed';
+            output.textContent += '\n\nERROR: ' + JSON.stringify(e) + '\n';
+        });
+        
+        eventSource.onerror = function(e) {
+            console.error('SSE Connection Error:', e);
+            status.textContent = 'ERROR: Connection lost';
+        };
+    </script>
+</body>
+</html>

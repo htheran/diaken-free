@@ -1,0 +1,235 @@
+---
+- name: Optimización de sistema y limpieza de kernels
+  hosts: target_host
+  become: yes
+  gather_facts: yes
+  vars:
+    keep_kernels: 2
+    tuned_profile: "throughput-performance"
+
+  tasks:
+    - name: Registrar hora de inicio
+      set_fact:
+        playbook_start_time: "{{ ansible_date_time.epoch }}"
+    
+    - name: Verificar que es un sistema Red Hat/CentOS/Rocky
+      assert:
+        that:
+          - ansible_os_family == "RedHat"
+        fail_msg: "Este playbook solo funciona en sistemas Red Hat/CentOS/Rocky Linux"
+        success_msg: "Sistema compatible detectado: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: Obtener información del kernel actual
+      set_fact:
+        current_kernel: "{{ ansible_kernel }}"
+
+    - name: Verificar espacio en /boot antes de limpieza
+      shell: df -h /boot | awk 'NR==2 {print $4}'
+      register: boot_space_before
+      changed_when: false
+
+    - name: Obtener uso de /boot en porcentaje
+      shell: df /boot | awk 'NR==2 {print $5}' | tr -d '%'
+      register: boot_usage_percent
+      changed_when: false
+
+    - name: Advertencia si /boot está casi lleno
+      debug:
+        msg: "⚠️  ADVERTENCIA: /boot está al {{ boot_usage_percent.stdout }}% de capacidad. Se recomienda limpieza urgente."
+      when: boot_usage_percent.stdout | int > 80
+
+    - name: Listar kernels instalados
+      shell: rpm -q kernel --queryformat '%{VERSION}-%{RELEASE}.%{ARCH}\n' | sort -V
+      register: installed_kernels
+      changed_when: false
+      failed_when: false
+
+    - name: Mostrar kernels instalados
+      debug:
+        msg: |
+          Kernels instalados ({{ installed_kernels.stdout_lines | length }}):
+          {% for kernel in installed_kernels.stdout_lines %}
+          - kernel-{{ kernel }}{% if kernel in current_kernel %} (ACTUAL){% endif %}
+          {% endfor %}
+      when: installed_kernels.stdout_lines | length > 0
+
+    - name: Configurar límite de kernels en dnf.conf
+      lineinfile:
+        path: /etc/dnf/dnf.conf
+        regexp: '^installonly_limit='
+        line: 'installonly_limit={{ keep_kernels }}'
+        insertafter: '^\[main\]'
+        create: no
+        backup: yes
+
+    - name: Verificar si hay kernels para eliminar
+      set_fact:
+        kernels_to_remove: "{{ (installed_kernels.stdout_lines | length) - keep_kernels }}"
+      when: installed_kernels.stdout_lines | length > 0
+
+    - name: Mostrar plan de limpieza
+      debug:
+        msg: "Se eliminarán {{ kernels_to_remove }} kernel(s) antiguo(s). Se mantendrán los {{ keep_kernels }} más recientes."
+      when: 
+        - kernels_to_remove is defined
+        - kernels_to_remove | int > 0
+
+    - name: Validar que no se eliminará el kernel actual
+      assert:
+        that:
+          - keep_kernels | int >= 1
+          - current_kernel is defined
+        fail_msg: "SEGURIDAD: No se puede proceder. Se debe mantener al menos 1 kernel y el kernel actual debe estar identificado."
+        success_msg: "Validación de seguridad: OK. Se mantendrán {{ keep_kernels }} kernel(s)."
+      when: 
+        - kernels_to_remove is defined
+        - kernels_to_remove | int > 0
+    
+    - name: Eliminar kernels antiguos (mantiene los {{ keep_kernels }} más recientes)
+      shell: |
+        set -e
+        # Verificar que el kernel actual no será eliminado
+        CURRENT_KERNEL="{{ current_kernel }}"
+        echo "Kernel actual protegido: $CURRENT_KERNEL"
+        
+        # Eliminar kernels antiguos
+        dnf remove --oldinstallonly --setopt installonly_limit={{ keep_kernels }} -y kernel 2>&1
+      when: 
+        - kernels_to_remove is defined
+        - kernels_to_remove | int > 0
+      register: kernel_cleanup
+      changed_when: "'Removed:' in kernel_cleanup.stdout or 'Erased:' in kernel_cleanup.stdout"
+      failed_when: 
+        - kernel_cleanup.rc != 0
+        - "'No packages marked for removal' not in kernel_cleanup.stdout"
+      notify: Actualizar GRUB
+
+    - name: Verificar que tuned está disponible
+      command: which tuned-adm
+      register: tuned_available
+      changed_when: false
+      failed_when: false
+      tags: optimize
+
+    - name: Configurar parámetros de kernel para mejor rendimiento
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+        sysctl_file: /etc/sysctl.d/99-performance.conf
+      loop:
+        - { name: vm.swappiness, value: '10' }
+        - { name: vm.dirty_ratio, value: '20' }
+        - { name: vm.dirty_background_ratio, value: '10' }
+        - { name: net.core.somaxconn, value: '1024' }
+        - { name: net.ipv4.tcp_max_syn_backlog, value: '2048' }
+        - { name: fs.file-max, value: '65536' }
+      tags: optimize
+
+    - name: Advertencia si tuned no está disponible
+      debug:
+        msg: "⚠️  ADVERTENCIA: tuned no está instalado. Se aplicarán solo optimizaciones de kernel. Para instalar tuned, ejecute el playbook de actualización del sistema."
+      when: tuned_available.rc != 0
+      tags: optimize
+
+    - name: Verificar perfil tuned actual
+      command: tuned-adm active
+      register: current_tuned_profile
+      changed_when: false
+      when: tuned_available.rc == 0
+      tags: optimize
+
+    - name: Aplicar perfil de rendimiento tuned
+      command: tuned-adm profile {{ tuned_profile }}
+      when: 
+        - tuned_available.rc == 0
+        - current_tuned_profile is defined
+        - tuned_profile not in current_tuned_profile.stdout
+      register: tuned_changed
+      tags: optimize
+
+    - name: Verificar que el perfil se aplicó correctamente
+      command: tuned-adm verify
+      register: tuned_verify
+      changed_when: false
+      failed_when: false
+      when: tuned_available.rc == 0
+      tags: optimize
+
+  handlers:
+    - name: Actualizar GRUB
+      command: grub2-mkconfig -o /boot/grub2/grub.cfg
+      register: grub_update
+      failed_when: grub_update.rc != 0
+
+  post_tasks:
+    - name: Registrar hora de finalización
+      set_fact:
+        playbook_end_time: "{{ ansible_date_time.epoch }}"
+    
+    - name: Calcular duración de ejecución
+      set_fact:
+        execution_duration: "{{ (playbook_end_time | int) - (playbook_start_time | int) }}"
+    
+    - name: Verificar espacio en /boot después de limpieza
+      shell: df -h /boot | awk 'NR==2 {print $4}'
+      register: boot_space_after
+      changed_when: false
+
+    - name: Obtener uso final de /boot
+      shell: df /boot | awk 'NR==2 {print $5}'
+      register: boot_usage_final
+      changed_when: false
+
+    - name: Contar kernels finales
+      shell: rpm -q kernel | wc -l
+      register: final_kernel_count
+      changed_when: false
+
+    - name: Verificar perfil tuned activo
+      command: tuned-adm active
+      register: active_tuned
+      changed_when: false
+      failed_when: false
+      when: tuned_available is defined and tuned_available.rc == 0
+
+    - name: Mostrar resumen final de optimización
+      debug:
+        msg: |
+          ╔════════════════════════════════════════════════════════════╗
+          ║         OPTIMIZACIÓN COMPLETADA EXITOSAMENTE              ║
+          ╠════════════════════════════════════════════════════════════╣
+          ║ Sistema: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          ║ Hostname: {{ ansible_hostname }}
+          ║ 
+          ║ KERNEL:
+          ║   • Kernel actual: {{ current_kernel }}
+          ║   • Kernels instalados: {{ final_kernel_count.stdout }}
+          ║   • Límite configurado: {{ keep_kernels }}
+          ║ 
+          ║ ESPACIO EN /BOOT:
+          ║   • Antes: {{ boot_space_before.stdout }} disponible
+          ║   • Después: {{ boot_space_after.stdout }} disponible
+          ║   • Uso actual: {{ boot_usage_final.stdout }}
+          ║ 
+          ║ OPTIMIZACIONES APLICADAS:
+          {% if active_tuned is defined and active_tuned.stdout is defined %}
+          ║   • Perfil tuned: {{ active_tuned.stdout }}
+          {% else %}
+          ║   • Perfil tuned: No disponible (instalar con playbook de actualización)
+          {% endif %}
+          ║   • Parámetros kernel: Optimizados en /etc/sysctl.d/99-performance.conf
+          ║   • Tiempo de ejecución: {{ execution_duration }} segundos
+          ║ 
+          ║ RECOMENDACIONES:
+          {% if boot_usage_percent.stdout | int > 70 %}
+          ║   ⚠️  Considerar aumentar tamaño de /boot
+          {% endif %}
+          {% if kernel_cleanup is defined and kernel_cleanup.changed %}
+          ║   ✓ Kernels antiguos eliminados
+          {% endif %}
+          {% if package_update is defined and package_update.changed %}
+          ║   ✓ Sistema actualizado
+          {% endif %}
+          ╚════════════════════════════════════════════════════════════╝

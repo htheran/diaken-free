@@ -1,0 +1,95 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Delete Webhook - Diaken{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-trash text-danger"></i> Delete Webhook</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'notifications:webhook_list' %}">Webhooks</a></li>
+                    <li class="breadcrumb-item active">Delete</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Confirm Deletion</h5>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        Are you sure you want to delete the webhook <strong>"{{ webhook.name }}"</strong>?
+                    </p>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-info-circle"></i> This action will:</h6>
+                        <ul>
+                            <li>Permanently delete this webhook configuration</li>
+                            <li>Delete all notification logs associated with this webhook</li>
+                            <li>Stop sending notifications to this Microsoft Teams channel</li>
+                        </ul>
+                        <p class="mb-0"><strong>This action cannot be undone!</strong></p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>Webhook Details:</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="30%">Name:</th>
+                                    <td>{{ webhook.name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td>
+                                        <span class="badge {% if webhook.active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if webhook.active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Notifications Sent:</th>
+                                    <td>{{ webhook.notification_count }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>{{ webhook.created_at|date:"Y-m-d H:i:s" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Notification:</th>
+                                    <td>
+                                        {% if webhook.last_notification_at %}
+                                        {{ webhook.last_notification_at|date:"Y-m-d H:i:s" }}
+                                        {% else %}
+                                        Never
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'notifications:webhook_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Yes, Delete Webhook
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

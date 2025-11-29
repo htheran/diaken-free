@@ -1,0 +1,62 @@
+{% extends 'base/base.html' %}
+{% block title %}Global Variable{% endblock %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header">
+        <h2>{% if setting %}Edit{% else %}Create{% endif %} Global Variable</h2>
+      </div>
+      <div class="card-body">
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            <strong>Error:</strong>
+            <ul>
+              {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                  <li>{{ field }}: {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+        
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="id_section">Section:</label>
+            <select name="section" class="form-control" id="id_section">
+              <option value="">---------</option>
+              {% for section in form.section.field.queryset %}
+                <option value="{{ section.pk }}" {% if form.section.value|stringformat:'s' == section.pk|stringformat:'s' %}selected{% endif %}>{{ section.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="id_key">Key:</label>
+            <input type="text" name="key" class="form-control" id="id_key" value="{{ form.key.value|default:'' }}" {% if setting %}readonly{% endif %}>
+            {% if setting %}
+              <small class="form-text text-muted">Key cannot be changed when editing</small>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="id_value">Value:</label>
+            <textarea name="value" class="form-control" id="id_value" rows="3">{{ form.value.value|default:'' }}</textarea>
+            {% if form.value.errors %}
+              <div class="text-danger">{{ form.value.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label for="id_description">Description:</label>
+            <textarea name="description" class="form-control" id="id_description">{{ form.description.value|default:'' }}</textarea>
+          </div>
+          <div class="form-group">
+            <label for="id_order">Order:</label>
+            <input type="number" name="order" class="form-control" id="id_order" value="{{ form.order.value|default:'' }}">
+          </div>
+          <button type="submit" class="btn btn-primary">Save</button>
+          <a href="{% url 'global_setting_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

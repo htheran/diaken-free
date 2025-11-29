@@ -1,0 +1,197 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} User{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <h2>
+        <i class="fas fa-user-{% if action == 'Create' %}plus{% else %}edit{% endif %} mr-2"></i>
+        {{ action }} User
+      </h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-info-circle mr-2"></i>User Information
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            
+            <!-- Username -->
+            <div class="form-group">
+              <label for="username">Username: <span class="text-danger">*</span></label>
+              <input type="text" 
+                     name="username" 
+                     id="username" 
+                     class="form-control" 
+                     value="{{ user_obj.username|default:'' }}"
+                     {% if action == 'Edit' %}readonly{% else %}required{% endif %}>
+              {% if action == 'Edit' %}
+                <small class="form-text text-muted">Username cannot be changed</small>
+              {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" 
+                     name="email" 
+                     id="email" 
+                     class="form-control" 
+                     value="{{ user_obj.email|default:'' }}">
+            </div>
+
+            <!-- First Name -->
+            <div class="form-group">
+              <label for="first_name">First Name:</label>
+              <input type="text" 
+                     name="first_name" 
+                     id="first_name" 
+                     class="form-control" 
+                     value="{{ user_obj.first_name|default:'' }}">
+            </div>
+
+            <!-- Last Name -->
+            <div class="form-group">
+              <label for="last_name">Last Name:</label>
+              <input type="text" 
+                     name="last_name" 
+                     id="last_name" 
+                     class="form-control" 
+                     value="{{ user_obj.last_name|default:'' }}">
+            </div>
+
+            {% if action == 'Create' %}
+              <!-- Password (only for create) -->
+              <div class="form-group">
+                <label for="password">Password: <span class="text-danger">*</span></label>
+                <input type="password" 
+                       name="password" 
+                       id="password" 
+                       class="form-control" 
+                       required>
+                <small class="form-text text-muted">
+                  Use a strong password with at least 8 characters
+                </small>
+              </div>
+            {% endif %}
+
+            <!-- Permissions -->
+            <div class="card mt-4">
+              <div class="card-header bg-light">
+                <i class="fas fa-shield-alt mr-2"></i>Permissions
+              </div>
+              <div class="card-body">
+                <div class="form-check">
+                  <input type="checkbox" 
+                         class="form-check-input" 
+                         id="is_staff" 
+                         name="is_staff"
+                         {% if user_obj.is_staff %}checked{% endif %}>
+                  <label class="form-check-label" for="is_staff">
+                    <strong>Staff Status</strong>
+                    <br>
+                    <small class="text-muted">
+                      User can access admin interface and manage other users
+                    </small>
+                  </label>
+                </div>
+
+                <div class="form-check mt-3">
+                  <input type="checkbox" 
+                         class="form-check-input" 
+                         id="is_superuser" 
+                         name="is_superuser"
+                         {% if user_obj.is_superuser %}checked{% endif %}>
+                  <label class="form-check-label" for="is_superuser">
+                    <strong>Superuser Status</strong>
+                    <br>
+                    <small class="text-muted">
+                      User has all permissions without explicitly assigning them
+                    </small>
+                  </label>
+                </div>
+
+                {% if action == 'Edit' %}
+                  <div class="form-check mt-3">
+                    <input type="checkbox" 
+                           class="form-check-input" 
+                           id="is_active" 
+                           name="is_active"
+                           {% if user_obj.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">
+                      <strong>Active</strong>
+                      <br>
+                      <small class="text-muted">
+                        Uncheck to disable this user's account
+                      </small>
+                    </label>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="mt-4">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save mr-2"></i>Save
+              </button>
+              <a href="{% url 'user_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times mr-2"></i>Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-info text-white">
+          <i class="fas fa-info-circle mr-2"></i>Information
+        </div>
+        <div class="card-body">
+          {% if action == 'Create' %}
+            <h6>Creating a New User</h6>
+            <p class="small">
+              Fill in the required fields (username and password) to create a new user account.
+            </p>
+            <hr>
+            <h6>Permissions</h6>
+            <ul class="small">
+              <li><strong>Staff:</strong> Can manage users and access settings</li>
+              <li><strong>Superuser:</strong> Has all permissions</li>
+            </ul>
+          {% else %}
+            <h6>User Details</h6>
+            <ul class="list-unstyled small">
+              <li><strong>Username:</strong> {{ user_obj.username }}</li>
+              <li><strong>Date Joined:</strong> {{ user_obj.date_joined|date:"Y-m-d H:i" }}</li>
+              <li><strong>Last Login:</strong> 
+                {% if user_obj.last_login %}
+                  {{ user_obj.last_login|date:"Y-m-d H:i" }}
+                {% else %}
+                  Never
+                {% endif %}
+              </li>
+            </ul>
+            <hr>
+            <h6>Password</h6>
+            <p class="small">
+              To change the password, use the "Reset Password" button from the user list.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends 'base/base.html' %}
+{% block title %}Execute Playbook on Group{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Execute Playbook on Group</h3>
+    </div>
+    <div class="card-body">
+      <form id="groupPlaybookForm" method="post">
+        {% csrf_token %}
+        
+        <!-- Environment Filter -->
+        <div class="form-group">
+          <label for="environment">Environment:</label>
+          <select name="environment" id="environment" class="form-control">
+            <option value="">-------------</option>
+            {% for env in environments %}
+              <option value="{{ env.id }}">{{ env.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Group Selection -->
+        <div class="form-group">
+          <label for="group">Group: <span class="text-danger">*</span></label>
+          <select name="group" id="group" class="form-control" required>
+            <option value="">Select a group...</option>
+            {% for g in groups %}
+              <option value="{{ g.id }}" data-environment="{{ g.environment.id }}">
+                {{ g.name }} ({{ g.environment.name }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Playbook Selection -->
+        <div class="form-group">
+          <label for="playbook">Playbook: <span class="text-danger">*</span></label>
+          <select name="playbook" id="playbook" class="form-control" required>
+            <option value="">Select a playbook...</option>
+            {% for pb in playbooks %}
+              <option value="{{ pb.id }}">{{ pb.name }} - {{ pb.description|truncatewords:10 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Snapshot Option -->
+        <div class="form-group">
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="create_snapshot" name="create_snapshot" value="1">
+            <label class="custom-control-label" for="create_snapshot">
+              <i class="fas fa-camera"></i> Create snapshot before execution (all hosts)
+              <small class="text-muted d-block">Safety snapshots will be created for all hosts and auto-deleted after configured retention period</small>
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-play"></i> Execute Playbook
+          </button>
+          <a href="{% url 'deploy:deploy_index' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Executing Playbook on Group</h5>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+        <p class="text-center">Please wait while the playbook is being executed on all hosts in the group...</p>
+        <div id="progressOutput" class="bg-dark text-light p-3" style="max-height: 400px; overflow-y: auto; display: none;">
+          <pre id="outputText" class="text-light mb-0"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  // Filter groups by environment
+  function filterGroups() {
+    var envId = $('#environment').val();
+    
+    $('#group option').each(function() {
+      if ($(this).val() === '') {
+        $(this).show();
+        return;
+      }
+      
+      var groupEnv = $(this).data('environment');
+      
+      // If no environment selected, hide all groups
+      if (!envId) {
+        $(this).hide();
+      } else if (groupEnv != envId) {
+        $(this).hide();
+      } else {
+        $(this).show();
+      }
+    });
+    
+    // Reset group selection if current selection is hidden
+    if ($('#group option:selected').is(':hidden')) {
+      $('#group').val('');
+    }
+  }
+  
+  $('#environment').change(filterGroups);
+  
+  // Filter groups on page load
+  filterGroups();
+  
+  // Handle form submission
+  $('#groupPlaybookForm').submit(function(e) {
+    e.preventDefault();
+    
+    var groupId = $('#group').val();
+    var playbookId = $('#playbook').val();
+    
+    if (!groupId || !playbookId) {
+      alert('Please select both a group and a playbook');
+      return;
+    }
+    
+    // Show progress modal
+    $('#progressModal').modal('show');
+    
+    // Execute playbook
+    $.ajax({
+      url: '{% url "deploy:execute_group_playbook_run" %}',
+      method: 'POST',
+      data: {
+        'group': groupId,
+        'playbook': playbookId,
+        'create_snapshot': $('#create_snapshot').is(':checked') ? '1' : '',
+        'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+      },
+      success: function(response) {
+        if (response.success) {
+          $('#progressOutput').show();
+          $('#outputText').text(response.output);
+          $('.spinner-border').hide();
+          
+          // Update title based on status
+          var titleClass = response.status === 'success' ? 'text-success' : 'text-danger';
+          var titleText = response.status === 'success' ? 'Playbook Execution Completed Successfully' : 'Playbook Execution Failed';
+          $('.modal-title').html('<span class="' + titleClass + '">' + titleText + '</span>');
+          
+          // Add close button
+          var buttonClass = response.status === 'success' ? 'btn-success' : 'btn-warning';
+          $('.modal-body').append(
+            '<div class="text-center mt-3">' +
+            '<a href="/history/' + response.history_id + '/" class="' + buttonClass + '">View Details</a> ' +
+            '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>' +
+            '</div>'
+          );
+        } else {
+          alert('Error: ' + response.error);
+          $('#progressModal').modal('hide');
+        }
+      },
+      error: function() {
+        alert('An error occurred while executing the playbook');
+        $('#progressModal').modal('hide');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

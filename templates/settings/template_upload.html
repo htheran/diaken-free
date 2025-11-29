@@ -1,0 +1,49 @@
+{% extends 'base/base.html' %}
+{% block title %}Upload Template{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-upload"></i> Upload Ansible Template</h3>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="id_name">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="text-danger">{{ form.name.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label for="id_description">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="text-danger">{{ form.description.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label for="id_template_type">{{ form.template_type.label }}</label>
+          {{ form.template_type }}
+          {% if form.template_type.errors %}
+            <div class="text-danger">{{ form.template_type.errors }}</div>
+          {% endif %}
+          <small class="form-text text-muted">
+            Select "Host" for templates used in host playbooks, or "Group" for group playbooks.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="id_file">{{ form.file.label }}</label>
+          {{ form.file }}
+          {% if form.file.errors %}
+            <div class="text-danger">{{ form.file.errors }}</div>
+          {% endif %}
+        </div>
+        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Upload</button>
+        <a href="{% url 'template_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

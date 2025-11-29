@@ -1,0 +1,238 @@
+{% extends 'base/base.html' %}
+{% block title %}Execute Playbook on Host{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Execute Playbook on Host</h3>
+    </div>
+    <div class="card-body">
+      <form id="playbookForm" method="post">
+        {% csrf_token %}
+        
+        <!-- Environment Filter -->
+        <div class="form-group">
+          <label for="environment">Environment:</label>
+          <select name="environment" id="environment" class="form-control">
+            <option value="">-------------</option>
+            {% for env in environments %}
+              <option value="{{ env.id }}">{{ env.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Group Filter -->
+        <div class="form-group">
+          <label for="group">Group:</label>
+          <select name="group" id="group" class="form-control">
+            <option value="">-------------</option>
+            {% for grp in groups %}
+              <option value="{{ grp.id }}" data-environment="{{ grp.environment.id }}">{{ grp.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Host Selection -->
+        <div class="form-group">
+          <label for="host">Host: <span class="text-danger">*</span></label>
+          <select name="host" id="host" class="form-control" required>
+            <option value="">Select a host...</option>
+            {% for h in hosts %}
+              <option value="{{ h.id }}" data-environment="{{ h.environment.id }}" data-group="{{ h.group.id|default:'' }}">
+                {{ h.name }} ({{ h.ip }}) - {{ h.environment.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Playbook Selection -->
+        <div class="form-group">
+          <label for="playbook">Playbook: <span class="text-danger">*</span></label>
+          <select name="playbook" id="playbook" class="form-control" required>
+            <option value="">Select a playbook...</option>
+            {% for pb in playbooks %}
+              <option value="{{ pb.id }}">{{ pb.name }} - {{ pb.description|truncatewords:10 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <!-- Snapshot Option -->
+        <div class="form-group">
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="create_snapshot" name="create_snapshot" value="1">
+            <label class="custom-control-label" for="create_snapshot">
+              <i class="fas fa-camera"></i> Create snapshot before execution
+              <small class="text-muted d-block">Safety snapshot will be auto-deleted after configured retention period</small>
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-play"></i> Execute Playbook
+          </button>
+          <a href="{% url 'deploy:deploy_index' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Executing Playbook</h5>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+        <p class="text-center">Please wait while the playbook is being executed...</p>
+        <div id="progressOutput" class="bg-dark text-light p-3" style="max-height: 400px; overflow-y: auto; display: none;">
+          <pre id="outputText" class="text-light mb-0"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  // Filter groups by environment
+  function filterGroups() {
+    var envId = $('#environment').val();
+    
+    $('#group option').each(function() {
+      if ($(this).val() === '') {
+        $(this).show();
+        return;
+      }
+      
+      var groupEnv = $(this).data('environment');
+      
+      // If no environment selected, hide all groups
+      if (!envId) {
+        $(this).hide();
+      } else if (groupEnv != envId) {
+        $(this).hide();
+      } else {
+        $(this).show();
+      }
+    });
+    
+    // Reset group selection if current selection is hidden
+    if ($('#group option:selected').is(':hidden')) {
+      $('#group').val('');
+    }
+  }
+  
+  // Filter hosts by environment and group
+  function filterHosts() {
+    var envId = $('#environment').val();
+    var grpId = $('#group').val();
+    
+    $('#host option').each(function() {
+      if ($(this).val() === '') {
+        $(this).show();
+        return;
+      }
+      
+      var hostEnv = $(this).data('environment');
+      var hostGrp = $(this).data('group');
+      
+      // Hosts depend on GROUP selection (not just environment)
+      // If no group selected, hide all hosts
+      if (!grpId) {
+        $(this).hide();
+        return;
+      }
+      
+      // Show host only if it matches the selected group
+      if (hostGrp == grpId) {
+        $(this).show();
+      } else {
+        $(this).hide();
+      }
+    });
+    
+    // Reset host selection if current selection is hidden
+    if ($('#host option:selected').is(':hidden')) {
+      $('#host').val('');
+    }
+  }
+  
+  $('#environment').change(function() {
+    filterGroups();
+    filterHosts();
+  });
+  
+  $('#group').change(filterHosts);
+  
+  // Filter on page load
+  filterGroups();
+  filterHosts();
+  
+  // Handle form submission
+  $('#playbookForm').submit(function(e) {
+    e.preventDefault();
+    
+    var hostId = $('#host').val();
+    var playbookId = $('#playbook').val();
+    
+    if (!hostId || !playbookId) {
+      alert('Please select both a host and a playbook');
+      return;
+    }
+    
+    // Show progress modal
+    $('#progressModal').modal('show');
+    
+    // Execute playbook
+    $.ajax({
+      url: '{% url "deploy:execute_playbook" %}',
+      method: 'POST',
+      data: {
+        'host': hostId,
+        'playbook': playbookId,
+        'create_snapshot': $('#create_snapshot').is(':checked') ? '1' : '',
+        'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+      },
+      success: function(response) {
+        if (response.success) {
+          $('#progressOutput').show();
+          $('#outputText').text(response.output);
+          $('.spinner-border').hide();
+          
+          // Update title based on status
+          var titleClass = response.status === 'success' ? 'text-success' : 'text-danger';
+          var titleText = response.status === 'success' ? 'Playbook Execution Completed Successfully' : 'Playbook Execution Failed';
+          $('.modal-title').html('<span class="' + titleClass + '">' + titleText + '</span>');
+          
+          // Add close button
+          var buttonClass = response.status === 'success' ? 'btn-success' : 'btn-warning';
+          $('.modal-body').append(
+            '<div class="text-center mt-3">' +
+            '<a href="/history/' + response.history_id + '/" class="' + buttonClass + '">View Details</a> ' +
+            '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>' +
+            '</div>'
+          );
+        } else {
+          alert('Error: ' + response.error);
+          $('#progressModal').modal('hide');
+        }
+      },
+      error: function() {
+        alert('An error occurred while executing the playbook');
+        $('#progressModal').modal('hide');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

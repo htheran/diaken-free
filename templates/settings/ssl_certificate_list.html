@@ -1,0 +1,58 @@
+{% extends 'base/base.html' %}
+{% load i18n %}
+{% block title %}{% trans "SSL Certificates" %}{% endblock %}
+{% block content %}
+<h2>{% trans "SSL Certificates" %}</h2>
+<a href="{% url 'ssl_certificate_create' %}" class="btn btn-primary btn-sm mb-2">{% trans "New Certificate" %}</a>
+<table class="table table-bordered table-sm">
+  <thead>
+    <tr>
+      <th>{% trans "Name" %}</th>
+      <th>{% trans "Certificate" %}</th>
+      <th>{% trans "Private Key" %}</th>
+      <th>{% trans "Provider/CA" %}</th>
+      <th>{% trans "Description" %}</th>
+      <th>{% trans "Created" %}</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cert in certificates %}
+    <tr>
+      <td><strong>{{ cert.name }}</strong></td>
+      <td>
+        {% if cert.cert_file %}
+          <span class="badge badge-success"><i class="fas fa-check"></i> {{ cert.get_cert_filename }}</span>
+        {% else %}
+          <span class="badge badge-secondary"><i class="fas fa-times"></i> Missing</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if cert.key_file %}
+          <span class="badge badge-success"><i class="fas fa-check"></i> {{ cert.get_key_filename }}</span>
+        {% else %}
+          <span class="badge badge-secondary"><i class="fas fa-times"></i> Missing</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if cert.provider_file %}
+          <span class="badge badge-success"><i class="fas fa-check"></i> {{ cert.get_provider_filename }}</span>
+        {% else %}
+          <span class="badge badge-secondary"><i class="fas fa-times"></i> Missing</span>
+        {% endif %}
+      </td>
+      <td>{{ cert.description|truncatewords:10 }}</td>
+      <td>{{ cert.created_at|date:"Y-m-d" }}</td>
+      <td>
+        <a href="{% url 'ssl_certificate_update' cert.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="fas fa-edit"></i></a>
+        <a href="{% url 'ssl_certificate_delete' cert.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="7" class="text-center text-muted">No SSL certificates found</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

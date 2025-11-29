@@ -1,0 +1,213 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}View Script - {{ script.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-file-code"></i> View Script</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'script_list' %}">Scripts</a></li>
+                    <li class="breadcrumb-item active">{{ script.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Script Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Script Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="40%">Name:</th>
+                                    <td><strong>{{ script.name }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Filename:</th>
+                                    <td><code>{{ script.get_full_filename }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Target Type:</th>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-{% if script.target_type == 'host' %}server{% else %}layer-group{% endif %}"></i>
+                                            {{ script.get_target_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>OS Family:</th>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-{% if script.os_family == 'windows' %}windows{% else %}linux{% endif %}"></i>
+                                            {{ script.get_os_family_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th width="40%">Status:</th>
+                                    <td>
+                                        {% if script.active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>File Path:</th>
+                                    <td><code>{{ script.file_path }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th>Created:</th>
+                                    <td>{{ script.created_at|date:"Y-m-d H:i:s" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Updated:</th>
+                                    <td>{{ script.updated_at|date:"Y-m-d H:i:s" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if script.description %}
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <h6>Description:</h6>
+                                <p class="text-muted">{{ script.description }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <a href="{% url 'script_edit' script.pk %}" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="{% url 'script_download' script.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                            <button type="button" class="btn btn-danger" onclick="deleteScript()">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                            <a href="{% url 'script_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Script Content Card -->
+            <div class="card">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Script Content</h5>
+                    <button type="button" class="btn btn-sm btn-light" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if script_content %}
+                        <pre id="scriptContent" style="margin: 0; padding: 15px; background-color: #f8f9fa; border: none; max-height: 600px; overflow-y: auto;"><code>{{ script_content }}</code></pre>
+                    {% else %}
+                        <div class="alert alert-warning m-3">
+                            <i class="fas fa-exclamation-triangle"></i> Script content not available
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the script <strong>{{ script.name }}</strong>?</p>
+                <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone and will also delete the script file.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteScript() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    fetch('/scripts/{{ script.pk }}/delete/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '{% url "script_list" %}';
+        } else {
+            alert('Error deleting script: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error deleting script: ' + error);
+    });
+});
+
+function copyToClipboard() {
+    const content = document.getElementById('scriptContent').textContent;
+    navigator.clipboard.writeText(content).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.remove('btn-light');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-light');
+        }, 2000);
+    }, function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+</script>
+{% endblock %}

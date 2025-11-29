@@ -1,0 +1,346 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}IP Addressing - VM Inventory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vcenter-select {
+        max-width: 400px;
+    }
+    .search-box {
+        max-width: 600px;
+    }
+    .vm-table {
+        font-size: 0.9rem;
+    }
+    .vm-table th {
+        background-color: #f8f9fa;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .badge-power-on {
+        background-color: #28a745;
+    }
+    .badge-power-off {
+        background-color: #dc3545;
+    }
+    .badge-suspended {
+        background-color: #ffc107;
+    }
+    .ip-list, .mac-list {
+        margin: 0;
+        padding-left: 1.2rem;
+        font-size: 0.85rem;
+    }
+    .loading-spinner {
+        display: none;
+    }
+    .loading .loading-spinner {
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-network-wired"></i> IP Addressing - VM Inventory
+                    </h4>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- Mensajes -->
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'error' %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% elif message.tags == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif message.tags == 'warning' %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Formulario de Filtros -->
+                    <form method="get" action="{% url 'vm_list' %}" id="filterForm">
+                        <div class="row">
+                            <!-- Selector de vCenter -->
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="vcenter">
+                                        <i class="fas fa-server"></i> vCenter Server
+                                    </label>
+                                    <select name="vcenter" id="vcenter" class="form-control vcenter-select" onchange="document.getElementById('filterForm').submit()">
+                                        <option value="">---------------</option>
+                                        {% for vc in vcenters %}
+                                        <option value="{{ vc.id }}" {% if selected_vcenter and selected_vcenter.id == vc.id %}selected{% endif %}>
+                                            {{ vc.name }} ({{ vc.host }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Selector de VLAN -->
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="vlan">
+                                        <i class="fas fa-network-wired"></i> VLAN
+                                    </label>
+                                    <select name="vlan" id="vlan" class="form-control" {% if not selected_vcenter %}disabled{% endif %} onchange="document.getElementById('filterForm').submit()">
+                                        <option value="">--------</option>
+                                        {% for vlan in all_vlans %}
+                                        <option value="{{ vlan }}" {% if vlan_filter == vlan %}selected{% endif %}>
+                                            {{ vlan }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Campo de Búsqueda -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="search">
+                                        <i class="fas fa-search"></i> Search
+                                    </label>
+                                    <div class="input-group search-box">
+                                        <select name="search_field" class="form-control" style="max-width: 150px;">
+                                            <option value="all" {% if search_field == 'all' %}selected{% endif %}>All Fields</option>
+                                            <option value="ip" {% if search_field == 'ip' %}selected{% endif %}>IP Address</option>
+                                            <option value="mac" {% if search_field == 'mac' %}selected{% endif %}>MAC Address</option>
+                                            <option value="hostname" {% if search_field == 'hostname' %}selected{% endif %}>Hostname</option>
+                                        </select>
+                                        <input type="text" name="search" id="search" class="form-control" 
+                                               placeholder="Search by IP, MAC, or Hostname..." 
+                                               value="{{ search_query }}">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="submit">
+                                                <i class="fas fa-search"></i> Search
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones de Acción -->
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <div>
+                                        {% if selected_vcenter %}
+                                        <a href="{% url 'vm_export_csv' %}?vcenter={{ selected_vcenter.id }}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}" 
+                                           class="btn btn-success btn-sm">
+                                            <i class="fas fa-file-csv"></i> CSV
+                                        </a>
+                                        {% endif %}
+                                        {% if search_query or selected_vcenter or vlan_filter %}
+                                        <a href="{% url 'vm_list' %}" class="btn btn-secondary btn-sm">
+                                            <i class="fas fa-times"></i> Clear
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <!-- Información de Resultados -->
+                    {% if selected_vcenter %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>vCenter:</strong> {{ selected_vcenter.name }} ({{ selected_vcenter.host }})
+                        {% if vlan_filter %}
+                        | <strong>VLAN:</strong> {{ vlan_filter }}
+                        {% endif %}
+                        {% if search_query %}
+                        | <strong>Search:</strong> "{{ search_query }}" in {{ search_field }}
+                        {% endif %}
+                        | <strong>Total VMs:</strong> {{ total_vms }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Tabla de VMs -->
+                    {% if vms %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-bordered vm-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 4%;">#</th>
+                                    <th style="width: 12%;">VM Name</th>
+                                    <th style="width: 12%;">Hostname</th>
+                                    <th style="width: 13%;">IP Address(es)</th>
+                                    <th style="width: 13%;">MAC Address(es)</th>
+                                    <th style="width: 15%;">VLAN/Network</th>
+                                    <th style="width: 21%;">Operating System</th>
+                                    <th style="width: 10%;">Power State</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vm in vms %}
+                                <tr>
+                                    <td>{{ forloop.counter|add:vms.start_index|add:"-1" }}</td>
+                                    <td>
+                                        <strong>{{ vm.vm_name }}</strong>
+                                    </td>
+                                    <td>{{ vm.hostname }}</td>
+                                    <td>
+                                        {% if vm.ips %}
+                                            {% if vm.ips|length == 1 %}
+                                                <code>{{ vm.ips.0 }}</code>
+                                            {% else %}
+                                                <ul class="ip-list">
+                                                    {% for ip in vm.ips %}
+                                                    <li><code>{{ ip }}</code></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if vm.macs %}
+                                            {% if vm.macs|length == 1 %}
+                                                <code>{{ vm.macs.0 }}</code>
+                                            {% else %}
+                                                <ul class="mac-list">
+                                                    {% for mac in vm.macs %}
+                                                    <li><code>{{ mac }}</code></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if vm.networks %}
+                                            {% if vm.networks|length == 1 %}
+                                                <span class="badge badge-info">{{ vm.networks.0 }}</span>
+                                            {% else %}
+                                                <span class="badge badge-info">{{ vm.network_primary }}</span>
+                                                {% if vm.networks|length > 1 %}
+                                                <small class="text-muted d-block mt-1">+{{ vm.networks|length|add:"-1" }} more</small>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ vm.os }}</small>
+                                    </td>
+                                    <td>
+                                        {% if vm.power_state == 'poweredOn' %}
+                                            <span class="badge badge-power-on">
+                                                <i class="fas fa-power-off"></i> ON
+                                            </span>
+                                        {% elif vm.power_state == 'poweredOff' %}
+                                            <span class="badge badge-power-off">
+                                                <i class="fas fa-power-off"></i> OFF
+                                            </span>
+                                        {% elif vm.power_state == 'suspended' %}
+                                            <span class="badge badge-suspended">
+                                                <i class="fas fa-pause"></i> SUSPENDED
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ vm.power_state }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    {% if vms.has_other_pages %}
+                    <nav aria-label="VM pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if vms.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ vms.previous_page_number }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ vms.number }} of {{ vms.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if vms.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ vms.next_page_number }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ vms.paginator.num_pages }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% elif selected_vcenter and not error_message %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        No VMs found{% if search_query %} matching "{{ search_query }}"{% endif %}.
+                    </div>
+                    {% elif not selected_vcenter %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Please select a vCenter server to view VM inventory.
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-submit on vCenter change
+    $('#vcenter').on('change', function() {
+        $('#filterForm').submit();
+    });
+
+    // Loading spinner on form submit
+    $('#filterForm').on('submit', function() {
+        $(this).addClass('loading');
+    });
+});
+</script>
+{% endblock %}

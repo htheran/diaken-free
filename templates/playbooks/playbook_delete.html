@@ -1,0 +1,101 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Delete Playbook{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Delete Playbook
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5><i class="fas fa-exclamation-circle"></i> Warning!</h5>
+                        <p class="mb-0">You are about to permanently delete this playbook. This action cannot be undone!</p>
+                    </div>
+                    
+                    <h5 class="mb-3">Playbook Details:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="200">Name:</th>
+                                <td><strong>{{ playbook.name }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Filename:</th>
+                                <td>{{ playbook.name }}.yml</td>
+                            </tr>
+                            <tr>
+                                <th>Description:</th>
+                                <td>{{ playbook.description|default:"No description" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Type:</th>
+                                <td>
+                                    {% if playbook.playbook_type == 'host' %}
+                                        <span class="badge bg-info">Host</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Group</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>OS Family:</th>
+                                <td>
+                                    {% if playbook.os_family == 'redhat' %}
+                                        <span class="badge bg-danger">RedHat</span>
+                                    {% elif playbook.os_family == 'debian' %}
+                                        <span class="badge bg-warning">Debian</span>
+                                    {% elif playbook.os_family == 'windows' %}
+                                        <span class="badge bg-primary">Windows</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ playbook.get_os_family_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>File Path:</th>
+                                <td><code>{{ playbook.file.path }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td>{{ playbook.created_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Modified:</th>
+                                <td>{{ playbook.updated_at|date:"Y-m-d H:i:s" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>What will be deleted:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Database record for this playbook</li>
+                            <li>Physical file: <code>{{ playbook.file.path }}</code></li>
+                        </ul>
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'playbook_list' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash"></i> Yes, Delete Playbook
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

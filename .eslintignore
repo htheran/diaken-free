@@ -1,0 +1,3 @@
+# Ignore Django templates (they contain Django template syntax that confuses JS linters)
+templates/**/*.html
+*.html

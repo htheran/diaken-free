@@ -1,0 +1,832 @@
+{% extends 'base/base.html' %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h2><i class="fab fa-linux"></i> Deploy Linux Server VM</h2>
+      </div>
+      <div class="card-body">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        <form method="post" id="deployForm">
+          {% csrf_token %}
+          
+          <!-- vCenter Configuration -->
+          <div class="card mb-3">
+            <div class="card-header bg-secondary text-white">
+              <i class="fas fa-server"></i> vCenter Configuration
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="id_vcenter">vCenter:</label>
+                {{ form.vcenter }}
+                {% if form.vcenter.errors %}<div class="text-danger">{{ form.vcenter.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_datacenter">Datacenter:</label>
+                {{ form.datacenter }}
+                {% if form.datacenter.errors %}<div class="text-danger">{{ form.datacenter.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_cluster">Cluster:</label>
+                {{ form.cluster }}
+                {% if form.cluster.errors %}<div class="text-danger">{{ form.cluster.errors }}</div>{% endif %}
+              </div>
+              <!-- Resource Pool oculto - se usa el predeterminado del cluster -->
+              <div class="form-group" style="display:none;">
+                <label for="id_resource_pool">Resource Pool:</label>
+                {{ form.resource_pool }}
+                {% if form.resource_pool.errors %}<div class="text-danger">{{ form.resource_pool.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_datastore">Datastore:</label>
+                {{ form.datastore }}
+                {% if form.datastore.errors %}<div class="text-danger">{{ form.datastore.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_folder">Folder (Optional):</label>
+                <select name="folder" id="id_folder" class="form-control w-100">
+                  <option value="">Root folder</option>
+                </select>
+                <small class="form-text text-muted">Select a folder to organize the VM in vCenter. Leave empty to place in datacenter root.</small>
+              </div>
+              <div class="form-group">
+                <label for="id_network">Network:</label>
+                {{ form.network }}
+                {% if form.network.errors %}<div class="text-danger">{{ form.network.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_template">Template:</label>
+                {{ form.template }}
+                {% if form.template.errors %}<div class="text-danger">{{ form.template.errors }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <!-- VM Configuration -->
+          <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+              <i class="fas fa-cog"></i> VM Configuration
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="id_hostname">Hostname:</label>
+                {{ form.hostname }}
+                {% if form.hostname.errors %}<div class="text-danger">{{ form.hostname.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_ip">IP Address:</label>
+                {{ form.ip }}
+                {% if form.ip.errors %}<div class="text-danger">{{ form.ip.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_ssh_credential">SSH Credential:</label>
+                {{ form.ssh_credential }}
+                {% if form.ssh_credential.errors %}<div class="text-danger">{{ form.ssh_credential.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_operating_system">Operating System:</label>
+                {{ form.operating_system }}
+                {% if form.operating_system.errors %}<div class="text-danger">{{ form.operating_system.errors }}</div>{% endif %}
+              </div>
+              <div class="form-group">
+                <label for="id_ansible_python_interpreter">Ansible Python Interpreter:</label>
+                {{ form.ansible_python_interpreter }}
+                {% if form.ansible_python_interpreter.errors %}<div class="text-danger">{{ form.ansible_python_interpreter.errors }}</div>{% endif %}
+                <small class="form-text text-muted">Path to Python interpreter on the target VM (default: /usr/bin/python3).</small>
+              </div>
+            </div>
+          </div>
+          <!-- Playbook Selection -->
+          <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+              <i class="fas fa-tasks"></i> Post-Deployment Playbooks
+            </div>
+            <div class="card-body">
+              <p class="text-muted small">Choose which configurations to apply after VM deployment</p>
+            
+            <div class="row">
+              <!-- 1. Basic Setup (Mandatory) -->
+              <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card playbook-card border-primary" style="opacity: 0.95;">
+                  <div class="card-body text-center p-3">
+                    <div class="playbook-icon mb-2">
+                      <i class="fas fa-cog fa-4x text-primary"></i>
+                      <!-- Placeholder for custom image: <img src="/static/images/playbooks/basic.png" alt="Basic" style="width: 64px; height: 64px;"> -->
+                    </div>
+                    <h6 class="card-title font-weight-bold">Basic Setup</h6>
+                    <p class="card-text small text-muted">Essential system configuration</p>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input playbook-checkbox" id="playbook_basic" name="playbooks[]" value="basic" checked disabled>
+                      <label class="custom-control-label" for="playbook_basic">
+                        <span class="badge badge-success">Required</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 2. Update System (Optional - RedHat only) -->
+              <div class="col-md-3 col-sm-6 mb-3" id="playbook-update-card">
+                <div class="card playbook-card border-info" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_update')">
+                  <div class="card-body text-center p-3">
+                    <div class="playbook-icon mb-2">
+                      <i class="fas fa-sync-alt fa-4x text-info"></i>
+                      <!-- Placeholder for custom image: <img src="/static/images/playbooks/update.png" alt="Update" style="width: 64px; height: 64px;"> -->
+                    </div>
+                    <h6 class="card-title font-weight-bold">Update System</h6>
+                    <p class="card-text small text-muted">Update packages and OS</p>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input playbook-checkbox" id="playbook_update" name="playbooks[]" value="Update-Redhat-Host">
+                      <label class="custom-control-label" for="playbook_update">
+                        <span class="badge badge-secondary">Optional</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 3. Install HTTPD (Optional - RedHat only) -->
+              <div class="col-md-3 col-sm-6 mb-3" id="playbook-httpd-card">
+                <div class="card playbook-card border-warning" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_httpd')">
+                  <div class="card-body text-center p-3">
+                    <div class="playbook-icon mb-2">
+                      <i class="fas fa-server fa-4x text-warning"></i>
+                      <!-- Placeholder for custom image: <img src="/static/images/playbooks/httpd.png" alt="HTTPD" style="width: 64px; height: 64px;"> -->
+                    </div>
+                    <h6 class="card-title font-weight-bold">Install HTTPD</h6>
+                    <p class="card-text small text-muted">Apache web server</p>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input playbook-checkbox" id="playbook_httpd" name="playbooks[]" value="Install-Httpd-Host">
+                      <label class="custom-control-label" for="playbook_httpd">
+                        <span class="badge badge-secondary">Optional</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 4. Install VSFTPD (Optional - RedHat only) -->
+              <div class="col-md-3 col-sm-6 mb-3" id="playbook-vsftpd-card">
+                <div class="card playbook-card border-success" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_vsftpd')">
+                  <div class="card-body text-center p-3">
+                    <div class="playbook-icon mb-2">
+                      <i class="fas fa-folder-open fa-4x text-success"></i>
+                      <!-- Placeholder for custom image: <img src="/static/images/playbooks/vsftpd.png" alt="VSFTPD" style="width: 64px; height: 64px;"> -->
+                    </div>
+                    <h6 class="card-title font-weight-bold">Install VSFTPD</h6>
+                    <p class="card-text small text-muted">FTP file server</p>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input playbook-checkbox" id="playbook_vsftpd" name="playbooks[]" value="Install-Vsftpd-Host">
+                      <label class="custom-control-label" for="playbook_vsftpd">
+                        <span class="badge badge-secondary">Optional</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 5. Update Debian System (Optional - Debian/Ubuntu only) -->
+              <div class="col-md-3 col-sm-6 mb-3" id="playbook-update-debian-card" style="display:none;">
+                <div class="card playbook-card border-info" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_update_debian')">
+                  <div class="card-body text-center p-3">
+                    <div class="playbook-icon mb-2">
+                      <i class="fas fa-sync-alt fa-4x text-info"></i>
+                      <!-- Placeholder for custom image: <img src="/static/images/playbooks/update-debian.png" alt="Update Debian" style="width: 64px; height: 64px;"> -->
+                    </div>
+                    <h6 class="card-title font-weight-bold">Update System</h6>
+                    <p class="card-text small text-muted">Update packages and OS (Debian)</p>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input playbook-checkbox" id="playbook_update_debian" name="playbooks[]" value="Update-Debian-Host">
+                      <label class="custom-control-label" for="playbook_update_debian">
+                        <span class="badge badge-secondary">Optional</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 6. Install Apache (Optional - Debian/Ubuntu only) -->
+              <div class="col-md-3 col-sm-6 mb-3" id="playbook-apache-debian-card" style="display:none;">
+                <div class="card playbook-card border-warning" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_apache_debian')">
+                  <div class="card-body text-center p-3">
+                    <div class="playbook-icon mb-2">
+                      <i class="fas fa-server fa-4x text-warning"></i>
+                      <!-- Placeholder for custom image: <img src="/static/images/playbooks/apache-debian.png" alt="Apache Debian" style="width: 64px; height: 64px;"> -->
+                    </div>
+                    <h6 class="card-title font-weight-bold">Install Apache</h6>
+                    <p class="card-text small text-muted">Apache web server (Debian)</p>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input playbook-checkbox" id="playbook_apache_debian" name="playbooks[]" value="Install-Apache-Debian-Host">
+                      <label class="custom-control-label" for="playbook_apache_debian">
+                        <span class="badge badge-secondary">Optional</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Hidden field to store selected playbooks -->
+            <input type="hidden" id="additional_playbook" name="additional_playbook" value="">
+            </div>
+          </div>
+          
+          <style>
+          /* Fix input visibility in dark theme */
+          .form-control {
+            background-color: #fff !important;
+            color: #000 !important;
+          }
+          .form-control:focus {
+            background-color: #fff !important;
+            color: #000 !important;
+          }
+          
+          .playbook-card {
+            transition: all 0.3s ease;
+            height: 100%;
+          }
+          .playbook-card:hover:not([style*="opacity: 0.95"]) {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          }
+          .playbook-card .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+          }
+          .playbook-icon {
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          </style>
+          <script>
+            // Polling Implementation (MISMO SISTEMA QUE PLAYBOOKS) - Last updated: 2025-10-20 12:16:00 (v4.0)
+            // Toggle playbook checkbox
+            function togglePlaybookDeploy(checkboxId) {
+              var checkbox = $('#' + checkboxId);
+              if (!checkbox.prop('disabled')) {
+                checkbox.prop('checked', !checkbox.prop('checked'));
+              }
+            }
+            
+            // Hide/Show OS-specific playbooks based on OS selection
+            function updatePlaybookVisibility() {
+              var osSelect = $('#id_operating_system');
+              var selectedOS = osSelect.val();
+              
+              // RedHat-specific playbooks
+              var redhatPlaybooks = ['#playbook-update-card', '#playbook-httpd-card', '#playbook-vsftpd-card'];
+              
+              // Debian-specific playbooks
+              var debianPlaybooks = ['#playbook-update-debian-card', '#playbook-apache-debian-card'];
+              
+              if (selectedOS === 'debian' || selectedOS === 'Debian/Ubuntu') {
+                // Hide RedHat playbooks for Debian/Ubuntu
+                redhatPlaybooks.forEach(function(selector) {
+                  $(selector).hide();
+                  // Uncheck the checkbox
+                  $(selector).find('input[type="checkbox"]').prop('checked', false);
+                });
+                
+                // Show Debian playbooks
+                debianPlaybooks.forEach(function(selector) {
+                  $(selector).show();
+                });
+              } else {
+                // Show RedHat playbooks for other OS
+                redhatPlaybooks.forEach(function(selector) {
+                  $(selector).show();
+                });
+                
+                // Hide Debian playbooks
+                debianPlaybooks.forEach(function(selector) {
+                  $(selector).hide();
+                  // Uncheck the checkbox
+                  $(selector).find('input[type="checkbox"]').prop('checked', false);
+                });
+              }
+            }
+            
+            // Initialize on page load
+            $(function() {
+              updatePlaybookVisibility();
+              
+              // Update when OS changes
+              $('#id_operating_system').on('change', function() {
+                updatePlaybookVisibility();
+              });
+            });
+            
+            // Handle form submission with AJAX
+            $('#deployForm').submit(function(e) {
+              e.preventDefault(); // Prevent default form submission
+              
+              var selectedPlaybooks = [];
+              var playbookNames = [];
+              
+              $('.playbook-checkbox:checked').each(function() {
+                var value = $(this).val();
+                selectedPlaybooks.push(value);
+                
+                // Get playbook display name
+                var card = $(this).closest('.card');
+                var name = card.find('.card-title').text();
+                playbookNames.push(name);
+              });
+              
+              var playbooksCSV = selectedPlaybooks.join(',');
+              $('#additional_playbook').val(playbooksCSV);
+              
+              // Hide form and show progress area
+              $('#deployForm').hide();
+              $('#progressArea').show();
+              $('#resultArea').hide();
+              
+              // Show real-time output container
+              $('#realtimeOutputContainer').show();
+              $('#realtimeOutput').collapse('show');
+              
+              // Start time tracking
+              var startTime = Date.now();
+              var timeInterval = setInterval(function() {
+                var elapsed = Math.floor((Date.now() - startTime) / 1000);
+                var minutes = Math.floor(elapsed / 60);
+                var seconds = elapsed % 60;
+                var timeStr = (minutes > 0 ? minutes + 'm ' : '') + seconds + 's';
+                $('#progressStatus').html('Deployment in progress... <small class="text-muted">(Time: ' + timeStr + ')</small>');
+              }, 1000);
+              
+              // Prepare form data
+              var formData = $(this).serialize();
+              
+              // Submit deployment via AJAX
+              $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: formData,
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                  if (response.success && response.history_id) {
+                    // Start polling deployment status
+                    $('#progressStatus').html('Deployment started! <small class="text-muted">Waiting for output...</small>');
+                    $('#realtimeOutputContent').text('Waiting for deployment output...\n');
+                    startDeploymentPolling(response.history_id, timeInterval);
+                  } else {
+                    // Backend returned error
+                    clearInterval(timeInterval);
+                    showDeploymentResult(false, response.error || 'Deployment failed to start', '', timeInterval);
+                  }
+                },
+                error: function(xhr, status, error) {
+                  // AJAX error
+                  clearInterval(timeInterval);
+                  showDeploymentResult(false, 'Error: ' + error, '', timeInterval);
+                }
+              });
+              
+              return false;
+            });
+            
+            // Function to poll deployment status
+            function startDeploymentPolling(historyId, timeInterval) {
+              var pollInterval = 3000; // Poll every 3 seconds
+              var pollCount = 0;
+              var maxPolls = 1000; // Max 50 minutes
+              
+              function checkStatus() {
+                pollCount++;
+                
+                // Update progress bar gradually
+                var progress = Math.min(95, 10 + (pollCount / maxPolls) * 85);
+                $('#progressBar').css('width', progress + '%');
+                $('#progressText').text(Math.floor(progress) + '%');
+                
+                $.ajax({
+                  url: '/deploy/history-status/' + historyId + '/',
+                  type: 'GET',
+                  success: function(data) {
+                    // Update real-time output
+                    if (data.output && data.output.trim()) {
+                      $('#realtimeOutputContent').text(data.output);
+                      
+                      // Auto-scroll to bottom
+                      var pre = $('#realtimeOutputContent')[0];
+                      if (pre) {
+                        pre.scrollTop = pre.scrollHeight;
+                      }
+                    }
+                    
+                    // Check if deployment is complete
+                    if (data.status === 'success' || data.status === 'failed') {
+                      // Stop time tracking
+                      clearInterval(timeInterval);
+                      
+                      // Set progress to 100%
+                      $('#progressBar').css('width', '100%');
+                      $('#progressText').text('100%');
+                      $('#progressStatus').text('Completed!');
+                      
+                      // Show result after 1 second
+                      setTimeout(function() {
+                        showDeploymentResult(
+                          data.status === 'success',
+                          data.status === 'success' ? 'VM deployed successfully!' : 'Deployment failed',
+                          data.output || '',
+                          timeInterval
+                        );
+                      }, 1000);
+                    } else if (pollCount >= maxPolls) {
+                      // Timeout
+                      clearInterval(timeInterval);
+                      showDeploymentResult(false, 'Polling timeout - deployment may still be running', data.output || '', timeInterval);
+                    } else {
+                      // Continue polling
+                      setTimeout(checkStatus, pollInterval);
+                    }
+                  },
+                  error: function() {
+                    // On error, continue polling (deployment may still be running)
+                    if (pollCount < maxPolls) {
+                      setTimeout(checkStatus, pollInterval);
+                    }
+                  }
+                });
+              }
+              
+              // Start polling immediately
+              checkStatus();
+            }
+            
+            // Function to show deployment result
+            function showDeploymentResult(success, message, output, timeInterval) {
+              clearInterval(timeInterval);
+              $('#progressArea').hide();
+              $('#resultArea').show();
+              
+              if (success) {
+                $('#resultHeader').removeClass('bg-danger').addClass('bg-success text-white');
+                $('#resultTitle').html('<i class="fas fa-check-circle"></i> Deployment Successful');
+                
+                $('#resultContent').html(
+                  '<div class="alert alert-success">' +
+                  '<i class="fas fa-check-circle"></i> <strong>' + message + '</strong>' +
+                  '</div>' +
+                  '<pre class="bg-dark text-light p-3" style="max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 12px;">' +
+                  (output || 'No output available') +
+                  '</pre>' +
+                  '<div class="mt-3">' +
+                  '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="fas fa-list"></i> View Deployment History</a> ' +
+                  '<button onclick="location.reload()" class="btn btn-secondary"><i class="fas fa-redo"></i> Deploy Another VM</button>' +
+                  '</div>'
+                );
+              } else {
+                $('#resultHeader').removeClass('bg-success').addClass('bg-danger text-white');
+                $('#resultTitle').html('<i class="fas fa-times-circle"></i> Deployment Failed');
+                
+                $('#resultContent').html(
+                  '<div class="alert alert-danger">' +
+                  '<i class="fas fa-times-circle"></i> <strong>' + message + '</strong>' +
+                  '</div>' +
+                  '<pre class="bg-dark text-light p-3" style="max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 12px;">' +
+                  (output || 'No output available') +
+                  '</pre>' +
+                  '<div class="mt-3">' +
+                  '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="fas fa-list"></i> View Deployment History</a> ' +
+                  '<button onclick="location.reload()" class="btn btn-secondary"><i class="fas fa-redo"></i> Try Again</button>' +
+                  '</div>'
+                );
+              }
+            }
+            
+            function loadClusters() {
+              var dc = $("#id_datacenter").val();
+              var vcenterId = $("#id_vcenter").val();
+              $.get("/deploy/ajax/get_clusters/?datacenter=" + encodeURIComponent(dc) + "&vcenter_id=" + vcenterId, function(data) {
+                var $cluster = $("#id_cluster");
+                $cluster.empty();
+                if(data.error && data.error !== 'null' && data.error !== 'undefined') {
+                  $cluster.append($('<option>').val('').text('Error: ' + data.error));
+                } else if(!data.clusters || data.clusters.length === 0) {
+                  $cluster.append($('<option>').val('').text('No clusters found'));
+                } else {
+                  var sortedClusters = data.clusters.sort();
+                  $.each(sortedClusters, function(_, val) { $cluster.append($('<option>').val(val).text(val)); });
+                  $cluster.trigger('change');
+                }
+              });
+            }
+            function loadResourcePools() {
+              var dc = $("#id_datacenter").val();
+              var cl = $("#id_cluster").val();
+              var vcenterId = $("#id_vcenter").val();
+              $.get("/deploy/ajax/get_resource_pools/?datacenter=" + encodeURIComponent(dc) + "&cluster=" + encodeURIComponent(cl) + "&vcenter_id=" + vcenterId, function(data) {
+                var $rp = $("#id_resource_pool");
+                $rp.empty();
+                var sortedResourcePools = data.resource_pools.sort();
+                $.each(sortedResourcePools, function(_, val) { $rp.append($('<option>').val(val).text(val)); });
+                $rp.trigger('change');
+              });
+            }
+            function loadDatastores() {
+              var vcenterId = $("#id_vcenter").val();
+              $.get("/deploy/ajax/get_datastores/?vcenter_id=" + vcenterId, function(data) {
+                var $ds = $("#id_datastore");
+                $ds.empty();
+                var sortedDatastores = data.datastores.sort();
+                $.each(sortedDatastores, function(_, val) { $ds.append($('<option>').val(val).text(val)); });
+              });
+            }
+            function loadNetworks() {
+              var vcenterId = $("#id_vcenter").val();
+              $.get("/deploy/ajax/get_networks/?vcenter_id=" + vcenterId, function(data) {
+                var $net = $("#id_network");
+                $net.empty();
+                // Ordenar alfabéticamente
+                var sortedNetworks = data.networks.sort();
+                $.each(sortedNetworks, function(_, val) { $net.append($('<option>').val(val).text(val)); });
+              });
+            }
+            function loadFolders() {
+              var vcenterId = $("#id_vcenter").val();
+              var datacenter = $("#id_datacenter").val();
+              if (!datacenter) {
+                $("#id_folder").empty().append($('<option>').val('').text('---------'));
+                return;
+              }
+              $.get("/deploy/ajax/get_folders/?vcenter_id=" + vcenterId + "&datacenter=" + datacenter, function(data) {
+                var $folder = $("#id_folder");
+                $folder.empty();
+                $folder.append($('<option>').val('').text('---------'));
+                // Folders are already sorted by the backend
+                $.each(data.folders, function(_, folder) {
+                  $folder.append($('<option>').val(folder.path).text(folder.path));
+                });
+              });
+            }
+            function loadTemplates() {
+              $.get("/deploy/ajax/get_templates/", function(data) {
+                var $tpl = $("#id_template");
+                $tpl.empty();
+                var sortedTemplates = data.templates.sort();
+                $.each(sortedTemplates, function(_, val) { $tpl.append($('<option>').val(val).text(val)); });
+              });
+            }
+            $(function() {
+              // Cuando cambia vCenter, recargar datacenters y templates
+              $("#id_vcenter").change(function() {
+                var vcenterId = $(this).val();
+                
+                // Si no hay vCenter seleccionado, limpiar todos los campos
+                if (!vcenterId) {
+                  $("#id_datacenter").empty();
+                  $("#id_cluster").empty();
+                  $("#id_resource_pool").empty();
+                  $("#id_datastore").empty();
+                  $("#id_network").empty();
+                  $("#id_template").empty();
+                  return;
+                }
+                
+                // Recargar datacenters
+                $.get("/deploy/ajax/get_datacenters/?vcenter_id=" + vcenterId, function(data) {
+                  var $dc = $("#id_datacenter");
+                  $dc.empty();
+                  var sortedDatacenters = data.datacenters.sort();
+                  $.each(sortedDatacenters, function(_, val) { $dc.append($('<option>').val(val).text(val)); });
+                  $dc.trigger('change');
+                });
+                
+                // Recargar templates
+                $.get("/deploy/ajax/get_templates/?vcenter_id=" + vcenterId, function(data) {
+                  var $tpl = $("#id_template");
+                  $tpl.empty();
+                  var sortedTemplates = data.templates.sort();
+                  $.each(sortedTemplates, function(_, val) { $tpl.append($('<option>').val(val).text(val)); });
+                });
+                
+                // Recargar datastores y networks
+                loadDatastores();
+                loadNetworks();
+              });
+              
+              $("#id_datacenter").change(function() { loadClusters(); loadFolders(); });
+              $("#id_cluster").change(function() { loadResourcePools(); });
+              $("#id_resource_pool").change(function() { loadDatastores(); loadNetworks(); });
+              
+              // No cargar datos iniciales - esperar a que se seleccione un vCenter
+              // Los datos se cargarán automáticamente cuando se seleccione un vCenter
+            });
+            
+            // Simulate task progress
+            function simulateProgress() {
+              // Get total number of steps (including additional playbooks)
+              const totalSteps = $('#progressSteps li').length;
+              const baseSteps = 7;
+              const additionalPlaybookCount = totalSteps - baseSteps;
+              
+              // Calculate percent per step
+              const percentPerStep = 100 / totalSteps;
+              
+              const steps = [
+                { step: 1, percent: percentPerStep * 1, message: 'Connecting to vCenter...', delay: 1000 },
+                { step: 2, percent: percentPerStep * 2, message: 'Cloning VM from template...', delay: 2000 },
+                { step: 3, percent: percentPerStep * 3, message: 'Powering on VM...', delay: 2000 },
+                { step: 4, percent: percentPerStep * 4, message: 'Dispatching to Celery worker...', delay: 2000 },
+                { step: 5, percent: percentPerStep * 5, message: 'Running Ansible provisioning...', delay: 2000 },
+                { step: 6, percent: percentPerStep * 6, message: 'Configuring network...', delay: 2000 },
+                { step: 7, percent: percentPerStep * 7, message: 'Deployment in progress...', delay: 2000 }
+              ];
+              
+              // Add additional playbook steps dynamically
+              if (additionalPlaybookCount > 0) {
+                for (let i = 0; i < additionalPlaybookCount; i++) {
+                  const stepNum = baseSteps + i + 1;
+                  const stepElement = $('#step' + stepNum);
+                  const playbookName = stepElement.text().match(/Running (.+) playbook/)?.[1] || 'additional';
+                  
+                  steps.push({
+                    step: stepNum,
+                    percent: percentPerStep * stepNum,
+                    message: `Running ${playbookName} playbook...`,
+                    delay: 30000
+                  });
+                }
+              }
+              
+              let currentStep = 0;
+              
+              function updateStep() {
+                if (currentStep < steps.length) {
+                  const s = steps[currentStep];
+                  
+                  // Update progress bar
+                  $('#progressBar').css('width', Math.round(s.percent) + '%').attr('aria-valuenow', Math.round(s.percent));
+                  $('#progressPercent').text(Math.round(s.percent) + '%');
+                  
+                  // Update message with step number
+                  $('#progressMessage').html(`<strong>Step ${s.step}/${totalSteps}:</strong> ${s.message}`);
+                  
+                  // Mark step as completed
+                  $('#step' + s.step + ' i').removeClass('text-muted').addClass('text-success').removeClass('fa-circle').addClass('fa-check-circle');
+                  
+                  currentStep++;
+                  
+                  if (currentStep < steps.length) {
+                    setTimeout(updateStep, steps[currentStep - 1].delay);
+                  } else {
+                    // All steps completed - redirect immediately
+                    setTimeout(checkCompletion, 1000);
+                  }
+                }
+              }
+              
+              function checkCompletion() {
+                // Deployment iniciado - mostrar mensaje y redirigir
+                $('#progressBar').removeClass('progress-bar-animated').addClass('bg-info');
+                $('#progressBar').css('width', '100%').attr('aria-valuenow', 100);
+                $('#progressPercent').text('100%');
+                $('#progressMessage').html('<strong><i class="fas fa-rocket text-info"></i> Deployment Started!</strong><br><small>Redirecting to deployment history...</small>');
+                $('.spinner-border').hide();
+                
+                // Redirigir al historial después de 1 segundo
+                setTimeout(function() {
+                  // Usar la URL capturada del backend o fallback a /history/
+                  window.location.href = window.deploymentHistoryUrl || '/history/';
+                }, 1000);
+              }
+              
+              updateStep();
+            }
+            
+            // Simulate initial progress (extended for better UX)
+            function simulateInitialProgress() {
+              const steps = [
+                { step: 1, percent: 14, message: 'Connecting to vCenter...', delay: 1000 },
+                { step: 2, percent: 28, message: 'Cloning VM from template...', delay: 2000 },
+                { step: 3, percent: 42, message: 'Powering on VM...', delay: 2000 },
+                { step: 4, percent: 57, message: 'Running provisioning playbook...', delay: 3000 },
+                { step: 5, percent: 71, message: 'Configuring network and hostname...', delay: 2000 },
+                { step: 6, percent: 85, message: 'Scheduling system reboot...', delay: 1500 }
+              ];
+              
+              let currentStep = 0;
+              
+              function updateStep() {
+                if (currentStep < steps.length) {
+                  const s = steps[currentStep];
+                  
+                  // Update progress bar
+                  $('#progressBar').css('width', s.percent + '%').attr('aria-valuenow', s.percent);
+                  $('#progressPercent').text(s.percent + '%');
+                  
+                  // Update message
+                  $('#progressMessage').html(`<strong>Step ${s.step}/7:</strong> ${s.message}`);
+                  
+                  // Mark step as completed
+                  $('#step' + s.step + ' i').removeClass('text-muted').addClass('text-success').removeClass('fa-circle').addClass('fa-check-circle');
+                  
+                  currentStep++;
+                  
+                  if (currentStep < steps.length) {
+                    setTimeout(updateStep, steps[currentStep - 1].delay);
+                  } else {
+                    // Show final message
+                    $('#progressMessage').html('<strong>Dispatching to Celery...</strong> You will be redirected to the deployment history page.');
+                  }
+                }
+              }
+              
+              updateStep();
+            }
+          </script>
+          
+          <!-- Auto-open HTTP URL if httpd was installed -->
+          {% if request.session.auto_open_url %}
+            <a id="autoOpenLink" href="{{ request.session.auto_open_url }}" target="_blank" style="display:none;">Open HTTP</a>
+          {% endif %}
+          
+          <script>
+            $(document).ready(function() {
+              console.log('Checking for auto_open_url...');
+              {% if request.session.auto_open_url %}
+                console.log('Found auto_open_url: {{ request.session.auto_open_url }}');
+                // Wait a bit for the success message to be visible, then trigger click
+                setTimeout(function() {
+                  console.log('Auto-clicking link to open: {{ request.session.auto_open_url }}');
+                  var link = document.getElementById('autoOpenLink');
+                  if (link) {
+                    link.click();
+                    // Clear the session flag via AJAX to prevent reopening
+                    $.post('{% url "deploy:clear_auto_open" %}', {
+                      'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    });
+                  }
+                }, 1500);
+              {% else %}
+                console.log('No auto_open_url in session');
+              {% endif %}
+            });
+          </script>
+          
+          <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary btn-lg" id="deployButton">
+              <i class="fas fa-rocket"></i> Deploy VM
+            </button>
+          </div>
+        </form>
+        
+        <!-- Progress Area -->
+        <div id="progressArea" style="display:none;" class="mt-4">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0" id="progressTitle"><i class="fas fa-spinner fa-spin"></i> Deploying VM...</h5>
+            </div>
+            <div class="card-body">
+              <div class="progress" style="height: 30px;">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                  <span id="progressText">0%</span>
+                </div>
+              </div>
+              <p class="mt-3 mb-0" id="progressStatus">Initializing deployment...</p>
+              <p class="mt-2 mb-0 text-muted small" id="progressTime">Time elapsed: 0s</p>
+              
+              <!-- Real-time Output Collapsible -->
+              <div class="mt-3" id="realtimeOutputContainer" style="display:none;">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#realtimeOutput" aria-expanded="false" aria-controls="realtimeOutput">
+                  <i class="fas fa-terminal"></i> Show Real-time Output
+                </button>
+                <div class="collapse mt-2" id="realtimeOutput">
+                  <div class="card card-body bg-dark text-light" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <pre id="realtimeOutputContent" class="mb-0" style="color: #00ff00;"></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Result Area -->
+        <div id="resultArea" style="display:none;" class="mt-4">
+          <div class="card">
+            <div class="card-header" id="resultHeader">
+              <h5 class="card-title mb-0" id="resultTitle"></h5>
+            </div>
+            <div class="card-body">
+              <div id="resultContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

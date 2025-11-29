@@ -1,0 +1,19 @@
+[connection]
+id={{ net_if }}
+uuid={{ ansible_default_ipv4.macaddress | default('00:00:00:00:00:00') | replace(':', '') | hash('md5') }}
+type=ethernet
+interface-name={{ net_if }}
+autoconnect=true
+autoconnect-priority=999
+
+[ethernet]
+
+[ipv4]
+address1={{ new_ip }}/24
+gateway={{ new_gateway }}
+method=manual
+
+[ipv6]
+method=disabled
+
+[proxy]

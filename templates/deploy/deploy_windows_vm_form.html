@@ -1,0 +1,434 @@
+{% extends 'base/base.html' %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h2><i class="fab fa-windows"></i> Deploy Windows Server VM</h2>
+      </div>
+      <div class="card-body">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+        <form method="post" id="deployForm">
+          {% csrf_token %}
+          
+          <!-- vCenter Configuration -->
+          <div class="card mb-3">
+            <div class="card-header bg-secondary text-white">
+              <i class="fas fa-server"></i> vCenter Configuration
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="id_vcenter">vCenter:</label>
+                <select name="vcenter" id="id_vcenter" class="form-control" required>
+                  <option value="">Select vCenter...</option>
+                  {% for vc in vcenter_credentials %}
+                    <option value="{{ vc.id }}">{{ vc.name }} ({{ vc.host }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_datacenter">Datacenter:</label>
+                <select name="datacenter" id="id_datacenter" class="form-control" required>
+                  <option value="">Select datacenter...</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_cluster">Cluster:</label>
+                <select name="cluster" id="id_cluster" class="form-control" required>
+                  <option value="">Select cluster...</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_datastore">Datastore:</label>
+                <select name="datastore" id="id_datastore" class="form-control" required>
+                  <option value="">Select datastore...</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_folder">Folder (Optional):</label>
+                <select name="folder" id="id_folder" class="form-control">
+                  <option value="">Root folder</option>
+                </select>
+                <small class="form-text text-muted">Select a folder to organize the VM in vCenter. Leave empty to place in datacenter root.</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_network">Network:</label>
+                <select name="network" id="id_network" class="form-control" required>
+                  <option value="">Select network...</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_template">Windows Template:</label>
+                <select name="template" id="id_template" class="form-control" required>
+                  <option value="">Select Windows template...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Windows Configuration -->
+          <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+              <i class="fab fa-windows"></i> Windows Configuration
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="id_hostname">Hostname:</label>
+                <input type="text" name="hostname" id="id_hostname" class="form-control" required placeholder="WIN-SERVER01">
+                <small class="form-text text-muted">Windows hostname (max 15 characters)</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="id_windows_credential">Windows Credentials:</label>
+                <select name="windows_credential" id="id_windows_credential" class="form-control" required>
+                  <option value="">Select credentials...</option>
+                  {% for cred in windows_credentials %}
+                    <option value="{{ cred.id }}">{{ cred.name }} ({{ cred.username }})</option>
+                  {% endfor %}
+                </select>
+                <small class="form-text text-muted">Credentials for WinRM connection</small>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Network Configuration -->
+          <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+              <i class="fas fa-network-wired"></i> Network Configuration
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="id_ip">IP Address:</label>
+                <input type="text" name="ip" id="id_ip" class="form-control" required placeholder="10.100.18.100">
+                <small class="form-text text-muted">Gateway and DNS will be calculated automatically from IP</small>
+              </div>
+              
+              <!-- Hidden fields for auto-calculated values -->
+              <input type="hidden" name="gateway" id="id_gateway" value="">
+              <input type="hidden" name="dns1" id="id_dns1" value="8.8.8.8">
+              <input type="hidden" name="dns2" id="id_dns2" value="8.8.4.4">
+            </div>
+          </div>
+          
+          <div class="form-group text-center">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fab fa-windows"></i> Deploy Windows VM
+            </button>
+            <button type="button" class="btn btn-warning btn-lg" onclick="$('#deployForm')[0].reset(); $('#progressArea').hide();">
+              <i class="fas fa-redo"></i> Reset Form
+            </button>
+            <a href="{% url 'deploy:deploy_vm' %}" class="btn btn-secondary btn-lg">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+          </div>
+        </form>
+        
+        <!-- Progress Area -->
+        <div id="progressArea" style="display:none;" class="mt-4">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0" id="progressTitle"><i class="fas fa-spinner fa-spin"></i> Deploying VM...</h5>
+            </div>
+            <div class="card-body">
+              <div class="progress" style="height: 30px;">
+                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                  <span id="progressText">0%</span>
+                </div>
+              </div>
+              <p class="mt-3 mb-0" id="progressStatus">Initializing deployment...</p>
+              <p class="mt-2 mb-0 text-muted small" id="progressTime">Time elapsed: 0s</p>
+              
+              <!-- Real-time Output Collapsible -->
+              <div class="mt-3" id="realtimeOutputContainer" style="display:none;">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#realtimeOutput" aria-expanded="false" aria-controls="realtimeOutput">
+                  <i class="fas fa-terminal"></i> Show Real-time Output
+                </button>
+                <div class="collapse mt-2" id="realtimeOutput">
+                  <div class="card card-body bg-dark text-light" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <pre id="realtimeOutputContent" class="mb-0" style="color: #00ff00;"></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Result Area -->
+        <div id="resultArea" style="display:none;" class="mt-4">
+          <div class="card">
+            <div class="card-header" id="resultHeader">
+              <h5 class="card-title mb-0" id="resultTitle"></h5>
+            </div>
+            <div class="card-body">
+              <div id="resultContent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      // Auto-calculate gateway from IP
+      $('#id_ip').on('blur', function() {
+        var ip = $(this).val();
+        if (ip) {
+          // Extract first 3 octets and add .1
+          var parts = ip.split('.');
+          if (parts.length === 4) {
+            var gateway = parts[0] + '.' + parts[1] + '.' + parts[2] + '.1';
+            $('#id_gateway').val(gateway);
+          }
+        }
+      });
+      
+      // Load vCenter resources dynamically
+      $('#id_vcenter').change(function() {
+        var vcenterId = $(this).val();
+        if (vcenterId) {
+          // Load datacenters
+          $.get('/deploy/ajax/get_datacenters/', {vcenter: vcenterId}, function(data) {
+            $('#id_datacenter').html('<option value="">Select datacenter...</option>');
+            $.each(data.datacenters, function(i, dc) {
+              $('#id_datacenter').append('<option value="' + dc + '">' + dc + '</option>');
+            });
+          });
+        }
+      });
+      
+      $('#id_datacenter').change(function() {
+        var vcenterId = $('#id_vcenter').val();
+        var datacenter = $(this).val();
+        if (vcenterId && datacenter) {
+          // Load clusters
+          $.get('/deploy/ajax/get_clusters/', {vcenter: vcenterId, datacenter: datacenter}, function(data) {
+            $('#id_cluster').html('<option value="">Select cluster...</option>');
+            $.each(data.clusters, function(i, cluster) {
+              $('#id_cluster').append('<option value="' + cluster + '">' + cluster + '</option>');
+            });
+          });
+          
+          // Load folders
+          $.get('/deploy/ajax/get_folders/', {vcenter: vcenterId, datacenter: datacenter}, function(data) {
+            $('#id_folder').html('<option value="">Root folder</option>');
+            $.each(data.folders, function(i, folder) {
+              $('#id_folder').append('<option value="' + folder.path + '">' + folder.path + '</option>');
+            });
+          });
+        }
+      });
+      
+      $('#id_cluster').change(function() {
+        var vcenterId = $('#id_vcenter').val();
+        var datacenter = $('#id_datacenter').val();
+        var cluster = $(this).val();
+        if (vcenterId && datacenter && cluster) {
+          // Load datastores
+          $.get('/deploy/ajax/get_datastores/', {vcenter: vcenterId, datacenter: datacenter, cluster: cluster}, function(data) {
+            $('#id_datastore').html('<option value="">Select datastore...</option>');
+            $.each(data.datastores, function(i, ds) {
+              $('#id_datastore').append('<option value="' + ds + '">' + ds + '</option>');
+            });
+          });
+          
+          // Load networks
+          $.get('/deploy/ajax/get_networks/', {vcenter: vcenterId, datacenter: datacenter, cluster: cluster}, function(data) {
+            $('#id_network').html('<option value="">Select network...</option>');
+            $.each(data.networks, function(i, net) {
+              $('#id_network').append('<option value="' + net + '">' + net + '</option>');
+            });
+          });
+          
+          // Load templates (filter Windows templates)
+          $.get('/deploy/ajax/get_templates/', {vcenter: vcenterId, datacenter: datacenter}, function(data) {
+            $('#id_template').html('<option value="">Select Windows template...</option>');
+            $.each(data.templates, function(i, tmpl) {
+              // Filter templates that contain "Windows" or "WIN" in the name
+              if (tmpl.toLowerCase().includes('windows') || tmpl.toLowerCase().includes('win')) {
+                $('#id_template').append('<option value="' + tmpl + '">' + tmpl + '</option>');
+              }
+            });
+          });
+        }
+      });
+      
+      // Form submission with progress modal
+      $('#deployForm').submit(function(e) {
+        e.preventDefault(); // Prevent default form submission
+        
+        // Hide form and show progress area
+        $('#deployForm').hide();
+        $('#progressArea').show();
+        $('#resultArea').hide();
+        
+        // Show real-time output container
+        $('#realtimeOutputContainer').show();
+        $('#realtimeOutput').collapse('show');
+        
+        // Start time tracking
+        var startTime = Date.now();
+        var timeInterval = setInterval(function() {
+          var elapsed = Math.floor((Date.now() - startTime) / 1000);
+          var minutes = Math.floor(elapsed / 60);
+          var seconds = elapsed % 60;
+          var timeStr = (minutes > 0 ? minutes + 'm ' : '') + seconds + 's';
+          $('#progressTime').text('Time elapsed: ' + timeStr);
+        }, 1000);
+        
+        // Prepare form data
+        var formData = $(this).serialize();
+        
+        // Submit deployment via AJAX
+        $.ajax({
+          url: '{% url "deploy:deploy_windows_vm_run" %}',
+          type: 'POST',
+          data: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          success: function(response) {
+            if (response.success && response.history_id) {
+              // Start polling deployment status
+              $('#progressStatus').html('Deployment started! <small class="text-muted">Waiting for output...</small>');
+              $('#realtimeOutputContent').text('Waiting for deployment output...\n');
+              startDeploymentPolling(response.history_id, timeInterval);
+            } else {
+              // Backend returned error
+              clearInterval(timeInterval);
+              showDeploymentResult(false, response.error || 'Deployment failed to start', '', timeInterval);
+            }
+          },
+          error: function(xhr, status, error) {
+            // AJAX error
+            clearInterval(timeInterval);
+            showDeploymentResult(false, 'Error: ' + error, '', timeInterval);
+          }
+        });
+        
+        return false;
+      });
+      
+      // Function to poll deployment status
+      function startDeploymentPolling(historyId, timeInterval) {
+        var pollInterval = 3000; // Poll every 3 seconds
+        var pollCount = 0;
+        var maxPolls = 1000; // Max 50 minutes
+        
+        function checkStatus() {
+          pollCount++;
+          
+          // Update progress bar gradually
+          var progress = Math.min(95, 10 + (pollCount / maxPolls) * 85);
+          $('#progressBar').css('width', progress + '%');
+          $('#progressText').text(Math.floor(progress) + '%');
+          
+          $.ajax({
+            url: '/deploy/history-status/' + historyId + '/',
+            type: 'GET',
+            success: function(data) {
+              // Update real-time output
+              if (data.output && data.output.trim()) {
+                $('#realtimeOutputContent').text(data.output);
+                
+                // Auto-scroll to bottom
+                var pre = $('#realtimeOutputContent')[0];
+                if (pre) {
+                  pre.scrollTop = pre.scrollHeight;
+                }
+              }
+              
+              // Check if deployment is complete
+              if (data.status === 'success' || data.status === 'failed') {
+                // Stop time tracking
+                clearInterval(timeInterval);
+                
+                // Set progress to 100%
+                $('#progressBar').css('width', '100%');
+                $('#progressText').text('100%');
+                $('#progressStatus').text('Completed!');
+                
+                // Show result after 1 second
+                setTimeout(function() {
+                  showDeploymentResult(
+                    data.status === 'success',
+                    data.status === 'success' ? 'VM deployed successfully!' : 'Deployment failed',
+                    data.output || '',
+                    timeInterval
+                  );
+                }, 1000);
+              } else if (pollCount >= maxPolls) {
+                // Timeout
+                clearInterval(timeInterval);
+                showDeploymentResult(false, 'Polling timeout - deployment may still be running', data.output || '', timeInterval);
+              } else {
+                // Continue polling
+                setTimeout(checkStatus, pollInterval);
+              }
+            },
+            error: function() {
+              // On error, continue polling (deployment may still be running)
+              if (pollCount < maxPolls) {
+                setTimeout(checkStatus, pollInterval);
+              }
+            }
+          });
+        }
+        
+        // Start polling immediately
+        checkStatus();
+      }
+      
+      // Function to show deployment result
+      function showDeploymentResult(success, message, output, timeInterval) {
+        clearInterval(timeInterval);
+        $('#progressArea').hide();
+        $('#resultArea').show();
+        
+        if (success) {
+          $('#resultHeader').removeClass('bg-danger').addClass('bg-success text-white');
+          $('#resultTitle').html('<i class="fas fa-check-circle"></i> Deployment Successful');
+          
+          $('#resultContent').html(
+            '<div class="alert alert-success">' +
+            '<i class="fas fa-check-circle"></i> <strong>' + message + '</strong>' +
+            '</div>' +
+            '<pre class="bg-dark text-light p-3" style="max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 12px;">' +
+            (output || 'No output available') +
+            '</pre>' +
+            '<div class="mt-3">' +
+            '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="fas fa-list"></i> View Deployment History</a> ' +
+            '<button onclick="location.reload()" class="btn btn-secondary"><i class="fas fa-redo"></i> Deploy Another VM</button>' +
+            '</div>'
+          );
+        } else {
+          $('#resultHeader').removeClass('bg-success').addClass('bg-danger text-white');
+          $('#resultTitle').html('<i class="fas fa-times-circle"></i> Deployment Failed');
+          
+          $('#resultContent').html(
+            '<div class="alert alert-danger">' +
+            '<i class="fas fa-times-circle"></i> <strong>' + message + '</strong>' +
+            '</div>' +
+            '<pre class="bg-dark text-light p-3" style="max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 12px;">' +
+            (output || 'No output available') +
+            '</pre>' +
+            '<div class="mt-3">' +
+            '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="fas fa-list"></i> View Deployment History</a> ' +
+            '<button onclick="location.reload()" class="btn btn-secondary"><i class="fas fa-redo"></i> Try Again</button>' +
+            '</div>'
+          );
+        }
+      }
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Upload Playbook{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload"></i> Upload Playbook File
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Note:</strong> Upload an existing playbook YAML file (.yml or .yaml). 
+                        If you want to create a new playbook with inline editing, use 
+                        <a href="{% url 'playbook_create' %}" class="alert-link">Create Playbook</a> instead.
+                    </div>
+                    
+                    <form method="post" enctype="multipart/form-data" id="uploadForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        {{ form.name.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.playbook_type.id_for_label }}" class="form-label">
+                                        {{ form.playbook_type.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.playbook_type }}
+                                    {% if form.playbook_type.errors %}
+                                        <div class="text-danger">{{ form.playbook_type.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.playbook_type.help_text }}</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="{{ form.os_family.id_for_label }}" class="form-label">
+                                        {{ form.os_family.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.os_family }}
+                                    {% if form.os_family.errors %}
+                                        <div class="text-danger">{{ form.os_family.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{{ form.os_family.help_text }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.file.id_for_label }}" class="form-label">
+                                {{ form.file.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.file }}
+                            {% if form.file.errors %}
+                                <div class="text-danger">{{ form.file.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.file.help_text }}</small>
+                        </div>
+                        
+                        <div id="filePreview" class="alert alert-secondary d-none">
+                            <strong>Selected file:</strong> <span id="fileName"></span>
+                            <br>
+                            <strong>Size:</strong> <span id="fileSize"></span>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'playbook_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload"></i> Upload Playbook
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.querySelector('input[type="file"]');
+    const nameInput = document.querySelector('input[name="name"]');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Show file preview
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                document.getElementById('filePreview').classList.remove('d-none');
+                
+                // Auto-fill name from filename (without extension)
+                if (!nameInput.value) {
+                    const nameWithoutExt = file.name.replace(/\.(yml|yaml)$/i, '');
+                    nameInput.value = nameWithoutExt;
+                }
+            } else {
+                document.getElementById('filePreview').classList.add('d-none');
+            }
+        });
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

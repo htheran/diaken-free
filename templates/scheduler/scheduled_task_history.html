@@ -1,0 +1,208 @@
+{% extends 'base/base.html' %}
+{% block title %}Scheduled Task History{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="card-title mb-0"><i class="fas fa-history"></i> Scheduled Task Execution History</h3>
+      <a href="{% url 'history:cleanup_stuck_deployments' %}" class="btn btn-warning btn-sm">
+        <i class="fas fa-broom"></i> Cleanup Stuck Deployments
+      </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card-body">
+      <form method="get" class="form-inline mb-3">
+        <label class="mr-2"><i class="fas fa-filter"></i> Filters:</label>
+        
+        <select name="status" class="form-control form-control-sm mr-2">
+          <option value="">All Status</option>
+          <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Success</option>
+          <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+        </select>
+        
+        <select name="task_type" class="form-control form-control-sm mr-2">
+          <option value="">All Types</option>
+          <option value="host" {% if task_type_filter == 'host' %}selected{% endif %}>Host</option>
+          <option value="group" {% if task_type_filter == 'group' %}selected{% endif %}>Group</option>
+        </select>
+        
+        <label class="mr-2">From:</label>
+        <input type="date" name="date_from" class="form-control form-control-sm mr-2" value="{{ date_from }}">
+        
+        <label class="mr-2">To:</label>
+        <input type="date" name="date_to" class="form-control form-control-sm mr-2" value="{{ date_to }}">
+        
+        <button type="submit" class="btn btn-primary btn-sm mr-2"><i class="fas fa-search"></i> Filter</button>
+        <a href="{% url 'scheduled_task_history' %}" class="btn btn-secondary btn-sm"><i class="fas fa-eraser"></i> Clear</a>
+      </form>
+    </div>
+    
+    <!-- Table -->
+    <div class="card-body p-0">
+      <table class="table table-hover table-sm mb-0">
+        <thead class="thead-light">
+          <tr>
+            <th style="width: 10%">User</th>
+            <th style="width: 10%">Environment</th>
+            <th style="width: 15%">Target</th>
+            <th style="width: 15%">Playbook</th>
+            <th style="width: 12%">Scheduled For</th>
+            <th style="width: 12%">Executed At</th>
+            <th style="width: 8%">Duration</th>
+            <th style="width: 8%" class="text-center">Status</th>
+            <th style="width: 10%" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in history %}
+          <tr>
+            <td><i class="fas fa-user"></i> {% if h.scheduled_task and h.scheduled_task.created_by %}{{ h.scheduled_task.created_by.username }}{% else %}Unknown{% endif %}</td>
+            <td><span class="badge badge-info">{{ h.environment_name|default:"N/A" }}</span></td>
+            <td>
+              {% if h.task_type == 'host' %}
+                <i class="fas fa-desktop"></i>
+              {% else %}
+                <i class="fas fa-users"></i>
+              {% endif %}
+              <strong>{{ h.target_name }}</strong>
+              <span class="badge badge-secondary">{{ h.task_type|title }}</span>
+              {% if h.target_ip %}
+                <br><small class="text-muted">{{ h.target_ip }}</small>
+              {% endif %}
+            </td>
+            <td><i class="fas fa-file-code"></i> {{ h.playbook_name }}</td>
+            <td><i class="far fa-calendar"></i> {{ h.scheduled_for|date:"d/m/Y H:i:s" }}</td>
+            <td><i class="far fa-clock"></i> {{ h.executed_at|date:"d/m/Y H:i:s" }}</td>
+            <td>
+              {% if h.execution_duration %}
+                <i class="fas fa-stopwatch"></i> {{ h.execution_duration }}s
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td class="text-center">
+              {% if h.status == 'success' %}
+                <span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>
+              {% elif h.status == 'failed' %}
+                <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+              {% else %}
+                {% if h.is_stuck %}
+                  <span class="badge badge-danger" title="Running for {{ h.running_hours|floatformat:1 }} hours">
+                    <i class="fas fa-exclamation-triangle"></i> Stuck ({{ h.running_hours|floatformat:1 }}h)
+                  </span>
+                {% else %}
+                  <span class="badge badge-warning"><i class="fas fa-spinner fa-spin"></i> Running</span>
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'scheduled_task_history_detail' h.id %}" class="btn btn-sm btn-primary" title="View Details">
+                <i class="fas fa-eye"></i> View
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center text-muted">No execution history found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh for running scheduled tasks (AJAX - no page reload)
+$(document).ready(function() {
+  // Find all running tasks and store their IDs
+  var runningTasks = [];
+  $('tbody tr').each(function() {
+    var statusCell = $(this).find('td:nth-child(8)');
+    var statusBadge = statusCell.find('.badge-warning:contains("Running")');
+    
+    if (statusBadge.length > 0) {
+      // Extract history ID from the View button URL
+      var viewButton = $(this).find('a[href*="/scheduler/history/"]');
+      if (viewButton.length > 0) {
+        var href = viewButton.attr('href');
+        var historyId = href.match(/\/scheduler\/history\/(\d+)\//);
+        if (historyId && historyId[1]) {
+          runningTasks.push({
+            id: historyId[1],
+            row: $(this),
+            statusCell: statusCell
+          });
+        }
+      }
+    }
+  });
+  
+  if (runningTasks.length > 0) {
+    console.log('Found ' + runningTasks.length + ' running scheduled task(s), enabling auto-refresh...');
+    
+    // Check status every 5 seconds
+    var refreshInterval = setInterval(function() {
+      // Check each running task
+      runningTasks.forEach(function(task) {
+        $.ajax({
+          url: '/scheduler/history/' + task.id + '/status/',
+          type: 'GET',
+          success: function(data) {
+            // Update badge if status changed
+            if (data.status === 'success') {
+              task.statusCell.html('<span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>');
+              console.log('Scheduled task history ' + task.id + ' completed successfully');
+              
+              // Update duration if available
+              if (data.execution_duration) {
+                var durationCell = task.row.find('td:nth-child(7)');
+                durationCell.html('<i class="fas fa-stopwatch"></i> ' + data.execution_duration + 's');
+              }
+              
+              // Remove from running list
+              runningTasks = runningTasks.filter(function(t) {
+                return t.id !== task.id;
+              });
+              
+            } else if (data.status === 'failed') {
+              task.statusCell.html('<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>');
+              console.log('Scheduled task history ' + task.id + ' failed');
+              
+              // Update duration if available
+              if (data.execution_duration) {
+                var durationCell = task.row.find('td:nth-child(7)');
+                durationCell.html('<i class="fas fa-stopwatch"></i> ' + data.execution_duration + 's');
+              }
+              
+              // Remove from running list
+              runningTasks = runningTasks.filter(function(t) {
+                return t.id !== task.id;
+              });
+            }
+          },
+          error: function(xhr, status, error) {
+            console.error('Error checking status for scheduled task history ' + task.id + ':', error);
+          }
+        });
+      });
+      
+      // Stop polling if no more running tasks
+      if (runningTasks.length === 0) {
+        clearInterval(refreshInterval);
+        console.log('All scheduled tasks completed, stopping auto-refresh');
+      }
+    }, 5000); // Check every 5 seconds
+    
+    // Stop after 1 hour to prevent infinite polling
+    setTimeout(function() {
+      clearInterval(refreshInterval);
+      console.log('Auto-refresh stopped after 1 hour');
+    }, 3600000);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,433 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  .chart-container {
+    position: relative;
+    height: 400px;
+    margin-bottom: 20px;
+  }
+  .filter-controls {
+    background-color: #f8f9fc;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  .top-playbook-item {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background-color: #f8f9fc;
+    border-left: 4px solid #4e73df;
+  }
+  .playbook-name {
+    font-weight: bold;
+    color: #2e59d9;
+  }
+  .playbook-count {
+    float: right;
+    font-weight: bold;
+    color: #5a5c69;
+  }
+  .os-chart-container {
+    height: 220px;
+  }
+  .info-card {
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  .info-card-icon {
+    font-size: 2.5rem;
+    opacity: 0.3;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2><i class="fas fa-tachometer-alt mr-2"></i>Dashboard</h2>
+    </div>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="filter-controls">
+        <form id="filterForm" class="form-inline" method="get">
+          <div class="form-group mr-3">
+            <label for="daysFilter" class="mr-2"><i class="fas fa-calendar-alt mr-1"></i>Period:</label>
+            <select id="daysFilter" name="days" class="form-control" onchange="this.form.submit()">
+              <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 Days</option>
+              <option value="14" {% if days == 14 %}selected{% endif %}>Last 14 Days</option>
+              <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+              <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 Days</option>
+            </select>
+          </div>
+          <span class="ml-3 text-muted">
+            <i class="fas fa-calendar-check mr-1"></i> {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}
+          </span>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 1: Inventory Statistics Cards -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="mb-3"><i class="fas fa-database mr-2"></i>Inventory Overview</h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <!-- Total Playbooks -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Playbooks</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_playbooks }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-book fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Hosts -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Hosts</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_hosts }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-server fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total vCenters -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">vCenters</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_vcenters }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-cloud fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Environments -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Environments</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_environments }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-layer-group fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Groups -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-danger shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Groups</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_groups }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-users fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OS Types -->
+    <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-secondary shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">OS Types</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ os_types_count }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fab fa-linux fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Execution Statistics -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="mb-3"><i class="fas fa-chart-line mr-2"></i>Execution Statistics (Last {{ days }} Days)</h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <!-- Total Executions -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Executions</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_executions }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Rate -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Success Rate</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ success_rate }}%</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Successful Executions -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Successful</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ successful_executions }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-thumbs-up fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Failed Executions -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-danger shadow h-100 py-2 stat-card">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Failed</div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">{{ failed_executions }}</div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="row">
+    <!-- Main Chart: Executions by Day -->
+    <div class="col-xl-8 col-lg-7">
+      <div class="card shadow mb-4 stat-card">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-chart-bar mr-2"></i>Playbook Executions by Day
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="executionsHistogram"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Charts -->
+    <div class="col-xl-4 col-lg-5">
+      <!-- Top Playbooks -->
+      <div class="card shadow mb-4 stat-card">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list mr-2"></i>Top Playbooks
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if top_playbooks %}
+            {% for item in top_playbooks %}
+            <div class="top-playbook-item">
+              <span class="playbook-name">{{ item.playbook|default:"Unknown"|truncatechars:30 }}</span>
+              <span class="playbook-count">{{ item.count }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center text-muted py-3">
+              <i class="fas fa-info-circle mr-1"></i>No data available
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- OS Distribution -->
+      <div class="card shadow mb-4 stat-card">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-server mr-2"></i>OS Distribution
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="os-chart-container">
+            <canvas id="osDistributionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Main Executions Chart
+  let labels = {{ labels|safe }};
+  let datasets = {{ datasets|safe }};
+  let ctx = document.getElementById('executionsHistogram').getContext('2d');
+  
+  // Format dates for better visualization
+  const formattedLabels = labels.map(date => {
+    const parts = date.split('-');
+    return `${parts[2]}/${parts[1]}`; // Format DD/MM
+  });
+  
+  // Main chart configuration
+  let executionsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: formattedLabels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            font: {
+              size: 12
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            title: function(tooltipItems) {
+              const idx = tooltipItems[0].dataIndex;
+              return labels[idx];
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+  
+  // OS Distribution Chart
+  let osData = {{ os_data_json|safe }};
+  let osCtx = document.getElementById('osDistributionChart').getContext('2d');
+  
+  let osChart = new Chart(osCtx, {
+    type: 'doughnut',
+    data: {
+      labels: osData.labels,
+      datasets: [{
+        data: osData.data,
+        backgroundColor: osData.colors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            font: {
+              size: 12
+            }
+          }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+</script>
+{% endblock %}

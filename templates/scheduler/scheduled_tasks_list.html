@@ -1,0 +1,184 @@
+{% extends 'base/base.html' %}
+{% block title %}Scheduled Tasks{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Scheduled Tasks</h3>
+    </div>
+    <div class="card-body">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      
+      <!-- Filter by status -->
+      <div class="mb-3">
+        <label>Filter by Status:</label>
+        <div class="btn-group" role="group">
+          <a href="{% url 'scheduled_tasks_list' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">All</a>
+          <a href="{% url 'scheduled_tasks_list' %}?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-warning{% else %}btn-outline-warning{% endif %}">Pending</a>
+          <a href="{% url 'scheduled_tasks_list' %}?status=running" class="btn btn-sm {% if status_filter == 'running' %}btn-info{% else %}btn-outline-info{% endif %}">In Progress</a>
+          <a href="{% url 'scheduled_tasks_list' %}?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-success{% else %}btn-outline-success{% endif %}">Completed</a>
+          <a href="{% url 'scheduled_tasks_list' %}?status=failed" class="btn btn-sm {% if status_filter == 'failed' %}btn-danger{% else %}btn-outline-danger{% endif %}">Failed</a>
+          <a href="{% url 'scheduled_tasks_list' %}?status=cancelled" class="btn btn-sm {% if status_filter == 'cancelled' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Cancelled</a>
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>Task Name</th>
+              <th>Type</th>
+              <th>Target</th>
+              <th>Playbook/Script</th>
+              <th>Scheduled For</th>
+              <th>Status</th>
+              <th>Created By</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+              <tr data-task-id="{{ task.id }}">
+                <td>{{ task.name }}</td>
+                <td>
+                  {% if task.task_type == 'host' %}
+                    <span class="badge badge-info">Host</span>
+                  {% else %}
+                    <span class="badge badge-primary">Group</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if task.task_type == 'host' and task.host %}
+                    {{ task.host.name }} ({{ task.host.ip }})
+                  {% elif task.task_type == 'group' and task.group %}
+                    {{ task.group.name }}
+                  {% else %}
+                    Unknown
+                  {% endif %}
+                </td>
+                <td>
+                  {% if task.execution_type == 'script' and task.script %}
+                    {{ task.script.name }}
+                  {% elif task.playbook %}
+                    {{ task.playbook.name }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td>{{ task.scheduled_datetime|date:"Y-m-d H:i:s" }}</td>
+                <td class="task-status" data-status="{{ task.status }}">
+                  {% if task.status == 'pending' %}
+                    <span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>
+                  {% elif task.status == 'running' %}
+                    <span class="badge badge-info"><i class="fas fa-spinner fa-spin"></i> In Progress</span>
+                  {% elif task.status == 'completed' %}
+                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>
+                  {% elif task.status == 'failed' %}
+                    <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+                  {% elif task.status == 'cancelled' %}
+                    <span class="badge badge-secondary"><i class="fas fa-ban"></i> Cancelled</span>
+                  {% endif %}
+                </td>
+                <td>{{ task.created_by.username }}</td>
+                <td>
+                  {% if task.status == 'pending' %}
+                    <a href="{% url 'cancel_scheduled_task' task.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this task?')">
+                      <i class="fas fa-times"></i> Cancel
+                    </a>
+                  {% endif %}
+                  {% if task.scheduled_task_history_id %}
+                    <a href="/scheduler/history/{{ task.scheduled_task_history_id }}/" class="btn btn-sm btn-info">
+                      <i class="fas fa-eye"></i> View Result
+                    </a>
+                  {% elif task.deployment_history_id %}
+                    <a href="/scheduler/history/{{ task.id }}/" class="btn btn-sm btn-info">
+                      <i class="fas fa-eye"></i> View Result
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center">No scheduled tasks found</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  // Auto-refresh task status every 5 seconds
+  function refreshTaskStatus() {
+    $('tbody tr').each(function() {
+      var $row = $(this);
+      var taskId = $row.data('task-id');
+      
+      if (!taskId) return;
+      
+      var currentStatus = $row.find('.task-status').data('status');
+      
+      // Only refresh if task is pending or running
+      if (currentStatus === 'pending' || currentStatus === 'running') {
+        $.ajax({
+          url: '/scheduler/tasks/' + taskId + '/status/',
+          method: 'GET',
+          success: function(response) {
+            if (response.status !== currentStatus) {
+              var $statusCell = $row.find('.task-status');
+              $statusCell.data('status', response.status);
+              
+              var badgeHtml = '';
+              if (response.status === 'pending') {
+                badgeHtml = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>';
+              } else if (response.status === 'running') {
+                badgeHtml = '<span class="badge badge-info"><i class="fas fa-spinner fa-spin"></i> In Progress</span>';
+              } else if (response.status === 'completed') {
+                badgeHtml = '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>';
+                if (response.history_id && !$row.find('.view-result-btn').length) {
+                  $row.find('td:last').append(
+                    ' <a href="/scheduler/history/' + response.history_id + '/" class="btn btn-sm btn-info view-result-btn">' +
+                    '<i class="fas fa-eye"></i> View Result</a>'
+                  );
+                }
+              } else if (response.status === 'failed') {
+                badgeHtml = '<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>';
+                if (response.history_id && !$row.find('.view-result-btn').length) {
+                  $row.find('td:last').append(
+                    ' <a href="/scheduler/history/' + response.history_id + '/" class="btn btn-sm btn-info view-result-btn">' +
+                    '<i class="fas fa-eye"></i> View Result</a>'
+                  );
+                }
+              } else if (response.status === 'cancelled') {
+                badgeHtml = '<span class="badge badge-secondary"><i class="fas fa-ban"></i> Cancelled</span>';
+              }
+              
+              $statusCell.html(badgeHtml);
+              
+              // Highlight row briefly
+              $row.addClass('table-success');
+              setTimeout(function() {
+                $row.removeClass('table-success');
+              }, 2000);
+            }
+          }
+        });
+      }
+    });
+  }
+  
+  // Refresh every 5 seconds
+  setInterval(refreshTaskStatus, 5000);
+  
+  // Initial refresh after 2 seconds
+  setTimeout(refreshTaskStatus, 2000);
+});
+</script>
+{% endblock %}

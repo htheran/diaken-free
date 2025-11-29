@@ -1,0 +1,171 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Webhook - Diaken{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="fas fa-bell"></i> {{ action }} Microsoft Teams Webhook</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'notifications:webhook_list' %}">Webhooks</a></li>
+                    <li class="breadcrumb-item active">{{ action }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fab fa-microsoft"></i> Webhook Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                            <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                            {% endif %}
+                            {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.webhook_url.id_for_label }}" class="form-label">
+                                {{ form.webhook_url.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.webhook_url }}
+                            {% if form.webhook_url.help_text %}
+                            <small class="form-text text-muted">{{ form.webhook_url.help_text }}</small>
+                            {% endif %}
+                            {% if form.webhook_url.errors %}
+                            <div class="text-danger">{{ form.webhook_url.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.active }}
+                                <label class="form-check-label" for="{{ form.active.id_for_label }}">
+                                    {{ form.active.label }}
+                                </label>
+                                {% if form.active.help_text %}
+                                <small class="form-text text-muted d-block">{{ form.active.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h6><i class="fas fa-cog"></i> Notification Preferences</h6>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.notify_deployments }}
+                                <label class="form-check-label" for="{{ form.notify_deployments.id_for_label }}">
+                                    <i class="fas fa-server text-info"></i> {{ form.notify_deployments.label }}
+                                </label>
+                                {% if form.notify_deployments.help_text %}
+                                <small class="form-text text-muted d-block">{{ form.notify_deployments.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.notify_playbook_executions }}
+                                <label class="form-check-label" for="{{ form.notify_playbook_executions.id_for_label }}">
+                                    <i class="fas fa-play text-primary"></i> {{ form.notify_playbook_executions.label }}
+                                </label>
+                                {% if form.notify_playbook_executions.help_text %}
+                                <small class="form-text text-muted d-block">{{ form.notify_playbook_executions.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.notify_scheduled_tasks }}
+                                <label class="form-check-label" for="{{ form.notify_scheduled_tasks.id_for_label }}">
+                                    <i class="fas fa-clock text-warning"></i> {{ form.notify_scheduled_tasks.label }}
+                                </label>
+                                {% if form.notify_scheduled_tasks.help_text %}
+                                <small class="form-text text-muted d-block">{{ form.notify_scheduled_tasks.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.notify_failures_only }}
+                                <label class="form-check-label" for="{{ form.notify_failures_only.id_for_label }}">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i> {{ form.notify_failures_only.label }}
+                                </label>
+                                {% if form.notify_failures_only.help_text %}
+                                <small class="form-text text-muted d-block">{{ form.notify_failures_only.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'notifications:webhook_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Webhook
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle"></i> Help</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Getting Your Webhook URL</h6>
+                    <ol class="small">
+                        <li>Open Microsoft Teams</li>
+                        <li>Go to your channel</li>
+                        <li>Click <strong>•••</strong> → <strong>Connectors</strong></li>
+                        <li>Configure <strong>Incoming Webhook</strong></li>
+                        <li>Copy the URL</li>
+                    </ol>
+
+                    <hr>
+
+                    <h6>Notification Types</h6>
+                    <ul class="small">
+                        <li><strong>VM Deployments:</strong> New VM creation events</li>
+                        <li><strong>Playbook Executions:</strong> Manual playbook runs</li>
+                        <li><strong>Scheduled Tasks:</strong> Automated scheduled executions</li>
+                    </ul>
+
+                    <hr>
+
+                    <h6>Failures Only</h6>
+                    <p class="small">
+                        When enabled, only failed executions will trigger notifications.
+                        Useful for monitoring production environments.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

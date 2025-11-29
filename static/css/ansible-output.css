@@ -1,0 +1,153 @@
+/* Ansible Output Styling - Terminal-like appearance */
+
+.ansible-output {
+    background-color: #2d2d30;
+    color: #d4d4d4;
+    padding: 20px;
+    border-radius: 5px;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+    border: 1px solid #3e3e42;
+}
+
+/* Success checkmark */
+.ansible-success-icon {
+    color: #4ec9b0;
+    font-weight: bold;
+}
+
+/* PLAY sections */
+.ansible-play {
+    margin: 15px 0;
+    color: #ffffff;
+}
+
+.ansible-play-text {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.ansible-highlight {
+    color: #dcdcaa;
+}
+
+/* TASK sections */
+.ansible-task {
+    margin: 10px 0;
+    color: #4fc1ff;
+}
+
+.ansible-task-text {
+    color: #4fc1ff;
+    font-weight: bold;
+}
+
+.ansible-task-name {
+    color: #ce9178;
+}
+
+/* Status indicators */
+.ansible-ok {
+    color: #4ec9b0;
+}
+
+.ansible-changed {
+    color: #ce9178;
+}
+
+.ansible-fatal {
+    color: #f48771;
+    font-weight: bold;
+}
+
+.ansible-skipping {
+    color: #569cd6;
+}
+
+.ansible-host {
+    color: #9cdcfe;
+}
+
+/* PLAY RECAP */
+.ansible-recap {
+    color: #ffffff;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+/* Statistics */
+.ansible-stats {
+    color: #d4d4d4;
+}
+
+/* Warnings and errors */
+.ansible-warning {
+    color: #dcdcaa;
+}
+
+.ansible-error {
+    color: #f48771;
+}
+
+/* Command output */
+.ansible-cmd {
+    color: #d4d4d4;
+    margin-left: 20px;
+}
+
+/* Messages */
+.ansible-msg {
+    color: #ce9178;
+    margin-left: 20px;
+}
+
+/* Separators (asterisks) */
+.ansible-separator {
+    color: #808080;
+}
+
+/* Section headers (=== PROVISIONING PLAYBOOK ===) */
+.ansible-section-header {
+    color: #4fc1ff;
+    font-weight: bold;
+    margin: 20px 0 10px 0;
+    font-size: 14px;
+}
+
+/* STDOUT/STDERR labels */
+.ansible-output-label {
+    color: #569cd6;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* Statistics in PLAY RECAP */
+.ansible-stat-ok {
+    color: #4ec9b0;
+}
+
+.ansible-stat-changed {
+    color: #ce9178;
+}
+
+.ansible-stat-unreachable {
+    color: #f48771;
+}
+
+.ansible-stat-failed {
+    color: #f48771;
+}
+
+.ansible-stat-skipped {
+    color: #569cd6;
+}
+
+/* Failed status */
+.ansible-failed {
+    color: #f48771;
+    font-weight: bold;
+}

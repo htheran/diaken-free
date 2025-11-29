@@ -1,0 +1,196 @@
+---
+- name: Autodetectar y montar nuevo disco VMware
+  hosts: target_host
+  become: yes
+  vars:
+    mount_point: "{{ mount_point }}"     # Must come from Django global settings
+    fstype: "{{ fstype }}"                # Must come from Django global settings (xfs recommended)
+    min_size: "{{ min_size }}"            # Must come from Django global settings
+    max_size: "{{ max_size }}"            # Must come from Django global settings
+    log_file: "{{ log_file }}"            # Must come from Django global settings
+
+  tasks:
+    - name: Crear log vacío con timestamp
+      copy:
+        dest: "{{ log_file }}"
+        content: "==== Inicio: {{ ansible_date_time.iso8601 }} ====\n"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Obtener lista de discos físicos sin particiones ni montaje (nuevo disco)
+      shell: |
+        ROOT_DEV=$(findmnt -n -o SOURCE / | sed 's/\([0-9]*\)$//' | sed 's/\/dev\///')
+        for d in $(lsblk -dn -o NAME,TYPE | awk '$2=="disk" {print $1}'); do
+          if [ "$d" != "$ROOT_DEV" ]; then
+            if ! lsblk -no MOUNTPOINT "/dev/$d" | grep -qv '^$'; then
+              if [ $(lsblk -n "/dev/$d" | wc -l) -eq 1 ]; then
+                echo "/dev/$d"
+              fi
+            fi
+          fi
+        done
+      register: new_disk
+      changed_when: false
+
+    - name: Asignar disco detectado
+      set_fact:
+        device: "{{ new_disk.stdout_lines | first | default('') }}"
+
+    - name: Validar que se detectó el disco nuevo
+      fail:
+        msg: "No se detectó un disco nuevo o disponible."
+      when: device == ""
+
+    - name: Obtener tamaño en bytes del disco seleccionado
+      shell: "lsblk -bn -o SIZE {{ device }}"
+      register: disk_size_raw
+      changed_when: false
+
+    - name: Convertir tamaño a GB (float)
+      set_fact:
+        disk_size_gb: "{{ (disk_size_raw.stdout | int // 1024 // 1024 // 1024) | float }}"
+
+    - name: Validar rango de tamaño de disco
+      fail:
+        msg: "El disco {{ device }} tiene {{ disk_size_gb }} GB, fuera del rango permitido ({{ min_size }}-{{ max_size }} GB)."
+      when: (disk_size_gb | float) < (min_size | float) or (disk_size_gb | float) > (max_size | float)
+
+    - name: Proteger contra el uso del disco raíz
+      shell: "findmnt -n -o SOURCE /"
+      register: rootdev
+      changed_when: false
+
+    - name: Fallar si el disco detectado es el raíz
+      fail:
+        msg: "ERROR: Disco detectado coincide con disco raíz. Abortando."
+      when: device == rootdev.stdout
+
+    - name: Crear partición primaria si no existe (idempotente)
+      community.general.parted:
+        device: "{{ device }}"
+        number: 1
+        state: present
+        part_type: primary
+        align: optimal
+      register: parted_result
+
+    - name: Esperar existencia de la partición
+      wait_for:
+        path: "{{ device }}1"
+        timeout: 10
+
+    - name: Definir nombre de la partición
+      set_fact:
+        partition: "{{ device }}1"
+
+    - name: Validar que la partición fue creada
+      stat:
+        path: "{{ partition }}"
+      register: stat_partition
+
+    - name: Fallar si partición no existe
+      fail:
+        msg: "La partición {{ partition }} no existe tras crearla."
+      when: not stat_partition.stat.exists
+
+    - name: Revisar si la partición tiene filesystem
+      command: lsblk -no FSTYPE "{{ partition }}"
+      register: partition_fstype
+      changed_when: false
+      failed_when: false
+
+    - name: Formatear partición si no tiene filesystem
+      filesystem:
+        fstype: "{{ fstype }}"
+        dev: "{{ partition }}"
+        opts: "-L DATA_DISK"  # Add label for easy identification
+      when: partition_fstype.stdout == ""
+      register: format_result
+    
+    - name: Verificar formato exitoso
+      command: "lsblk -no FSTYPE {{ partition }}"
+      register: verify_format
+      changed_when: false
+      failed_when: verify_format.stdout != fstype
+
+    - name: Respaldar fstab
+      copy:
+        src: /etc/fstab
+        dest: "/etc/fstab.bak.{{ ansible_date_time.epoch }}"
+        remote_src: true
+
+    - name: Obtener UUID de la partición para fstab
+      command: "blkid -s UUID -o value {{ partition }}"
+      register: partition_uuid_for_mount
+      changed_when: false
+    
+    - name: Crear punto de montaje si no existe
+      file:
+        path: "{{ mount_point }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Montar y asegurar persistencia de la partición usando UUID
+      mount:
+        path: "{{ mount_point }}"
+        src: "UUID={{ partition_uuid_for_mount.stdout }}"
+        fstype: "{{ fstype }}"
+        opts: "defaults,noatime,nodiratime"
+        state: mounted
+        passno: 2  # Enable fsck check on boot (after root filesystem)
+      register: mount_result
+    
+    - name: Verificar que el montaje fue exitoso
+      command: "findmnt -n {{ mount_point }}"
+      register: verify_mount
+      changed_when: false
+      failed_when: verify_mount.rc != 0
+
+    - name: Mostrar uso de espacio en {{ mount_point }}
+      command: df -h "{{ mount_point }}"
+      register: df_opt
+      changed_when: false
+
+    - name: Obtener UUID de la partición
+      command: "blkid -s UUID -o value {{ partition }}"
+      register: partition_uuid
+      changed_when: false
+      failed_when: false
+    
+    - name: Obtener label de la partición
+      command: "blkid -s LABEL -o value {{ partition }}"
+      register: partition_label
+      changed_when: false
+      failed_when: false
+    
+    - name: Registrar resumen final en log
+      lineinfile:
+        path: "{{ log_file }}"
+        insertafter: EOF
+        line: |
+          ==== Resumen final ====
+          Disco detectado: {{ device }}
+          Partición: {{ partition }}
+          Filesystem: {{ fstype }}
+          Label: {{ partition_label.stdout | default('N/A') }}
+          UUID: {{ partition_uuid.stdout | default('N/A') }}
+          Tamaño: {{ disk_size_gb }} GB
+          Punto de montaje: {{ mount_point }}
+          Opciones de montaje: defaults,noatime,nodiratime
+          Estado: Montado y persistente en /etc/fstab
+          Uso de espacio:
+          {{ df_opt.stdout }}
+          ==== Fin ejecución: {{ ansible_date_time.iso8601 }} ====
+
+    - name: Leer el contenido del log generado
+      ansible.builtin.slurp:
+        src: "{{ log_file }}"
+      register: mount_log
+
+    - name: Mostrar log de ejecución en formato legible
+      debug:
+        msg: "{{ mount_log.content | b64decode | string | split('\n') }}"
+

@@ -1,0 +1,20 @@
+# Archivo generado automáticamente por Ansible
+# Plantilla Netplan para Debian/Ubuntu
+# =====================================
+
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    {{ net_if_to_use }}:
+      dhcp4: no
+      addresses:
+        - {{ new_ip }}/24
+      routes:
+        - to: default
+          via: {{ calculated_gateway }}
+      nameservers:
+        addresses:
+{% for ns in nameservers_list %}
+          - {{ ns }}
+{% endfor %}

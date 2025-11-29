@@ -1,0 +1,721 @@
+---
+- name: Windows Server Update with native PowerShell and elevated privileges
+  hosts: windows_hosts
+  gather_facts: no
+  vars:
+    update_folder: 'C:\\Ansible_Update'
+    ansible_become: yes
+    ansible_become_method: runas
+    ansible_become_user: SYSTEM
+  tasks:
+
+  - name: Get server hostname
+    ansible.windows.win_shell: hostname
+    register: hostname_result
+
+  - name: Get current date and time from Windows server
+    ansible.windows.win_shell: Get-Date -Format yyyyMMdd_HHmmss
+    register: datetime_result
+
+  # NOTE: Snapshot is automatically created by Django before executing this playbook
+  # See: /opt/www/app/deploy/views_playbook_windows.py lines 140-146
+
+  - name: Create Ansible_Update folder if it doesn't exist
+    ansible.windows.win_file:
+      path: "{{ update_folder }}"
+      state: directory
+
+  - name: Initial report - Diagnostic with native PowerShell
+    ansible.windows.win_shell: |
+      # Run with elevated privileges
+      $ErrorActionPreference = "Continue"
+      
+      Write-Output "="*80
+      Write-Output "INITIAL REPORT - COMPLETE DIAGNOSTIC (Native PowerShell)"
+      Write-Output "="*80
+      Write-Output ""
+      Write-Output "Server: $env:COMPUTERNAME"
+      Write-Output "Date/Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+      Write-Output "Current User: $env:USERNAME"
+      Write-Output "Running as: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+      Write-Output "Is Admin: $([Security.Principal.WindowsPrincipal]([Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))"
+      Write-Output "System: $(Get-WmiObject -Class Win32_OperatingSystem | Select-Object -ExpandProperty Caption)"
+      Write-Output "Version: $(Get-WmiObject -Class Win32_OperatingSystem | Select-Object -ExpandProperty Version)"
+      Write-Output "Last Reboot: $((Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime)"
+      Write-Output ""
+      
+      # Check and start Windows Update service
+      Write-Output "-"*80
+      Write-Output "CHECKING WINDOWS UPDATE SERVICE:"
+      Write-Output "-"*80
+      $wuService = Get-Service -Name wuauserv
+      Write-Output "Current Status: $($wuService.Status)"
+      Write-Output "Startup Type: $($wuService.StartType)"
+      
+      if ($wuService.Status -ne 'Running') {
+        Write-Output "⚠ Service stopped. Starting..."
+        Start-Service -Name wuauserv -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 5
+        $wuService = Get-Service -Name wuauserv
+        Write-Output "Status after starting: $($wuService.Status)"
+      } else {
+        Write-Output "✓ Service running correctly"
+      }
+      Write-Output ""
+      
+      # Get updates using COM objects (native method)
+      Write-Output "-"*80
+      Write-Output "SEARCHING FOR UPDATES (COM Objects):"
+      Write-Output "-"*80
+      Write-Output ""
+      
+      try {
+        $updateSession = New-Object -ComObject Microsoft.Update.Session
+        $updateSearcher = $updateSession.CreateUpdateSearcher()
+        
+        Write-Output "Searching for updates..."
+        # Search for ALL non-installed updates (includes Software, Drivers, and downloaded updates)
+        $searchResult = $updateSearcher.Search("IsInstalled=0")
+        
+        if ($searchResult.Updates.Count -gt 0) {
+          Write-Output "✗ Total: $($searchResult.Updates.Count) PENDING updates"
+          Write-Output ""
+          
+          foreach ($update in $searchResult.Updates) {
+            $size = [math]::Round($update.MaxDownloadSize / 1MB, 2)
+            Write-Output "  - KB: $($update.KBArticleIDs -join ',')"
+            Write-Output "    Title: $($update.Title)"
+            Write-Output "    Size: $size MB"
+            Write-Output "    Type: $($update.Type) (1=Software, 2=Driver)"
+            Write-Output "    Category: $($update.Categories | Select-Object -First 1 -ExpandProperty Name)"
+            Write-Output "    Downloaded: $($update.IsDownloaded)"
+            Write-Output "    Installed: $($update.IsInstalled)"
+            Write-Output "    Hidden: $($update.IsHidden)"
+            Write-Output "    EULA Accepted: $($update.EulaAccepted)"
+            Write-Output ""
+          }
+        } else {
+          Write-Output "✓ No pending updates"
+        }
+      } catch {
+        Write-Output "✗ ERROR searching for updates:"
+        Write-Output "    $($_.Exception.Message)"
+      }
+    register: updates_report
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Display pending updates
+    ansible.builtin.debug:
+      msg: "{{ updates_report.stdout }}"
+
+  - name: Save detailed initial report to text file
+    ansible.windows.win_shell: |
+      $reportPath = "{{ update_folder }}\\{{ hostname_result.stdout | trim }}_{{ datetime_result.stdout | trim }}_BEFORE.txt"
+      
+      $separator = "=" * 80
+      $content = $separator + "`n"
+      $content += "INITIAL REPORT - BEFORE UPDATE`n"
+      $content += $separator + "`n"
+      $content += "Server: {{ hostname_result.stdout | trim }}`n"
+      $content += "Date/Time: {{ datetime_result.stdout | trim }}`n"
+      $content += "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n`n"
+      $content += "{{ updates_report.stdout }}"
+      $content += "`n`n" + $separator + "`n"
+      $content += "END OF INITIAL REPORT`n"
+      $content += $separator + "`n"
+      
+      $content | Out-File -FilePath $reportPath -Encoding UTF8
+      Write-Output "Report saved to: $reportPath"
+
+  - name: Ensure Windows Update service is running
+    ansible.windows.win_service:
+      name: wuauserv
+      state: started
+      start_mode: auto
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Download and install updates with native PowerShell (COM Objects)
+    ansible.windows.win_shell: |
+      # Run with maximum privileges
+      $ErrorActionPreference = "Continue"
+      
+      Write-Output "="*80
+      Write-Output "DOWNLOAD AND INSTALLATION OF UPDATES (Native PowerShell)"
+      Write-Output "="*80
+      Write-Output "Start Date/Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+      Write-Output "Running as: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+      Write-Output ""
+      
+      # Create array to track installed updates for final report
+      $script:installedUpdates = @()
+      
+      try {
+        # Create update session
+        $updateSession = New-Object -ComObject Microsoft.Update.Session
+        $updateSearcher = $updateSession.CreateUpdateSearcher()
+        
+        # IMPORTANT: Force online search (without using local cache)
+        $updateSearcher.Online = $true
+        
+        Write-Output "Searching for pending updates..."
+        Write-Output "Mode: Online search (no cache)"
+        Write-Output ""
+        
+        # First check for hidden updates
+        Write-Output "Checking for hidden updates..."
+        try {
+          $hiddenUpdates = $updateSearcher.Search("IsInstalled=0 and IsHidden=1")
+          if ($hiddenUpdates.Updates.Count -gt 0) {
+            Write-Output "⚠ WARNING: There are $($hiddenUpdates.Updates.Count) hidden updates:"
+            foreach ($u in $hiddenUpdates.Updates) {
+              Write-Output "  - $($u.Title) (KB: $($u.KBArticleIDs -join ','))"
+            }
+            Write-Output ""
+          }
+        } catch {
+          Write-Output "⚠ Could not check hidden updates"
+          Write-Output ""
+        }
+        
+        # Search for ALL non-installed updates (includes hidden, software, drivers)
+        Write-Output "Searching for ALL non-installed updates..."
+        Write-Output "Criteria: IsInstalled=0 (includes Software, Drivers, hidden)"
+        $searchResult = $updateSearcher.Search("IsInstalled=0")
+        
+        if ($searchResult.Updates.Count -eq 0) {
+          Write-Output ""
+          Write-Output "="*80
+          Write-Output "✓✓✓ NO UPDATES AVAILABLE"
+          Write-Output "="*80
+          Write-Output "System is fully updated."
+          Write-Output "Date/Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          Write-Output "="*80
+        } else {
+          Write-Output "✓ Found $($searchResult.Updates.Count) updates"
+          Write-Output ""
+          
+          # Create collection of updates to install
+          $updatesToDownload = New-Object -ComObject Microsoft.Update.UpdateColl
+          $updatesToInstall = New-Object -ComObject Microsoft.Update.UpdateColl
+        
+        Write-Output "-"*80
+        Write-Output "UPDATES TO PROCESS:"
+        Write-Output "-"*80
+        Write-Output ""
+        
+        $hiddenCount = 0
+        foreach ($update in $searchResult.Updates) {
+          # Show detailed information for each update
+          $updateType = switch ($update.Type) { 1 { "Software" } 2 { "Driver" } default { "Other($($update.Type))" } }
+          $hiddenStatus = if ($update.IsHidden) { " [HIDDEN]" } else { "" }
+          if ($update.IsHidden) { $hiddenCount++ }
+          
+          Write-Output "Processing: $($update.Title)$hiddenStatus"
+          Write-Output "  KB: $($update.KBArticleIDs -join ',')"
+          Write-Output "  Type: $updateType | Downloaded: $($update.IsDownloaded) | Hidden: $($update.IsHidden)"
+          
+          # Accept EULA automatically if necessary
+          if (-not $update.EulaAccepted) {
+            Write-Output "  ⚠ Accepting EULA automatically..."
+            $update.AcceptEula()
+          }
+          
+          if ($update.IsDownloaded) {
+            Write-Output "  → Adding to INSTALLATION list (already downloaded)"
+            $updatesToInstall.Add($update) | Out-Null
+          } else {
+            Write-Output "  → Adding to DOWNLOAD list"
+            $updatesToDownload.Add($update) | Out-Null
+          }
+          Write-Output ""
+        }
+        
+        if ($hiddenCount -gt 0) {
+          Write-Output "⚠ NOTE: $hiddenCount of $($searchResult.Updates.Count) updates are marked as hidden"
+          Write-Output "  but will be processed anyway because they are not installed."
+          Write-Output ""
+        }
+        Write-Output ""
+        
+        # DOWNLOAD updates
+        if ($updatesToDownload.Count -gt 0) {
+          Write-Output "-"*80
+          Write-Output "DOWNLOADING $($updatesToDownload.Count) UPDATES:"
+          Write-Output "-"*80
+          
+          # List updates to download
+          foreach ($update in $updatesToDownload) {
+            $size = [math]::Round($update.MaxDownloadSize / 1MB, 2)
+            Write-Output "  ⬇ $($update.Title) ($size MB)"
+          }
+          Write-Output ""
+          
+          $downloader = $updateSession.CreateUpdateDownloader()
+          $downloader.Updates = $updatesToDownload
+          
+          Write-Output "⌛ Starting download... (this may take several minutes)"
+          $downloadResult = $downloader.Download()
+          Write-Output ""
+          
+          Write-Output "Result: $($downloadResult.ResultCode) - $(switch ($downloadResult.ResultCode) {
+            0 { 'NotStarted' }
+            1 { 'InProgress' }
+            2 { 'Succeeded ✓' }
+            3 { 'SucceededWithErrors ⚠' }
+            4 { 'Failed ✗' }
+            5 { 'Aborted' }
+            default { 'Unknown' }
+          })"
+          Write-Output ""
+          
+          if ($downloadResult.ResultCode -eq 2) {
+            Write-Output "✓✓✓ ALL DOWNLOADS COMPLETED SUCCESSFULLY"
+            Write-Output "Adding $($updatesToDownload.Count) updates to installation list..."
+            # Add downloaded ones to installation list
+            foreach ($update in $updatesToDownload) {
+              $updatesToInstall.Add($update) | Out-Null
+            }
+            Write-Output "✓ Ready to install"
+          } elseif ($downloadResult.ResultCode -eq 3) {
+            Write-Output "⚠⚠⚠ DOWNLOAD COMPLETED WITH SOME ERRORS"
+            Write-Output "Will attempt to install those that downloaded successfully"
+            # Add downloaded ones to installation list
+            foreach ($update in $updatesToDownload) {
+              if ($update.IsDownloaded) {
+                $updatesToInstall.Add($update) | Out-Null
+              }
+            }
+          } else {
+            Write-Output "✗✗✗ DOWNLOAD ERROR"
+            Write-Output "Error code: $($downloadResult.ResultCode)"
+            Write-Output "HResult: $($downloadResult.HResult)"
+          }
+          Write-Output ""
+        } else {
+          Write-Output "DOWNLOAD: Not necessary - all updates are already downloaded"
+          Write-Output ""
+        }
+        
+        # INSTALL updates
+        if ($updatesToInstall.Count -gt 0) {
+          Write-Output "-"*80
+          Write-Output "INSTALLING $($updatesToInstall.Count) UPDATES:"
+          Write-Output "-"*80
+          Write-Output ""
+          
+          # List all updates to install
+          Write-Output "Updates to install:"
+          $installNumber = 1
+          foreach ($update in $updatesToInstall) {
+            Write-Output "  $installNumber. $($update.Title)"
+            Write-Output "     KB: $($update.KBArticleIDs -join ',') | Type: $(if ($update.Type -eq 1) {'Software'} else {'Driver'})"
+            $installNumber++
+          }
+          Write-Output ""
+          
+          $installer = $updateSession.CreateUpdateInstaller()
+          $installer.Updates = $updatesToInstall
+          
+          Write-Output "⌛ STARTING INSTALLATION..."
+          Write-Output "⚠ IMPORTANT: This process may take 10-30 minutes or more"
+          Write-Output "Please be patient and do not interrupt the process."
+          Write-Output ""
+          $startTime = Get-Date
+          
+          $installResult = $installer.Install()
+          
+          $endTime = Get-Date
+          $duration = $endTime - $startTime
+          Write-Output "Installation time: $($duration.Minutes) minutes, $($duration.Seconds) seconds"
+          
+          Write-Output "="*80
+          Write-Output "INSTALLATION RESULT"
+          Write-Output "="*80
+          Write-Output "Result code: $($installResult.ResultCode)"
+          Write-Output "  0=NotStarted, 1=InProgress, 2=Succeeded, 3=SucceededWithErrors, 4=Failed, 5=Aborted"
+          Write-Output "Reboot required: $($installResult.RebootRequired)"
+          Write-Output ""
+          
+          # Details for each update
+          Write-Output "DETAILS BY UPDATE:"
+          for ($i = 0; $i -lt $updatesToInstall.Count; $i++) {
+            $update = $updatesToInstall.Item($i)
+            $result = $installResult.GetUpdateResult($i)
+            
+            $status = switch ($result.ResultCode) {
+              2 { "✓ SUCCESS" }
+              3 { "⚠ SUCCESS WITH ERRORS" }
+              4 { "✗ FAILED" }
+              default { "? UNKNOWN ($($result.ResultCode))" }
+            }
+            
+            Write-Output "  $status - $($update.Title)"
+            if ($result.ResultCode -ne 2) {
+              Write-Output "    HResult: $($result.HResult)"
+            }
+            
+            # Track successfully installed updates for final report
+            if ($result.ResultCode -eq 2 -or $result.ResultCode -eq 3) {
+              $script:installedUpdates += [PSCustomObject]@{
+                Title = $update.Title
+                KB = ($update.KBArticleIDs -join ',')
+                Type = $(if ($update.Type -eq 1) {'Software'} else {'Driver'})
+                ResultCode = $result.ResultCode
+                Status = $status
+              }
+            }
+          }
+          Write-Output ""
+          
+        } else {
+          Write-Output "⚠ No updates ready to install"
+        }
+          
+          Write-Output ""
+          Write-Output "End Date/Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+        } # End of else (updates available)
+        
+      } catch {
+        Write-Output ""
+        Write-Output "="*80
+        Write-Output "✗✗✗ CRITICAL ERROR ✗✗✗"
+        Write-Output "="*80
+        Write-Output "Message: $($_.Exception.Message)"
+        Write-Output "Type: $($_.Exception.GetType().FullName)"
+        Write-Output "HResult: $($_.Exception.HResult)"
+        Write-Output ""
+        Write-Output "Stack Trace:"
+        Write-Output $_.Exception.StackTrace
+        exit 1
+      }
+    register: update_result
+    ignore_errors: yes
+    async: 7200
+    poll: 60
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Display installation result
+    ansible.builtin.debug:
+      msg: "{{ update_result.stdout }}"
+
+  - name: Reboot server to fully apply updates
+    ansible.windows.win_reboot:
+      msg: "Rebooting to complete Windows updates installed by Ansible"
+      pre_reboot_delay: 10
+      post_reboot_delay: 30
+      reboot_timeout: 600
+      test_command: whoami
+    when: update_result.rc is defined and update_result.rc == 0
+
+  - name: Wait for system stabilization after reboot
+    ansible.builtin.pause:
+      seconds: 30
+
+  - name: Final validation - Check status AFTER REBOOT
+    ansible.windows.win_shell: |
+      $ErrorActionPreference = "Continue"
+      
+      Write-Output "="*80
+      Write-Output "FINAL VALIDATION - AFTER REBOOT"
+      Write-Output "="*80
+      Write-Output "Date/Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+      Write-Output "Running as: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+      Write-Output ""
+      Write-Output "✓✓✓ IMPORTANT: This report is generated AFTER server reboot"
+      Write-Output "    Reflects the REAL system state with all updates applied"
+      Write-Output ""
+      
+      # Show updates installed in THIS execution
+      Write-Output "-"*80
+      Write-Output "UPDATES INSTALLED IN THIS SESSION:"
+      Write-Output "-"*80
+      Write-Output ""
+      
+      # Get install history from last 2 hours to capture updates from this run
+      try {
+        $updateSession = New-Object -ComObject Microsoft.Update.Session
+        $updateSearcher = $updateSession.CreateUpdateSearcher()
+        $historyCount = $updateSearcher.GetTotalHistoryCount()
+        
+        if ($historyCount -gt 0) {
+          # Query recent history (last 50 entries to be safe)
+          $recentHistory = $updateSearcher.QueryHistory(0, [Math]::Min(50, $historyCount))
+          
+          # Filter to successful installs from last 2 hours
+          $twoHoursAgo = (Get-Date).AddHours(-2)
+          $recentInstalls = $recentHistory | Where-Object {
+            $_.ResultCode -eq 2 -and
+            $_.Date -gt $twoHoursAgo -and
+            $_.Operation -eq 1  # 1 = Installation
+          }
+          
+          if ($recentInstalls.Count -gt 0) {
+            Write-Output "✓✓✓ $($recentInstalls.Count) UPDATES INSTALLED SUCCESSFULLY ✓✓✓"
+            Write-Output ""
+            
+            $installNum = 1
+            foreach ($install in $recentInstalls) {
+              # Extract KB number from title
+              $kbMatch = $install.Title -match '\(KB(\d+)\)'
+              $kb = if ($kbMatch) { "KB" + $Matches[1] } else { "N/A" }
+              
+              Write-Output "$installNum. $($install.Title)"
+              Write-Output "   KB: $kb"
+              Write-Output "   Installed: $($install.Date.ToString('yyyy-MM-dd HH:mm:ss'))"
+              Write-Output "   Category: $($install.Categories | Select-Object -First 1 -ExpandProperty Name -ErrorAction SilentlyContinue)"
+              Write-Output ""
+              $installNum++
+            }
+          } else {
+            Write-Output "⚠ No updates found in recent history (last 2 hours)"
+            Write-Output "  This may be normal if no updates were needed or if updates were already installed."
+            Write-Output ""
+          }
+        } else {
+          Write-Output "⚠ No update history available"
+          Write-Output ""
+        }
+      } catch {
+        Write-Output "✗ Could not retrieve install history: $($_.Exception.Message)"
+        Write-Output ""
+      }
+      
+      # Check pending updates with COM objects
+      Write-Output "-"*80
+      Write-Output "PENDING UPDATES:"
+      Write-Output "-"*80
+      Write-Output ""
+      
+      try {
+        $updateSession = New-Object -ComObject Microsoft.Update.Session
+        $updateSearcher = $updateSession.CreateUpdateSearcher()
+        
+        # Force online search
+        $updateSearcher.Online = $true
+        
+        Write-Output "Searching for pending updates (online search)..."
+        
+        # First check hidden updates
+        try {
+          $hiddenUpdates = $updateSearcher.Search("IsInstalled=0 and IsHidden=1")
+          if ($hiddenUpdates.Updates.Count -gt 0) {
+            Write-Output ""
+            Write-Output "⚠ HIDDEN UPDATES: $($hiddenUpdates.Updates.Count)"
+            foreach ($u in $hiddenUpdates.Updates) {
+              Write-Output "  - $($u.Title) (KB: $($u.KBArticleIDs -join ','))"
+            }
+            Write-Output ""
+            Write-Output "NOTE: Hidden updates are NOT installed automatically."
+            Write-Output "      Many are antivirus updates that are self-managed."
+            Write-Output ""
+          }
+        } catch { }
+        
+        # Search for visible updates (not hidden)
+        $searchResult = $updateSearcher.Search("IsInstalled=0 and IsHidden=0")
+        
+        if ($searchResult.Updates.Count -gt 0) {
+          Write-Output "⚠⚠⚠ WARNING: Still $($searchResult.Updates.Count) PENDING updates ⚠⚠⚠"
+          Write-Output ""
+          
+          foreach ($update in $searchResult.Updates) {
+            $size = [math]::Round($update.MaxDownloadSize / 1MB, 2)
+            Write-Output "  - KB: $($update.KBArticleIDs -join ',')"
+            Write-Output "    Title: $($update.Title)"
+            Write-Output "    Size: $size MB"
+            Write-Output "    Downloaded: $($update.IsDownloaded)"
+            Write-Output ""
+          }
+          
+          Write-Output "ACTION REQUIRED:"
+          Write-Output "  1. Run the playbook again to install these updates"
+          Write-Output "  2. Some updates require multiple installation cycles"
+          Write-Output "  3. Verify that the Windows Update service is working correctly"
+        } else {
+          Write-Output "✓✓✓ SYSTEM FULLY UPDATED ✓✓✓"
+          Write-Output "✓ No pending updates"
+        }
+      } catch {
+        Write-Output "✗ ERROR checking for updates:"
+        Write-Output $_.Exception.Message
+      }
+      
+      Write-Output ""
+      Write-Output "-"*80
+      Write-Output "UPDATE INSTALLATION HISTORY:"
+      Write-Output "-"*80
+      Write-Output ""
+      
+      try {
+        $updateSession = New-Object -ComObject Microsoft.Update.Session
+        $updateSearcher = $updateSession.CreateUpdateSearcher()
+        
+        # Search for installed updates
+        $historyCount = $updateSearcher.GetTotalHistoryCount()
+        
+        if ($historyCount -gt 0) {
+          $history = $updateSearcher.QueryHistory(0, [Math]::Min(20, $historyCount))
+          
+          Write-Output "Total updates in history: $historyCount"
+          Write-Output "Showing last 20:"
+          Write-Output ""
+          
+          foreach ($entry in $history) {
+            $resultCode = switch ($entry.ResultCode) {
+              1 { "In Progress" }
+              2 { "✓ Success" }
+              3 { "⚠ Success with errors" }
+              4 { "✗ Failed" }
+              5 { "Aborted" }
+              default { "Unknown" }
+            }
+            
+            Write-Output "  [$($entry.Date.ToString('yyyy-MM-dd HH:mm'))] $resultCode"
+            Write-Output "    $($entry.Title)"
+          }
+        } else {
+          Write-Output "No updates in history"
+        }
+      } catch {
+        Write-Output "Could not retrieve update history"
+        Write-Output $_.Exception.Message
+      }
+      
+      Write-Output ""
+      Write-Output "-"*80
+      Write-Output "REBOOT STATUS:"
+      Write-Output "-"*80
+      
+      try {
+        $systemInfo = New-Object -ComObject Microsoft.Update.SystemInfo
+        if ($systemInfo.RebootRequired) {
+          Write-Output "⚠⚠⚠ PENDING REBOOT REQUIRED ⚠⚠⚠"
+          Write-Output "System needs to reboot to complete update installation"
+        } else {
+          Write-Output "✓ No reboot required"
+        }
+      } catch {
+        Write-Output "Could not verify reboot status"
+        Write-Output $_.Exception.Message
+      }
+      
+      Write-Output ""
+      Write-Output "-"*80
+      Write-Output "SYSTEM INFORMATION:"
+      Write-Output "-"*80
+      Write-Output "Server: $env:COMPUTERNAME"
+      Write-Output "Last reboot: $((Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime)"
+      
+      $uptime = (Get-Date) - (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+      Write-Output "Uptime: $([int]$uptime.TotalDays) days, $($uptime.Hours) hours, $($uptime.Minutes) minutes"
+      
+      # Check Windows Update service
+      $wuService = Get-Service -Name wuauserv
+      Write-Output "Windows Update Service: $($wuService.Status)"
+    register: validation_result
+    ignore_errors: yes
+    become: yes
+    become_method: runas
+    become_user: SYSTEM
+
+  - name: Save complete and detailed final report
+    ansible.windows.win_shell: |
+      $ErrorActionPreference = "Continue"
+      $reportPath = "{{ update_folder }}\\{{ hostname_result.stdout | trim }}_{{ datetime_result.stdout | trim }}_AFTER.txt"
+      
+      # Save update output to temporary file to avoid command line length limit
+      $tempUpdateFile = "$env:TEMP\ansible_update_output.txt"
+      "{{ update_result.stdout | replace('"', '`"') }}" | Out-File -FilePath $tempUpdateFile -Encoding UTF8
+      
+      # Read temporary file content
+      $updateOutput = Get-Content -Path $tempUpdateFile -Raw
+      
+      # Count processed updates
+      $totalUpdates = 0
+      $successUpdates = 0
+      $failedUpdates = 0
+      $warningUpdates = 0
+      
+      if ($updateOutput -match 'INSTALLING (\d+) UPDATES:') {
+        $totalUpdates = [int]$matches[1]
+      }
+      
+      $successUpdates = ($updateOutput -split "\n" | Select-String -Pattern "✓ SUCCESS -" | Measure-Object).Count
+      $failedUpdates = ($updateOutput -split "\n" | Select-String -Pattern "✗ FAILED -" | Measure-Object).Count
+      $warningUpdates = ($updateOutput -split "\n" | Select-String -Pattern "⚠ SUCCESS WITH ERRORS -" | Measure-Object).Count
+      
+      # Create separators
+      $separator = "=" * 80
+      $subseparator = "-" * 80
+      
+      # Get reboot information
+      $lastBoot = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+      $lastBootFormatted = $lastBoot.ToString('yyyy-MM-dd HH:mm:ss')
+      
+      # Create structured report
+      $content = $separator + "`n"
+      $content += "FINAL REPORT - AFTER UPDATE AND REBOOT`n"
+      $content += $separator + "`n"
+      $content += "Server: {{ hostname_result.stdout | trim }}`n"
+      $content += "Process start date/time: {{ datetime_result.stdout | trim }}`n"
+      $content += "Last reboot: $lastBootFormatted`n"
+      $content += "Report generation date/time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`n"
+      $content += "`n✓✓✓ IMPORTANT: This report was generated AFTER server reboot`n"
+      $content += "    Reflects the REAL state with all updates applied`n`n"
+      $content += $subseparator + "`n"
+      $content += "UPDATE SUMMARY:`n"
+      $content += $subseparator + "`n"
+      $content += "Total processed: $totalUpdates`n"
+      $content += "✓ Successfully installed: $successUpdates`n"
+      $content += "⚠ Installed with warnings: $warningUpdates`n"
+      $content += "✗ Failed: $failedUpdates`n`n"
+      $content += "✓ Server rebooted automatically to apply updates`n`n"
+      # Write header and summary
+      $content | Out-File -FilePath $reportPath -Encoding UTF8
+      
+      # Add complete process details from temporary file
+      $subseparator + "`n" | Add-Content -Path $reportPath -Encoding UTF8
+      "COMPLETE PROCESS DETAILS:`n" | Add-Content -Path $reportPath -Encoding UTF8
+      $subseparator + "`n" | Add-Content -Path $reportPath -Encoding UTF8
+      Get-Content -Path $tempUpdateFile | Add-Content -Path $reportPath -Encoding UTF8
+      
+      # Save final validation to temporary file
+      $tempValidationFile = "$env:TEMP\ansible_validation_output.txt"
+      "{{ validation_result.stdout | replace('"', '`"') }}" | Out-File -FilePath $tempValidationFile -Encoding UTF8
+      
+      # Add final validation from temporary file
+      "`n`n" + $subseparator + "`n" | Add-Content -Path $reportPath -Encoding UTF8
+      "FINAL SYSTEM VALIDATION:`n" | Add-Content -Path $reportPath -Encoding UTF8
+      $subseparator + "`n" | Add-Content -Path $reportPath -Encoding UTF8
+      Get-Content -Path $tempValidationFile | Add-Content -Path $reportPath -Encoding UTF8
+      
+      # Add footer
+      "`n`n" + $separator + "`n" | Add-Content -Path $reportPath -Encoding UTF8
+      "END OF FINAL REPORT`n" | Add-Content -Path $reportPath -Encoding UTF8
+      $separator + "`n" | Add-Content -Path $reportPath -Encoding UTF8
+      "NOTE: This report was automatically generated by Ansible`n" | Add-Content -Path $reportPath -Encoding UTF8
+      "For more information, review logs in {{ update_folder }}`n" | Add-Content -Path $reportPath -Encoding UTF8
+      
+      # Clean up temporary files
+      Remove-Item -Path $tempUpdateFile -ErrorAction SilentlyContinue
+      Remove-Item -Path $tempValidationFile -ErrorAction SilentlyContinue
+      
+      Write-Output ""
+      Write-Output "="*80
+      Write-Output "REPORT SAVED SUCCESSFULLY"
+      Write-Output "="*80
+      Write-Output "Location: $reportPath"
+      Write-Output ""
+      Write-Output "QUICK SUMMARY:"
+      Write-Output "  Total updates: $totalUpdates"
+      Write-Output "  Successful: $successUpdates"
+      Write-Output "  With warnings: $warningUpdates"
+      Write-Output "  Failed: $failedUpdates"
+      Write-Output "  Reboot required: $(if ($rebootRequired) { 'YES' } else { 'NO' })"
+      Write-Output "="*80

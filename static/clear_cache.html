@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Browser Cache - Diaken</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .alert {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #27ae60;
+        }
+        .instructions {
+            background: #ecf0f1;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2980b9;
+        }
+        .button {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        code {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Clear Browser Cache</h1>
+        
+        <div class="alert">
+            <strong>⚠️ IMPORTANTE:</strong> Después de actualizar el código, debes limpiar el caché del navegador para ver los cambios.
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Instrucciones Rápidas:</h3>
+            <p><strong>Opción 1 - Hard Refresh (Recomendado):</strong></p>
+            <ul>
+                <li><strong>Windows/Linux:</strong> Presiona <code>Ctrl + Shift + R</code> o <code>Ctrl + F5</code></li>
+                <li><strong>Mac:</strong> Presiona <code>Cmd + Shift + R</code></li>
+            </ul>
+            
+            <p><strong>Opción 2 - Limpiar Caché Completo:</strong></p>
+            <ul>
+                <li><strong>Chrome:</strong> <code>Ctrl + Shift + Delete</code> → Seleccionar "Cached images and files" → Clear data</li>
+                <li><strong>Firefox:</strong> <code>Ctrl + Shift + Delete</code> → Seleccionar "Cache" → Clear Now</li>
+                <li><strong>Edge:</strong> <code>Ctrl + Shift + Delete</code> → Seleccionar "Cached images and files" → Clear now</li>
+            </ul>
+        </div>
+        
+        <div class="instructions">
+            <h3>✅ Cambios Implementados:</h3>
+            <ul>
+                <li><strong>Modal:</strong> Reducido de 167s a 14s (92% más rápido)</li>
+                <li><strong>Polling:</strong> Mejorado de 2s a 1s (actualización automática)</li>
+                <li><strong>Redirect:</strong> Ahora va a la página específica del deployment</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="button" onclick="location.reload(true)">🔄 Hard Reload Esta Página</button>
+            <button class="button" onclick="window.location.href='/deploy/vm/'">🚀 Ir a Deploy VM</button>
+        </div>
+        
+        <div class="success" style="margin-top: 20px;">
+            <strong>✓ Después de limpiar el caché:</strong>
+            <ul>
+                <li>El modal durará ~14 segundos (no 2+ minutos)</li>
+                <li>Redirigirá automáticamente a la página del deployment</li>
+                <li>El spinner se actualizará automáticamente (no necesitas F5)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+---
+# Playbook para verificar si el reinicio está programado correctamente
+- name: Verify Reboot Schedule
+  hosts: target_host
+  become: yes
+  tasks:
+    - name: Check for scheduled shutdown processes
+      shell: |
+        echo "=== Procesos de shutdown ==="
+        ps aux | grep -E 'shutdown|reboot' | grep -v grep || echo "No shutdown processes found"
+        echo ""
+        echo "=== Procesos de sleep relacionados ==="
+        ps aux | grep -E 'sleep.*shutdown' | grep -v grep || echo "No sleep+shutdown processes found"
+        echo ""
+        echo "=== Últimas líneas de /var/log/messages o syslog ==="
+        if [ -f /var/log/messages ]; then
+          tail -20 /var/log/messages | grep -i shutdown || echo "No shutdown messages in /var/log/messages"
+        elif [ -f /var/log/syslog ]; then
+          tail -20 /var/log/syslog | grep -i shutdown || echo "No shutdown messages in /var/log/syslog"
+        else
+          echo "Log files not found"
+        fi
+        echo ""
+        echo "=== Uptime actual ==="
+        uptime
+      register: reboot_status
+      changed_when: false
+    
+    - name: Show reboot status
+      debug:
+        var: reboot_status.stdout_lines
+    
+    - name: Check current IP configuration
+      shell: |
+        echo "=== IP actual ==="
+        ip addr show | grep -E 'inet ' | grep -v '127.0.0.1'
+        echo ""
+        echo "=== Gateway actual ==="
+        ip route | grep default
+        echo ""
+        echo "=== Hostname actual ==="
+        hostname
+      register: current_config
+      changed_when: false
+    
+    - name: Show current configuration
+      debug:
+        var: current_config.stdout_lines

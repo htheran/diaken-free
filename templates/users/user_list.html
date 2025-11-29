@@ -1,0 +1,128 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2><i class="fas fa-users mr-2"></i>User Management</h2>
+        <a href="{% url 'user_create' %}" class="btn btn-primary">
+          <i class="fas fa-user-plus mr-2"></i>Create New User
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <i class="fas fa-list mr-2"></i>All Users
+        </div>
+        <div class="card-body">
+          {% if users %}
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Permissions</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for user_obj in users %}
+                    <tr class="{% if not user_obj.is_active %}table-secondary{% endif %}">
+                      <td>
+                        <i class="fas fa-user mr-2"></i>
+                        <strong>{{ user_obj.username }}</strong>
+                        {% if user_obj.id == request.user.id %}
+                          <span class="badge badge-info ml-2">You</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ user_obj.get_full_name|default:"-" }}</td>
+                      <td>{{ user_obj.email|default:"-" }}</td>
+                      <td>
+                        {% if user_obj.is_active %}
+                          <span class="badge badge-success">
+                            <i class="fas fa-check-circle"></i> Active
+                          </span>
+                        {% else %}
+                          <span class="badge badge-secondary">
+                            <i class="fas fa-ban"></i> Inactive
+                          </span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if user_obj.is_superuser %}
+                          <span class="badge badge-danger">
+                            <i class="fas fa-crown"></i> Superuser
+                          </span>
+                        {% elif user_obj.is_staff %}
+                          <span class="badge badge-warning">
+                            <i class="fas fa-user-shield"></i> Staff
+                          </span>
+                        {% else %}
+                          <span class="badge badge-secondary">
+                            <i class="fas fa-user"></i> User
+                          </span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if user_obj.last_login %}
+                          {{ user_obj.last_login|date:"Y-m-d H:i" }}
+                        {% else %}
+                          <span class="text-muted">Never</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <a href="{% url 'user_edit' user_obj.id %}" 
+                             class="btn btn-sm btn-info" 
+                             title="Edit">
+                            <i class="fas fa-edit"></i>
+                          </a>
+                          <a href="{% url 'user_reset_password' user_obj.id %}" 
+                             class="btn btn-sm btn-warning" 
+                             title="Reset Password">
+                            <i class="fas fa-key"></i>
+                          </a>
+                          {% if user_obj.id != request.user.id %}
+                            <a href="{% url 'user_toggle_active' user_obj.id %}" 
+                               class="btn btn-sm {% if user_obj.is_active %}btn-secondary{% else %}btn-success{% endif %}" 
+                               title="{% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %}"
+                               onclick="return confirm('Are you sure you want to {% if user_obj.is_active %}deactivate{% else %}activate{% endif %} this user?')">
+                              <i class="fas fa-{% if user_obj.is_active %}ban{% else %}check{% endif %}"></i>
+                            </a>
+                            <a href="{% url 'user_delete' user_obj.id %}" 
+                               class="btn btn-sm btn-danger" 
+                               title="Delete">
+                              <i class="fas fa-trash"></i>
+                            </a>
+                          {% endif %}
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle mr-2"></i>
+              No users found. Click "Create New User" to add one.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

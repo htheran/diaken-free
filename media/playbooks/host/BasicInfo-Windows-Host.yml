@@ -1,0 +1,27 @@
+---
+- name: Obtener información básica de Windows y estado de activación
+  hosts: windows_hosts
+  gather_facts: yes
+  collections:
+    - ansible.windows
+    - community.windows
+
+  tasks:
+    - name: Mostrar información básica del servidor
+      debug:
+        msg:
+          - "Nombre del equipo: {{ ansible_hostname }}"
+          - "Sistema operativo: {{ ansible_os_family }}"
+          - "Versión: {{ ansible_os_version | default('No disponible') }}"
+          - "Arquitectura: {{ ansible_architecture | default('No disponible') }}"
+          - "Dirección IP: {{ ansible_default_ipv4.address | default('No disponible') }}"
+
+    - name: Obtener estado de licencia y activación de Windows
+      ansible.windows.win_product_facts:
+
+    - name: Mostrar estado de activación
+      debug:
+        msg:
+          - "Edición de Windows: {{ ansible_os_license_edition | default('Desconocida') }}"
+          - "Estado de activación: {{ ansible_os_license_status | default('No disponible') }}"
+          - "Código de producto: {{ ansible_os_product_key_last_five | default('No detectado') }}"

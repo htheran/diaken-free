@@ -1,0 +1,95 @@
+msgid "Home"
+msgstr "Inicio"
+
+msgid "Settings"
+msgstr "Configuración"
+
+msgid "Variables"
+msgstr "Variables"
+
+msgid "Credentials"
+msgstr "Credenciales"
+
+msgid "SSL Certificates"
+msgstr "Certificados SSL"
+
+msgid "vCenter"
+msgstr "vCenter"
+
+msgid "Logout"
+msgstr "Cerrar sesión"
+
+msgid "Global Variables"
+msgstr "Variables Globales"
+
+msgid "New Variable"
+msgstr "Nueva variable"
+
+msgid "Section"
+msgstr "Sección"
+
+msgid "Key"
+msgstr "Clave"
+
+msgid "Value"
+msgstr "Valor"
+
+msgid "Description"
+msgstr "Descripción"
+
+msgid "Edit"
+msgstr "Editar"
+
+msgid "New Section"
+msgstr "Nueva sección"
+
+msgid "Deployment Credentials"
+msgstr "Credenciales de Despliegue"
+
+msgid "New Credential"
+msgstr "Nueva credencial"
+
+msgid "Name"
+msgstr "Nombre"
+
+msgid "User"
+msgstr "Usuario"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "SSL Certificate"
+msgstr "Certificado SSL"
+
+msgid "New Certificate"
+msgstr "Nuevo certificado"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "vCenter Credentials"
+msgstr "Credenciales vCenter"
+
+msgid "New vCenter Credential"
+msgstr "Nueva credencial vCenter"
+
+msgid "Password"
+msgstr "Contraseña"
+
+msgid "Yes"
+msgstr "Sí"
+
+msgid "No"
+msgstr "No"
+
+msgid "Login"
+msgstr "Iniciar sesión"
+
+msgid "Login - Diaken"
+msgstr "Iniciar sesión - Diaken"
+
+msgid "Welcome to Diaken"
+msgstr "Bienvenido a Diaken"
+
+msgid "You have logged in successfully."
+msgstr "Has iniciado sesión correctamente."

@@ -1,0 +1,237 @@
+{% load i18n %}
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <!-- Brand Logo -->
+  <a href="/" class="brand-link">
+    <span class="brand-text font-weight-light">Diaken</span>
+  </a>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Sidebar user panel -->
+    <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+      <div class="image">
+        <img src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
+      </div>
+      <div class="info">
+        <a href="#" class="d-block">{{ user.username }}</a>
+      </div>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        <li class="nav-item">
+          <a href="/" class="nav-link">
+            <i class="nav-icon fas fa-home"></i>
+            <p>Home</p>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/dashboard/" class="nav-link">
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+            <p>Dashboard</p>
+          </a>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-database"></i>
+            <p>
+              Inventory
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item"><a href="/inventory/environments/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Environments</p></a></li>
+            <li class="nav-item"><a href="/inventory/groups/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Groups</p></a></li>
+            <li class="nav-item"><a href="/inventory/hosts/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Hosts</p></a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a href="/addressing/" class="nav-link">
+            <i class="nav-icon fas fa-network-wired"></i>
+            <p>IP Addressing</p>
+          </a>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-rocket"></i>
+            <p>
+              Deploy
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/deploy/vm/" class="nav-link">
+                <i class="fab fa-linux nav-icon"></i>
+                <p>Deploy VM (Linux)</p>
+              </a>
+            </li>
+            
+            <li class="nav-item">
+              <a href="/deploy/windows/" class="nav-link">
+                <i class="fab fa-windows nav-icon"></i>
+                <p>Deploy VM (Windows)</p>
+              </a>
+            </li>
+            
+            <li class="nav-item">
+              <a href="/deploy/playbook/" class="nav-link">
+                <i class="fab fa-linux nav-icon"></i>
+                <p>Execute (Linux)</p>
+              </a>
+            </li>
+            
+            <li class="nav-item">
+              <a href="/deploy/playbook/windows/" class="nav-link">
+                <i class="fab fa-windows nav-icon"></i>
+                <p>Execute (Windows)</p>
+              </a>
+            </li>
+           
+          </ul>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="/scheduler/tasks/" class="nav-link">
+            <i class="nav-icon fas fa-clock"></i>
+            <p>Scheduled Tasks</p>
+          </a>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-history"></i>
+            <p>
+              History
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/history/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Deployment History</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/scheduler/history/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Scheduled Task History</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/snapshots/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Snapshot History</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-file-code"></i>
+            <p>
+              Playbooks
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/playbooks/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>List Playbooks</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/playbooks/create/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Create Playbook</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/playbooks/upload/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Upload Playbook</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-terminal"></i>
+            <p>
+              Scripts
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/scripts/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>List Scripts</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/scripts/create/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Create Script</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/scripts/upload/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Upload Script</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-bell"></i>
+            <p>
+              Notifications
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="/notifications/" class="nav-link">
+                <i class="fab fa-microsoft nav-icon"></i>
+                <p>Microsoft Teams</p>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="/notifications/logs/" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Notification Logs</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-cogs"></i>
+            <p>
+              Settings
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item"><a href="/users/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Users</p></a></li>
+            <li class="nav-item"><a href="/settings/global/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Variables</p></a></li>
+            <li class="nav-item"><a href="/settings/credentials/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Credentials</p></a></li>
+            <li class="nav-item"><a href="/settings/templates/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>Ansible Templates</p></a></li>
+            <li class="nav-item"><a href="/settings/ssl/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>SSL Certificates</p></a></li>
+            <li class="nav-item"><a href="/settings/vcenter/" class="nav-link"><i class="far fa-circle nav-icon"></i><p>vCenter</p></a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a href="/logout/" class="nav-link">
+            <i class="nav-icon fas fa-sign-out-alt"></i>
+            <p>Logout</p>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>

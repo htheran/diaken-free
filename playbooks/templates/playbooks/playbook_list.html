@@ -1,0 +1,72 @@
+{% extends 'base/base.html' %}
+{% block title %}Playbooks{% endblock %}
+{% block content %}
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><i class="fas fa-file-code"></i> Playbooks</h3>
+      <div class="card-tools">
+        <a href="{% url 'playbook_list_host' %}" class="btn btn-info btn-sm {% if filter_type == 'host' %}active{% endif %}">
+          <i class="fas fa-server"></i> Host Playbooks
+        </a>
+        <a href="{% url 'playbook_list_group' %}" class="btn btn-info btn-sm {% if filter_type == 'group' %}active{% endif %}">
+          <i class="fas fa-users"></i> Group Playbooks
+        </a>
+        <a href="{% url 'playbook_upload' %}" class="btn btn-primary btn-sm">
+          <i class="fas fa-upload"></i> Upload New Playbook
+        </a>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="list-group list-group-flush">
+        {% for playbook in playbooks %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="mb-1">
+              {% if playbook.playbook_type == 'host' %}
+                <i class="fas fa-server text-info"></i>
+              {% else %}
+                <i class="fas fa-users text-success"></i>
+              {% endif %}
+              {{ playbook.name }}
+              <span class="badge badge-secondary">{{ playbook.playbook_type|title }}</span>
+              {% if playbook.os_family == 'redhat' %}
+                <span class="badge badge-danger"><i class="fab fa-redhat"></i> RedHat</span>
+              {% elif playbook.os_family == 'debian' %}
+                <span class="badge badge-info"><i class="fab fa-debian"></i> Debian</span>
+              {% elif playbook.os_family == 'windows' %}
+                <span class="badge badge-primary"><i class="fab fa-windows"></i> Windows</span>
+              {% endif %}
+            </h5>
+            {% if playbook.description %}
+              <p class="mb-1 text-muted">{{ playbook.description }}</p>
+            {% endif %}
+            <small class="text-muted">
+              <i class="far fa-calendar"></i> Created: {{ playbook.created_at|date:"d/m/Y H:i" }}
+              {% if playbook.file %}
+                | <i class="fas fa-file"></i> {{ playbook.file.name }}
+              {% endif %}
+            </small>
+          </div>
+          <div>
+            <a href="{% url 'playbook_edit' playbook.pk %}" class="btn btn-sm btn-warning" title="Edit">
+              <i class="fas fa-edit"></i> Edit
+            </a>
+            <form method="post" action="{% url 'playbook_delete' playbook.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this playbook?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </form>
+          </div>
+        </div>
+        {% empty %}
+        <div class="list-group-item text-center text-muted">
+          <p class="mb-0">No playbooks found</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

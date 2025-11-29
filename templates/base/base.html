@@ -1,0 +1,354 @@
+{% load i18n %}
+<!DOCTYPE html>
+{% load static %}
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Diaken{% endblock %}</title>
+
+  <!-- Google Font: Source Sans Pro (CDN) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome (CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- AdminLTE CSS (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <!-- Bootstrap CSS (CDN) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+  <!-- Dark Mode CSS -->
+  <link rel="stylesheet" href="{% static 'css/dark.css' %}?v=5">
+  <!-- Elimina cualquier otro CSS local innecesario -->
+  
+  <!-- Color personalizado para sidebar -->
+  <style>
+    .sidebar-dark-primary {
+      background-color: #1e3a5f !important;
+    }
+    .nav-sidebar .nav-item>.nav-link.active {
+      background-color: rgba(255,255,255,.1) !important;
+    }
+    .sidebar-dark-primary .nav-sidebar>.nav-item>.nav-link.active {
+      background-color: rgba(255,255,255,.2) !important;
+    }
+    [class*=sidebar-dark] .nav-treeview>.nav-item>.nav-link.active {
+      background-color: rgba(255,255,255,.1) !important;
+    }
+    /* Asegurar que el contenido principal ocupe el 100% de la altura */
+    html, body {
+      height: 100%;
+    }
+    .wrapper {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .content-wrapper {
+      flex: 1;
+      margin-left: 250px; /* Ajustar según el ancho del sidebar */
+      padding-bottom: 60px; /* Ajustar según la altura del footer */
+    }
+    .main-sidebar {
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .content {
+      padding-bottom: 60px; /* Ajustar según la altura del footer */
+    }
+    /* Estilos originales de AdminLTE para el footer */
+    .main-footer {
+      background: #fff;
+      padding: 1rem;
+      color: #6c757d;
+      border-top: 1px solid #dee2e6;
+      margin-left: 250px;
+      transition: margin-left .3s ease-in-out;
+    }
+    @media (max-width: 767.98px) {
+      .main-footer {
+        margin-left: 0;
+      }
+    }
+  </style>
+  
+  {% block extra_css %}{% endblock %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+  {% if user.is_authenticated %}
+    {% include 'base/navbar.html' %}
+    {% include 'base/sidebar.html' %}
+  
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+      <!-- Content Header -->
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                {% block breadcrumb %}{% endblock %}
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Main content -->
+      <div class="content">
+        <div class="container-fluid">
+          <!-- Mensajes -->
+          {% if messages %}
+            <div class="messages-container">
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+          
+          {% block content %}{% endblock %}
+        </div>
+      </div>
+    </div>
+  
+    {% include 'base/footer.html' %}
+    <script>
+      // Dark mode toggle
+      document.addEventListener('DOMContentLoaded', function() {
+        const themeToggle = document.getElementById('themeToggle');
+        const themeLabel = document.getElementById('themeLabel');
+        // Cargar preferencia de tema
+        if (localStorage.getItem('theme') === 'dark') {
+          document.body.classList.add('dark-mode');
+          themeLabel.textContent = 'Light';
+        }
+        themeToggle.addEventListener('click', function() {
+          document.body.classList.toggle('dark-mode');
+          const dark = document.body.classList.contains('dark-mode');
+          localStorage.setItem('theme', dark ? 'dark' : 'light');
+          themeLabel.textContent = dark ? 'Light' : 'Dark';
+        });
+        // Idioma
+        const langSelect = document.getElementById('langSelect');
+        langSelect && langSelect.addEventListener('change', function() {
+          this.form.submit();
+        });
+      });
+    </script>
+    {% block extra_js %}{% endblock %}
+  {% else %}
+    {% block auth_content %}{% endblock %}
+  {% endif %}
+</div>
+
+<!-- jQuery (CDN, debe ir antes que cualquier otro script que use $) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap 4 JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- FontAwesome JS (opcional, CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+<!-- Elimina cualquier otro JS local innecesario -->
+
+<!-- Modal de Licencias Simplificado -->
+<div class="modal fade" id="licenseModal" tabindex="-1" role="dialog" aria-labelledby="licenseModalLabel" data-backdrop="static">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content" style="border: none; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);">
+      <!-- Encabezado con color del sidebar -->
+      <div class="modal-header" style="background-color: #1e3a5f; color: white; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <h5 class="modal-title" style="font-weight: 500;">
+          <i class="fas fa-file-contract mr-2"></i>Third-Party Licenses
+        </h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.8;">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      
+      <!-- Cuerpo del Modal -->
+      <div class="modal-body" style="padding: 1.5rem;">
+        <!-- Lista de Componentes -->
+        <div class="mb-4">
+          <h6 class="modal-section-title" style="font-weight: 600; margin-bottom: 1.25rem; font-size: 1rem;">
+            <i class="fas fa-cubes mr-2"></i>Main Components
+          </h6>
+          
+          <!-- Django -->
+          <div class="mb-3" style="border-bottom: 1px solid #f0f2f5; padding-bottom: 1rem;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center">
+                <i class="fab fa-python mr-2" style="color: #1e3a5f; font-size: 1.1rem;"></i>
+                <span class="component-name" style="font-weight: 500;">Django</span>
+              </div>
+              <span class="badge" style="background-color: #e6f0ff; color: #1e3a5f; font-weight: 500; font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                BSD-3-Clause
+              </span>
+            </div>
+            <a href="https://github.com/django/django/blob/main/LICENSE" 
+               target="_blank" 
+               class="btn btn-sm btn-link" 
+               style="color: #1e3a5f; text-decoration: none; padding: 0.15rem 0; font-size: 0.85rem;">
+              <i class="fas fa-external-link-alt mr-1"></i> View License
+            </a>
+          </div>
+
+          <!-- Bootstrap -->
+          <div class="mb-3" style="border-bottom: 1px solid #f0f2f5; padding-bottom: 1rem;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center">
+                <i class="fab fa-bootstrap mr-2" style="color: #1e3a5f; font-size: 1.1rem;"></i>
+                <span style="font-weight: 500;">Bootstrap</span>
+              </div>
+              <span class="badge" style="background-color: #e6f0ff; color: #1e3a5f; font-weight: 500; font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                MIT
+              </span>
+            </div>
+            <a href="https://github.com/twbs/bootstrap/blob/main/LICENSE" 
+               target="_blank" 
+               class="btn btn-sm btn-link" 
+               style="color: #1e3a5f; text-decoration: none; padding: 0.15rem 0; font-size: 0.85rem;">
+              <i class="fas fa-external-link-alt mr-1"></i> View License
+            </a>
+          </div>
+
+          <!-- Ansible -->
+          <div class="mb-3" style="border-bottom: 1px solid #f0f2f5; padding-bottom: 1rem;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-server mr-2" style="color: #1e3a5f; font-size: 1.1rem;"></i>
+                <span style="font-weight: 500;">Ansible</span>
+              </div>
+              <span class="badge" style="background-color: #e6f0ff; color: #1e3a5f; font-weight: 500; font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                GPL-3.0
+              </span>
+            </div>
+            <p class="mb-2" style="color: #4a5568; font-size: 0.85rem; line-height: 1.4;">
+              Ansible is an open-source software platform for configuring and managing computers, combining multi-node software deployment, ad hoc task execution, and configuration management.
+            </p>
+            <div class="d-flex">
+              <a href="https://github.com/ansible/ansible/blob/devel/COPYING" 
+                 target="_blank" 
+                 class="btn btn-sm btn-link mr-2" 
+                 style="color: #1e3a5f; text-decoration: none; padding: 0.15rem 0; font-size: 0.85rem;">
+                <i class="fas fa-file-alt mr-1"></i> Licencia
+              </a>
+              <a href="https://www.ansible.com/" 
+                 target="_blank" 
+                 class="btn btn-sm btn-link" 
+                 style="color: #1e3a5f; text-decoration: none; padding: 0.15rem 0; font-size: 0.85rem;">
+                <i class="fas fa-globe mr-1"></i> Sitio web
+              </a>
+            </div>
+          </div>
+
+          <!-- Ansible Runner -->
+          <div style="border-bottom: 1px solid #f0f2f5; padding-bottom: 1rem;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-play-circle mr-2" style="color: #1e3a5f; font-size: 1.1rem;"></i>
+                <span style="font-weight: 500;">Ansible Runner</span>
+              </div>
+              <span class="badge" style="background-color: #e6f0ff; color: #1e3a5f; font-weight: 500; font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                Apache-2.0
+              </span>
+            </div>
+            <p class="mb-2" style="color: #4a5568; font-size: 0.85rem; line-height: 1.4;">
+              Ansible Runner provides a consistent and open interface for interacting with Ansible from different contexts, such as user interfaces or CLI tools.
+            </p>
+            <div class="d-flex">
+              <a href="https://github.com/ansible/ansible-runner/blob/main/LICENSE" 
+                 target="_blank" 
+                 class="btn btn-sm btn-link mr-2" 
+                 style="color: #1e3a5f; text-decoration: none; padding: 0.15rem 0; font-size: 0.85rem;">
+                <i class="fas fa-file-alt mr-1"></i> Licencia
+              </a>
+              <a href="https://ansible-runner.readthedocs.io/" 
+                 target="_blank" 
+                 class="btn btn-sm btn-link" 
+                 style="color: #1e3a5f; text-decoration: none; padding: 0.15rem 0; font-size: 0.85rem;">
+                <i class="fas fa-book mr-1"></i> Documentación
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enlace al archivo NOTICE -->
+        <div class="mt-4 pt-3" style="border-top: 1px solid #f0f2f5;">
+          <a href="{% url 'view_notice' %}" 
+             target="_blank" 
+             class="btn btn-block" 
+             style="background-color: #1e3a5f; color: white; border: none; padding: 0.5rem; font-weight: 500;"
+             id="viewNoticeLink">
+            <i class="fas fa-file-alt mr-2"></i> View Complete NOTICE File
+          </a>
+        </div>
+      </div>
+
+      <!-- Pie del Modal -->
+      <div class="modal-footer" style="border-top: 1px solid #f0f2f5; padding: 1rem 1.5rem;">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal" style="border-color: #d8dde5; color: #6c757d;">
+          <i class="fas fa-times mr-1"></i> Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
+</div>
+<script>
+  // Eliminar los mensajes de la sesión después de mostrarlos
+  document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar automáticamente las alertas después de 5 segundos
+    var alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+      var closeButton = alert.querySelector('.close');
+      if (closeButton) {
+        closeButton.addEventListener('click', function() {
+          alert.style.transition = 'opacity 0.5s';
+          alert.style.opacity = '0';
+          setTimeout(function() {
+            alert.remove();
+          }, 500);
+        });
+      }
+      
+      // Cerrar automáticamente después de 5 segundos
+      setTimeout(function() {
+        if (alert && document.body.contains(alert)) {
+          alert.style.transition = 'opacity 0.5s';
+          alert.style.opacity = '0';
+          setTimeout(function() {
+            if (alert && document.body.contains(alert)) {
+              alert.remove();
+            }
+          }, 500);
+        }
+      }, 5000);
+    });
+
+    // Limpiar los mensajes de la sesión cuando se cierran
+    $(document).on('closed.bs.alert', '.alert', function() {
+      // Opcional: Hacer una petición AJAX para limpiar los mensajes del backend
+      // Esto es útil si se está recargando la página con F5
+      fetch('/clear-messages/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+      }).catch(error => console.error('Error al limpiar mensajes:', error));
+    });
+  });
+</script>

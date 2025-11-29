@@ -1,0 +1,98 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Notification Logs - Diaken{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-history"></i> Notification Logs</h2>
+                    <p class="text-muted">History of sent notifications</p>
+                </div>
+                <div>
+                    <a href="{% url 'notifications:webhook_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Webhooks
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Webhook</th>
+                                    <th>Type</th>
+                                    <th>Title</th>
+                                    <th>Status</th>
+                                    <th>Response</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>
+                                        <small>{{ log.created_at|date:"Y-m-d H:i:s" }}</small>
+                                    </td>
+                                    <td>
+                                        <i class="fab fa-microsoft"></i> {{ log.webhook.name }}
+                                    </td>
+                                    <td>
+                                        {% if log.notification_type == 'deployment' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-server"></i> Deployment
+                                        </span>
+                                        {% elif log.notification_type == 'playbook' %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-play"></i> Playbook
+                                        </span>
+                                        {% elif log.notification_type == 'scheduled_task' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i> Scheduled
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.title }}</td>
+                                    <td>
+                                        {% if log.status == 'success' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Success
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times"></i> Failed
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ log.response_message|truncatewords:10 }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-info-circle"></i> Showing last 100 notifications
+                    </p>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No notification logs yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

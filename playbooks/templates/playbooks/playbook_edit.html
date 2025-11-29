@@ -1,0 +1,60 @@
+{% extends 'base/base.html' %}
+{% block title %}Edit Playbook{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header">
+      <h3><i class="fas fa-edit"></i> Edit Playbook</h3>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="id_name">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="text-danger">{{ form.name.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label for="id_description">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="text-danger">{{ form.description.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label for="id_playbook_type">{{ form.playbook_type.label }}</label>
+          {{ form.playbook_type }}
+          {% if form.playbook_type.errors %}
+            <div class="text-danger">{{ form.playbook_type.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label for="id_os_family">{{ form.os_family.label }}</label>
+          {{ form.os_family }}
+          {% if form.os_family.errors %}
+            <div class="text-danger">{{ form.os_family.errors }}</div>
+          {% endif %}
+          <small class="form-text text-muted">
+            Select the operating system family this playbook is designed for.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="id_file">{{ form.file.label }}</label>
+          {{ form.file }}
+          {% if playbook.file %}
+            <p class="text-muted">Current file: <code>{{ playbook.file.name }}</code></p>
+          {% endif %}
+          {% if form.file.errors %}
+            <div class="text-danger">{{ form.file.errors }}</div>
+          {% endif %}
+          <small class="form-text text-muted">Leave empty to keep the current file.</small>
+        </div>
+        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Save Changes</button>
+        <a href="{% url 'playbook_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
