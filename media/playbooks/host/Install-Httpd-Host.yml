@@ -1,0 +1,68 @@
+---
+# Install and Configure Apache HTTP Server (httpd)
+# This playbook installs and configures Apache on RedHat-based systems
+
+- name: Install and Configure Apache HTTP Server
+  hosts: target_host
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Display hostname
+      debug:
+        msg: "Installing Apache on: {{ inventory_hostname }}"
+    
+    - name: Install httpd package
+      dnf:
+        name: httpd
+        state: present
+      when: ansible_os_family == "RedHat"
+    
+    - name: Start and enable httpd service
+      systemd:
+        name: httpd
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+    
+    - name: Open firewall for HTTP
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+    
+    - name: Open firewall for HTTPS
+      firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+    
+    - name: Create default index.html
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Welcome to {{ inventory_hostname }}</title>
+          </head>
+          <body>
+              <h1>Apache HTTP Server is running!</h1>
+              <p>Hostname: {{ inventory_hostname }}</p>
+              <p>IP Address: {{ ansible_default_ipv4.address | default('N/A') }}</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: apache
+        group: apache
+        mode: '0644'
+      when: ansible_os_family == "RedHat"
+    
+    - name: Display success message
+      debug:
+        msg: "✅ Apache HTTP Server installed and configured successfully"

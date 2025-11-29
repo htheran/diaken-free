@@ -906,10 +906,12 @@ def provision_linux_vm_async(self, history_id, template_ip, new_ip, new_hostname
                     
                     # Find playbook file
                     playbook_path = os.path.join(settings.BASE_DIR, 'media', 'playbooks', 'host', f'{playbook_name}.yml')
+                    playbook_relative = os.path.join('media', 'playbooks', 'host', f'{playbook_name}.yml')
                     
                     if not os.path.exists(playbook_path):
-                        logger.error(f'[CELERY-LINUX-{self.request.id}] Playbook not found: {playbook_path}')
-                        provision_output += f"❌ ERROR: Playbook file not found: {playbook_path}\n"
+                        logger.error(f'[CELERY-LINUX-{self.request.id}] Playbook not found: {playbook_relative}')
+                        provision_output += f"⚠️ WARNING: Playbook '{playbook_name}' not found at {playbook_relative}\n"
+                        provision_output += f"   Create the playbook file or remove it from the deployment configuration.\n"
                         continue
                     
                     # Execute playbook
