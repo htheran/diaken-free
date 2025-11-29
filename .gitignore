@@ -94,3 +94,4 @@ logs/
 
 # Docker deployment (kept locally, not in git)
 docker/
+venv/

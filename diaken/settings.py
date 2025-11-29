@@ -24,32 +24,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY: SECRET_KEY from environment variable
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-if not SECRET_KEY:
-    raise ValueError(
-        "DJANGO_SECRET_KEY environment variable is required. "
-        "Generate one with: python -c 'from django.core.management.utils "
-        "import get_random_secret_key; print(get_random_secret_key())'"
-    )
+# SECURITY WARNING: Keep the secret key used in production secret!
+# For production, override this via DJANGO_SECRET_KEY environment variable
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-dev-key-change-in-production-8k#2m@9x!p$v7n&q3w5e'
+)
 
-# SECURITY: DEBUG mode from environment
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+# SECURITY WARNING: Don't run with debug turned on in production!
+# For production, set DJANGO_DEBUG=False in environment or .env file
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-# SECURITY: ALLOWED_HOSTS from environment
+# ALLOWED_HOSTS configuration
+# For production, set DJANGO_ALLOWED_HOSTS in environment or .env file
 ALLOWED_HOSTS_STR = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
 if ALLOWED_HOSTS_STR:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS_STR.split(',') if h.strip()]
 else:
-    if DEBUG:
-        ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
-    else:
-        raise ValueError(
-            "DJANGO_ALLOWED_HOSTS must be set in production. "
-            "Example: DJANGO_ALLOWED_HOSTS=myserver.example.com,10.100.18.80"
-        )
+    # Default: Allow all hosts in development, restrict in production
+    ALLOWED_HOSTS = ['*'] if DEBUG else []
 
 # CSRF Trusted Origins
+# For production, set DJANGO_CSRF_TRUSTED_ORIGINS in environment or .env file
 CSRF_TRUSTED_ORIGINS_STR = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
 if CSRF_TRUSTED_ORIGINS_STR:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS_STR.split(',') if o.strip()]
