@@ -61,12 +61,25 @@ class CredentialEncryptor:
             
         Returns:
             Decrypted plaintext string
+            
+        Raises:
+            ValueError: If decryption fails (invalid token or wrong key)
         """
         if not ciphertext:
             return ""
         
-        decrypted_bytes = self.cipher.decrypt(ciphertext.encode())
-        return decrypted_bytes.decode()
+        try:
+            decrypted_bytes = self.cipher.decrypt(ciphertext.encode())
+            return decrypted_bytes.decode()
+        except Exception as e:
+            # Token inválido - probablemente cambió la clave de encriptación
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to decrypt credential: {str(e)}")
+            raise ValueError(
+                "Failed to decrypt credential. The encryption key may have changed. "
+                "Please delete and re-create the credential."
+            ) from e
     
     @staticmethod
     def generate_key() -> str:
