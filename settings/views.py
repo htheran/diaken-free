@@ -353,13 +353,14 @@ def import_global_settings(request):
                             )
                             stats['settings_created'] += 1
             
-            # Import settings without section
+            # Import settings without section (acepta null o array)
             if 'settings_without_section' in import_data:
-                for setting_data in import_data['settings_without_section']:
+                sws = import_data['settings_without_section']
+                if sws is None:
+                    sws = []
+                for setting_data in sws:
                     key = setting_data['key']
-                    
                     existing = GlobalSetting.objects.filter(key=key).first()
-                    
                     if existing:
                         stats['settings_skipped'] += 1
                     else:
@@ -386,7 +387,7 @@ def import_global_settings(request):
             if msg_parts:
                 messages.success(request, 'Import completed: ' + ', '.join(msg_parts))
             else:
-                messages.info(request, 'No new settings to import')
+                messages.warning(request, 'No new settings were imported. All variables already exist or file is empty.')
             
         except json.JSONDecodeError:
             messages.error(request, 'Invalid JSON file format')
