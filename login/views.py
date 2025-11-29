@@ -30,41 +30,4 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-from django.utils import translation
-from django.views.decorators.http import require_http_methods
-from urllib.parse import urlparse
-import logging
-
-logger = logging.getLogger(__name__)
-
-@require_http_methods(["POST"])
-def set_language(request):
-    """
-    Set user language preference
-    CSRF protection is enabled (csrf_exempt removed for security)
-    """
-    if request.method == 'POST':
-        lang = request.POST.get('language', 'en')
-        
-        # Validate language
-        if lang not in ['en', 'es']:
-            logger.warning(f"Invalid language attempt: {lang} from user {request.user}")
-            lang = 'en'
-        
-        # Set session language
-        request.session['django_language'] = lang
-        translation.activate(lang)
-    
-    # Secure redirect - validate referer is from our domain
-    referer = request.META.get('HTTP_REFERER', '/')
-    try:
-        parsed = urlparse(referer)
-        # Only redirect to relative URLs or our own domain
-        if parsed.netloc and parsed.netloc not in request.get_host().split(':')[0]:
-            referer = '/'
-    except Exception:
-        referer = '/'
-    
-    return redirect(referer)
-
 # Create your views here.

@@ -16,18 +16,8 @@
     <!-- Dark Mode Toggle -->
     <li class="nav-item">
       <button id="themeToggle" class="btn btn-sm btn-outline-secondary mr-2" type="button">
-        <i class="fas fa-moon"></i> <span id="themeLabel">{% trans "Dark Mode" %}</span>
+        <i class="fas fa-moon"></i> <span id="themeLabel">Dark Mode</span>
       </button>
-    </li>
-    <!-- Language Selector -->
-    <li class="nav-item">
-      <form id="langForm" method="post" action="/set-language/" style="display:inline;">
-        {% csrf_token %}
-        <select name="language" id="langSelect" class="form-control form-control-sm" style="width:auto;display:inline;">
-          <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>{% trans "English" %}</option>
-          <option value="es" {% if LANGUAGE_CODE == 'es' %}selected{% endif %}>{% trans "Spanish" %}</option>
-        </select>
-      </form>
     </li>
     <!-- User Account Menu -->
     <li class="nav-item dropdown">

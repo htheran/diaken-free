@@ -12,29 +12,45 @@
     
     <!-- Filters -->
     <div class="card-body">
-      <form method="get" class="form-inline mb-3">
-        <label class="mr-2"><i class="fas fa-filter"></i> Filters:</label>
-        
-        <select name="status" class="form-control form-control-sm mr-2">
-          <option value="">All Status</option>
-          <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Success</option>
-          <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
-        </select>
-        
-        <select name="type" class="form-control form-control-sm mr-2">
-          <option value="">All Types</option>
-          <option value="host" {% if type_filter == 'host' %}selected{% endif %}>Host</option>
-          <option value="group" {% if type_filter == 'group' %}selected{% endif %}>Group</option>
-        </select>
-        
-        <label class="mr-2">From:</label>
-        <input type="date" name="date_from" class="form-control form-control-sm mr-2" value="{{ date_from }}">
-        
-        <label class="mr-2">To:</label>
-        <input type="date" name="date_to" class="form-control form-control-sm mr-2" value="{{ date_to }}">
-        
-        <button type="submit" class="btn btn-primary btn-sm mr-2"><i class="fas fa-search"></i> Filter</button>
-        <a href="{% url 'history:history_list' %}" class="btn btn-secondary btn-sm"><i class="fas fa-eraser"></i> Clear</a>
+      <form method="get" class="mb-0">
+        <div class="row align-items-end">
+          <div class="col-12 mb-2">
+            <label class="font-weight-bold"><i class="fas fa-filter"></i> Filters:</label>
+          </div>
+          
+          <div class="col-md-2 mb-2">
+            <label class="small text-muted mb-1">Status</label>
+            <select name="status" class="form-control form-control-sm">
+              <option value="">All Status</option>
+              <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Success</option>
+              <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+            </select>
+          </div>
+          
+          <div class="col-md-2 mb-2">
+            <label class="small text-muted mb-1">Type</label>
+            <select name="type" class="form-control form-control-sm">
+              <option value="">All Types</option>
+              <option value="host" {% if type_filter == 'host' %}selected{% endif %}>Host</option>
+              <option value="group" {% if type_filter == 'group' %}selected{% endif %}>Group</option>
+            </select>
+          </div>
+          
+          <div class="col-md-3 mb-2">
+            <label class="small text-muted mb-1">From:</label>
+            <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from }}">
+          </div>
+          
+          <div class="col-md-3 mb-2">
+            <label class="small text-muted mb-1">To:</label>
+            <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to }}">
+          </div>
+          
+          <div class="col-md-2 mb-2">
+            <button type="submit" class="btn btn-primary btn-sm btn-block"><i class="fas fa-search"></i> Filter</button>
+            <a href="{% url 'history:history_list' %}" class="btn btn-secondary btn-sm btn-block mt-1"><i class="fas fa-eraser"></i> Clear</a>
+          </div>
+        </div>
       </form>
     </div>
     
