@@ -130,6 +130,7 @@ install_dependencies() {
         "vim"
         "firewalld"
         "redis"
+        "openssh-clients"
     )
     
     # Try dnf first, fallback to yum
@@ -415,7 +416,7 @@ Type=forking
 User=${INSTALL_USER}
 Group=${INSTALL_USER}
 WorkingDirectory=${INSTALL_DIR}
-Environment="PATH=${INSTALL_DIR}/venv/bin"
+Environment="PATH=${INSTALL_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=${INSTALL_DIR}/venv/bin/celery -A ${PROJECT_NAME} worker --loglevel=info --detach --logfile=${CELERY_LOG_DIR}/worker.log --pidfile=${CELERY_PID_DIR}/worker.pid
 PIDFile=${CELERY_PID_DIR}/worker.pid
 Restart=always
