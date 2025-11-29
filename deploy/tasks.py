@@ -658,6 +658,8 @@ def provision_linux_vm_async(self, history_id, template_ip, new_ip, new_hostname
         wait_interval_boot = 5
         elapsed_boot = 0
         
+        logger.info(f'[CELERY-LINUX-{self.request.id}] Waiting for SSH on {template_ip}:22 (max {max_wait_boot}s)...')
+        
         while elapsed_boot < max_wait_boot and not ssh_ready:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -666,11 +668,15 @@ def provision_linux_vm_async(self, history_id, template_ip, new_ip, new_hostname
                 sock.close()
                 if result_sock == 0:
                     ssh_ready = True
-                    logger.info(f'[CELERY-LINUX-{self.request.id}] SSH ready on {template_ip}:22 after {elapsed_boot}s')
+                    logger.info(f'[CELERY-LINUX-{self.request.id}] ✓ SSH ready on {template_ip}:22 after {elapsed_boot}s')
                 else:
+                    if elapsed_boot % 15 == 0:  # Log every 15 seconds
+                        logger.info(f'[CELERY-LINUX-{self.request.id}] Still waiting for SSH... ({elapsed_boot}s/{max_wait_boot}s)')
                     time.sleep(wait_interval_boot)
                     elapsed_boot += wait_interval_boot
             except Exception as e:
+                if elapsed_boot % 15 == 0:  # Log every 15 seconds
+                    logger.warning(f'[CELERY-LINUX-{self.request.id}] SSH check error: {e} ({elapsed_boot}s/{max_wait_boot}s)')
                 time.sleep(wait_interval_boot)
                 elapsed_boot += wait_interval_boot
         
@@ -686,6 +692,34 @@ def provision_linux_vm_async(self, history_id, template_ip, new_ip, new_hostname
         # STEP 1: Execute Ansible playbook to configure hostname and IP
         # Selecciona playbook según OS
         import os
+        import stat
+        
+        # Verify SSH key exists and has correct permissions
+        if not os.path.exists(ssh_key_path):
+            error_msg = f'SSH key not found: {ssh_key_path}'
+            logger.error(f'[CELERY-LINUX-{self.request.id}] {error_msg}')
+            history_record.ansible_output = f"ERROR: {error_msg}"
+            history_record.completed_at = timezone.now()
+            history_record.status = 'failed'
+            history_record.save()
+            return {'status': 'failed', 'history_id': history_id, 'message': error_msg}
+        
+        # Check and fix SSH key permissions (must be 600)
+        try:
+            current_perms = stat.S_IMODE(os.lstat(ssh_key_path).st_mode)
+            if current_perms != 0o600:
+                logger.warning(f'[CELERY-LINUX-{self.request.id}] SSH key has incorrect permissions: {oct(current_perms)}. Fixing to 600...')
+                os.chmod(ssh_key_path, 0o600)
+                logger.info(f'[CELERY-LINUX-{self.request.id}] SSH key permissions fixed to 600')
+            else:
+                logger.info(f'[CELERY-LINUX-{self.request.id}] SSH key permissions are correct: 600')
+        except Exception as e:
+            logger.warning(f'[CELERY-LINUX-{self.request.id}] Could not check/fix SSH key permissions: {e}')
+        
+        logger.info(f'[CELERY-LINUX-{self.request.id}] Using SSH key: {ssh_key_path}')
+        logger.info(f'[CELERY-LINUX-{self.request.id}] SSH user: {ssh_user}')
+        logger.info(f'[CELERY-LINUX-{self.request.id}] Target IP: {template_ip}')
+        
         if os_family and os_family.lower() == 'debian':
             ansible_playbook = os.path.join(settings.BASE_DIR, 'ansible', 'provision_debian_vm.yml')
             logger.info(f'[CELERY-LINUX-{self.request.id}] Using Debian playbook: {ansible_playbook}')
