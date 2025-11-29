@@ -232,3 +232,44 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 #   - windows_update_reboot_timeout (default: 600)
 #   - windows_update_post_reboot_delay (default: 30)
 #   - windows_update_wsus_sync_wait (default: 30)
+
+# ============================================================================
+# CREDENTIAL ENCRYPTION CONFIGURATION
+# ============================================================================
+# Encryption key for storing sensitive credentials (vCenter, etc.)
+# Auto-generated if not provided via environment variable
+import secrets
+
+# Try to get from environment, otherwise generate a default key
+ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+
+if not ENCRYPTION_KEY:
+    # Path to store the encryption key
+    KEY_FILE = os.path.join(BASE_DIR, '.encryption_key')
+    
+    # Try to load existing key from file
+    if os.path.exists(KEY_FILE):
+        try:
+            with open(KEY_FILE, 'r') as f:
+                ENCRYPTION_KEY = f.read().strip()
+        except Exception:
+            pass
+    
+    # Generate new key if still not available
+    if not ENCRYPTION_KEY:
+        # Generate a secure random key (32 bytes = 256 bits)
+        ENCRYPTION_KEY = secrets.token_urlsafe(32)
+        
+        # Save it for future use
+        try:
+            with open(KEY_FILE, 'w') as f:
+                f.write(ENCRYPTION_KEY)
+            # Set restrictive permissions (only owner can read/write)
+            os.chmod(KEY_FILE, 0o600)
+        except Exception as e:
+            # If we can't save it, at least log a warning
+            import sys
+            print(f"Warning: Could not save encryption key to file: {e}", file=sys.stderr)
+
+# Export to environment for child processes
+os.environ['ENCRYPTION_KEY'] = ENCRYPTION_KEY
