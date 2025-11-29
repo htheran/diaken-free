@@ -9,9 +9,11 @@
     --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", 
                    "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     
-    /* Colores macOS */
-    --macos-blue: #007AFF;
-    --macos-blue-hover: #0051D5;
+    /* Colores ORIGINALES del proyecto (NO CAMBIAR) */
+    --primary-blue: #1e3a5f;
+    --primary-blue-hover: #163050;
+    --accent-blue: #3498db;
+    --accent-blue-hover: #2980b9;
     --macos-gray-100: #F5F5F7;
     --macos-gray-200: #E8E8ED;
     --macos-gray-300: #D2D2D7;
@@ -65,23 +67,23 @@ body, html {
     transition: var(--transition-fast);
 }
 
-/* ========== SIDEBAR ESTILO macOS ========== */
+/* ========== SIDEBAR ESTILO macOS (Colores originales) ========== */
 .main-sidebar {
-    background: rgba(248, 248, 248, 0.95) !important;
+    background: var(--primary-blue) !important;
     backdrop-filter: blur(30px) saturate(150%);
     -webkit-backdrop-filter: blur(30px) saturate(150%);
-    border-right: 1px solid var(--macos-gray-200) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: var(--shadow-md) !important;
 }
 
 .sidebar-dark-primary {
-    background: rgba(248, 248, 248, 0.95) !important;
+    background: var(--primary-blue) !important;
 }
 
 /* Logo sidebar */
 .brand-link {
     background: transparent !important;
-    border-bottom: 1px solid var(--macos-gray-200) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     padding: 12px 16px !important;
 }
 
@@ -89,27 +91,27 @@ body, html {
     font-size: 18px !important;
     font-weight: 600 !important;
     letter-spacing: -0.02em !important;
-    color: var(--macos-gray-900) !important;
+    color: #ffffff !important;
 }
 
-/* Menu items */
+/* Menu items - Colores originales */
 .nav-sidebar .nav-item .nav-link {
     border-radius: var(--radius-md) !important;
     margin: 4px 8px !important;
     padding: 10px 14px !important;
     font-size: 13px !important;
     font-weight: 500 !important;
-    color: var(--macos-gray-700) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
     transition: var(--transition-base) !important;
 }
 
 .nav-sidebar .nav-item .nav-link:hover {
-    background-color: var(--macos-gray-200) !important;
-    color: var(--macos-gray-900) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
 }
 
 .nav-sidebar .nav-item .nav-link.active {
-    background-color: var(--macos-blue) !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
     color: white !important;
     box-shadow: var(--shadow-sm) !important;
 }
@@ -194,12 +196,12 @@ body, html {
 }
 
 .btn-primary {
-    background: var(--macos-blue) !important;
+    background: var(--accent-blue) !important;
     color: white !important;
 }
 
 .btn-primary:hover {
-    background: var(--macos-blue-hover) !important;
+    background: var(--accent-blue-hover) !important;
 }
 
 .btn-success {
@@ -238,8 +240,8 @@ body, html {
 }
 
 .form-control:focus {
-    border-color: var(--macos-blue) !important;
-    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1) !important;
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1) !important;
     background: white !important;
 }
 
@@ -342,13 +344,13 @@ select.form-control {
 }
 
 .breadcrumb-item a {
-    color: var(--macos-blue) !important;
+    color: var(--accent-blue) !important;
     text-decoration: none;
     transition: var(--transition-fast) !important;
 }
 
 .breadcrumb-item a:hover {
-    color: var(--macos-blue-hover) !important;
+    color: var(--accent-blue-hover) !important;
 }
 
 /* ========== ALERTS ESTILO macOS ========== */
@@ -398,8 +400,8 @@ select.form-control {
 }
 
 .pagination .page-item.active .page-link {
-    background: var(--macos-blue) !important;
-    border-color: var(--macos-blue) !important;
+    background: var(--accent-blue) !important;
+    border-color: var(--accent-blue) !important;
     color: white !important;
 }
 
@@ -462,7 +464,9 @@ select.form-control {
 }
 
 /* ========== UTILIDADES ========== */
-.text-macos-blue { color: var(--macos-blue) !important; }
-.bg-macos-blue { background-color: var(--macos-blue) !important; }
+.text-primary-blue { color: var(--primary-blue) !important; }
+.bg-primary-blue { background-color: var(--primary-blue) !important; }
+.text-accent-blue { color: var(--accent-blue) !important; }
+.bg-accent-blue { background-color: var(--accent-blue) !important; }
 .shadow-macos { box-shadow: var(--shadow-md) !important; }
 .rounded-macos { border-radius: var(--radius-lg) !important; }
