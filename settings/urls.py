@@ -7,6 +7,8 @@ urlpatterns = [
     path('global/create/', views.global_setting_create, name='global_setting_create'),
     path('global/<int:pk>/edit/', views.global_setting_update, name='global_setting_update'),
     path('global/<int:pk>/delete/', views.global_setting_delete, name='global_setting_delete'),
+    path('global/export/', views.export_global_settings, name='export_global_settings'),
+    path('global/import/', views.import_global_settings, name='import_global_settings'),
     # Secciones
     path('sections/create/', views.section_create, name='section_create'),
     path('sections/<int:pk>/edit/', views.section_update, name='section_update'),

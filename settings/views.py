@@ -230,3 +230,169 @@ def template_delete(request, pk):
     return render(request, 'settings/template_delete.html', {'template': template})
 
 # Create your views here.
+
+# --- Export/Import Global Settings ---
+from django.http import JsonResponse, HttpResponse
+import json
+from django.views.decorators.http import require_http_methods
+
+@login_required
+def export_global_settings(request):
+    """Export all global settings to JSON file"""
+    # Prepare data structure
+    export_data = {
+        'version': '1.0',
+        'exported_at': timezone.now().isoformat(),
+        'sections': {},
+        'settings_without_section': []
+    }
+    
+    # Export sections with their settings
+    for section in SettingSection.objects.all():
+        export_data['sections'][section.name] = {
+            'description': section.description,
+            'settings': []
+        }
+        
+        for setting in section.settings.all().order_by('order'):
+            export_data['sections'][section.name]['settings'].append({
+                'key': setting.key,
+                'value': setting.value,
+                'description': setting.description,
+                'order': setting.order
+            })
+    
+    # Export settings without section
+    for setting in GlobalSetting.objects.filter(section__isnull=True).order_by('order'):
+        export_data['settings_without_section'].append({
+            'key': setting.key,
+            'value': setting.value,
+            'description': setting.description,
+            'order': setting.order
+        })
+    
+    # Create JSON response
+    response = HttpResponse(
+        json.dumps(export_data, indent=2),
+        content_type='application/json'
+    )
+    response['Content-Disposition'] = f'attachment; filename="diaken_settings_{timezone.now().strftime("%Y%m%d_%H%M%S")}.json"'
+    
+    messages.success(request, 'Settings exported successfully')
+    return response
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def import_global_settings(request):
+    """Import global settings from JSON file"""
+    if request.method == 'POST':
+        if 'settings_file' not in request.FILES:
+            messages.error(request, 'No file uploaded')
+            return redirect('global_setting_list')
+        
+        uploaded_file = request.FILES['settings_file']
+        
+        # Validate file extension
+        if not uploaded_file.name.endswith('.json'):
+            messages.error(request, 'Invalid file format. Please upload a JSON file.')
+            return redirect('global_setting_list')
+        
+        try:
+            # Read and parse JSON
+            file_content = uploaded_file.read().decode('utf-8')
+            import_data = json.loads(file_content)
+            
+            # Validate structure
+            if 'version' not in import_data:
+                messages.error(request, 'Invalid file structure. Missing version field.')
+                return redirect('global_setting_list')
+            
+            # Statistics
+            stats = {
+                'sections_created': 0,
+                'sections_skipped': 0,
+                'settings_created': 0,
+                'settings_skipped': 0,
+                'settings_updated': 0
+            }
+            
+            # Import sections
+            if 'sections' in import_data:
+                for section_name, section_data in import_data['sections'].items():
+                    # Check if section exists
+                    section, created = SettingSection.objects.get_or_create(
+                        name=section_name,
+                        defaults={'description': section_data.get('description', '')}
+                    )
+                    
+                    if created:
+                        stats['sections_created'] += 1
+                    else:
+                        stats['sections_skipped'] += 1
+                    
+                    # Import settings for this section
+                    for setting_data in section_data.get('settings', []):
+                        key = setting_data['key']
+                        
+                        # Check if setting exists
+                        existing = GlobalSetting.objects.filter(key=key).first()
+                        
+                        if existing:
+                            # Setting exists - skip or update based on user preference
+                            stats['settings_skipped'] += 1
+                        else:
+                            # Create new setting
+                            GlobalSetting.objects.create(
+                                section=section,
+                                key=key,
+                                value=setting_data['value'],
+                                description=setting_data.get('description', ''),
+                                order=setting_data.get('order', 0)
+                            )
+                            stats['settings_created'] += 1
+            
+            # Import settings without section
+            if 'settings_without_section' in import_data:
+                for setting_data in import_data['settings_without_section']:
+                    key = setting_data['key']
+                    
+                    existing = GlobalSetting.objects.filter(key=key).first()
+                    
+                    if existing:
+                        stats['settings_skipped'] += 1
+                    else:
+                        GlobalSetting.objects.create(
+                            section=None,
+                            key=key,
+                            value=setting_data['value'],
+                            description=setting_data.get('description', ''),
+                            order=setting_data.get('order', 0)
+                        )
+                        stats['settings_created'] += 1
+            
+            # Build success message
+            msg_parts = []
+            if stats['sections_created'] > 0:
+                msg_parts.append(f"{stats['sections_created']} section(s) created")
+            if stats['sections_skipped'] > 0:
+                msg_parts.append(f"{stats['sections_skipped']} section(s) already existed")
+            if stats['settings_created'] > 0:
+                msg_parts.append(f"{stats['settings_created']} setting(s) imported")
+            if stats['settings_skipped'] > 0:
+                msg_parts.append(f"{stats['settings_skipped']} setting(s) skipped (already exist)")
+            
+            if msg_parts:
+                messages.success(request, 'Import completed: ' + ', '.join(msg_parts))
+            else:
+                messages.info(request, 'No new settings to import')
+            
+        except json.JSONDecodeError:
+            messages.error(request, 'Invalid JSON file format')
+        except Exception as e:
+            messages.error(request, f'Error importing settings: {str(e)}')
+        
+        return redirect('global_setting_list')
+    
+    # GET request - show import form
+    return render(request, 'settings/global_setting_import.html')

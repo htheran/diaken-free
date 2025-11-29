@@ -6,6 +6,12 @@
     <div class="card-header">
       <h3 class="card-title">Global Variables</h3>
       <div class="card-tools">
+        <a href="{% url 'export_global_settings' %}" class="btn btn-success btn-sm" title="Export all settings to JSON">
+          <i class="fas fa-file-download"></i> Export
+        </a>
+        <a href="{% url 'import_global_settings' %}" class="btn btn-info btn-sm" title="Import settings from JSON">
+          <i class="fas fa-file-upload"></i> Import
+        </a>
         <a href="{% url 'global_setting_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> New Variable</a>
         <a href="{% url 'section_create' %}" class="btn btn-secondary btn-sm"><i class="fas fa-folder-plus"></i> New Section</a>
       </div>
