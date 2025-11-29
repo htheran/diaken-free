@@ -227,6 +227,30 @@ install_python_packages() {
     fi
 }
 
+install_govc() {
+    print_header "Installing govc (VMware CLI)"
+    
+    # Check if govc is already installed
+    if command -v govc &> /dev/null; then
+        local current_version=$(govc version 2>/dev/null | head -1)
+        print_info "govc is already installed: $current_version"
+        return 0
+    fi
+    
+    print_info "Downloading and installing govc..."
+    
+    # Download and install govc
+    if curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc 2>&1 | grep -q "govc"; then
+        sudo chmod +x /usr/local/bin/govc
+        local installed_version=$(govc version 2>/dev/null | head -1)
+        print_success "govc installed successfully: $installed_version"
+    else
+        print_error "Failed to install govc"
+        print_warning "You can install it manually later with:"
+        print_warning "curl -L https://github.com/vmware/govmomi/releases/latest/download/govc_\$(uname -s)_\$(uname -m).tar.gz | sudo tar -C /usr/local/bin -xvzf - govc"
+    fi
+}
+
 create_directories() {
     print_header "Creating Application Directories"
     
@@ -496,6 +520,7 @@ ${BLUE}Installation Details:${NC}
   • Install User: ${GREEN}$INSTALL_USER${NC}
   • Redis: ${GREEN}Running on localhost:6379${NC}
   • Celery Worker: ${GREEN}Running as systemd service${NC}
+  • govc (VMware CLI): ${GREEN}$(govc version 2>/dev/null | head -1 || echo 'Not installed')${NC}
 
 ${BLUE}To Start the Application:${NC}
 
@@ -582,6 +607,7 @@ EOF
     clone_repository
     setup_virtual_environment
     install_python_packages
+    install_govc
     create_directories
     run_migrations
     collect_static
