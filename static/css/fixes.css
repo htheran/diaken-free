@@ -1,0 +1,157 @@
+/* ============================================================================
+   DIAKEN - Layout Fixes & No Animations
+   ============================================================================ */
+
+/* ========== NO ANIMATIONS - CRÍTICO ========== */
+*, *::before, *::after {
+    animation: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+}
+
+/* Desactivar animaciones de Bootstrap */
+.fade {
+    transition: none !important;
+}
+
+.collapsing {
+    transition: none !important;
+}
+
+.modal.fade .modal-dialog {
+    transition: none !important;
+    transform: none !important;
+}
+
+.modal.show .modal-dialog {
+    transform: none !important;
+}
+
+/* ========== FIX: FILTROS NO CORTADOS ========== */
+.form-inline {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+}
+
+/* Asegurar que los inputs no se corten */
+.form-inline .input-group,
+.form-inline .form-control,
+.form-inline select,
+.form-inline button {
+    flex-shrink: 0 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Fix: Card body debe permitir overflow visible para filtros */
+.card-body {
+    overflow: visible !important;
+}
+
+/* Fix: Contenedor de filtros */
+.filter-container,
+form[method="get"] {
+    overflow: visible !important;
+    width: 100% !important;
+}
+
+/* ========== FIX: TABLAS RESPONSIVE ========== */
+.table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* ========== FIX: DARK MODE ========== */
+[data-theme="dark"] body,
+.dark-mode body {
+    background-color: #1a1a1a !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .card,
+.dark-mode .card {
+    background-color: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .table,
+.dark-mode .table {
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .table thead th,
+.dark-mode .table thead th {
+    background-color: #333 !important;
+    color: #fff !important;
+    border-color: #444 !important;
+}
+
+[data-theme="dark"] .table tbody tr,
+.dark-mode .table tbody tr {
+    background-color: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover,
+.dark-mode .table tbody tr:hover {
+    background-color: #333 !important;
+}
+
+[data-theme="dark"] .form-control,
+.dark-mode .form-control {
+    background-color: #333 !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .btn-primary,
+.dark-mode .btn-primary {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+[data-theme="dark"] .modal-content,
+.dark-mode .modal-content {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+}
+
+/* ========== FIX: SIDEBAR ========== */
+.sidebar {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ========== FIX: DROPDOWNS ========== */
+.dropdown-menu {
+    transition: none !important;
+    animation: none !important;
+}
+
+.dropdown-menu.show {
+    animation: none !important;
+}
+
+/* ========== FIX: ALERTS ========== */
+.alert {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== FIX: TOOLTIPS ========== */
+.tooltip {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ========== FIX: POPOVERS ========== */
+.popover {
+    transition: none !important;
+    animation: none !important;
+}
