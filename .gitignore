@@ -44,6 +44,17 @@ media/*
 media/playbooks/**/*.yml
 media/playbooks/**/*.yaml
 !media/playbooks/**/.gitkeep
+!media/scripts/
+!media/scripts/README.md
+!media/scripts/*/
+!media/scripts/*/*/
+!media/scripts/*/*/*
+media/scripts/**/*.sh
+media/scripts/**/*.ps1
+media/scripts/**/*.bat
+media/scripts/**/*.cmd
+media/scripts/**/*.py
+!media/scripts/**/.gitkeep
 staticfiles/
 
 # Secrets and sensitive files

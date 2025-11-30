@@ -268,7 +268,7 @@ create_directories() {
     cd "$INSTALL_DIR"
     
     # Base directories
-    local dirs=("logs" "media/scripts" "media/ssh" "media/ssl")
+    local dirs=("logs" "media/ssh" "media/ssl")
     
     for dir in "${dirs[@]}"; do
         if [ ! -d "$dir" ]; then
@@ -291,6 +291,22 @@ create_directories() {
     )
     
     for dir in "${playbook_dirs[@]}"; do
+        mkdir -p "$dir"
+        print_success "Created: $dir"
+    done
+    
+    # Scripts directory structure (RedHat, Debian, Windows)
+    print_info "Creating scripts directory structure..."
+    local script_dirs=(
+        "media/scripts/redhat/host"
+        "media/scripts/redhat/group"
+        "media/scripts/debian/host"
+        "media/scripts/debian/group"
+        "media/scripts/windows/host"
+        "media/scripts/windows/group"
+    )
+    
+    for dir in "${script_dirs[@]}"; do
         mkdir -p "$dir"
         print_success "Created: $dir"
     done

@@ -29,6 +29,9 @@ class Command(BaseCommand):
         }
         
         # Define default sections and settings
+        # NOTA: Solo se crean variables mínimas del sistema
+        # Las variables de deployment (vCenter, credenciales, etc.)
+        # deben ser configuradas por el usuario vía interfaz web
         default_config = {
             'System': {
                 'description': 'System configuration settings',
@@ -36,7 +39,7 @@ class Command(BaseCommand):
                     {
                         'key': 'timezone',
                         'value': 'America/Bogota',
-                        'description': 'System timezone (Colombia)',
+                        'description': 'System timezone',
                         'order': 1
                     },
                     {
@@ -54,8 +57,8 @@ class Command(BaseCommand):
                 ]
             },
             'Deployment': {
-                'description': 'Deployment settings',
-                'settings': []  # Will be populated by user
+                'description': 'Deployment settings - Configure via web interface',
+                'settings': []  # User must configure: vcenter_host, vcenter_user, etc.
             }
         }
         
