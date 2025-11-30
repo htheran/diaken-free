@@ -1,0 +1,8 @@
+# Playbooks para hosts individuales Debian/Ubuntu
+
+Coloca aquí los playbooks que se ejecutarán contra hosts individuales Debian/Ubuntu.
+
+Ejemplos:
+- Install-Apache-Debian-Host.yml
+- Update-Debian-Host.yml
+- Configure-Nginx-Host.yml

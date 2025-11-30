@@ -1,0 +1,8 @@
+# Playbooks para grupos de hosts Debian/Ubuntu
+
+Coloca aquí los playbooks que se ejecutarán contra grupos de hosts Debian/Ubuntu.
+
+Ejemplos:
+- Configure-WebServers-Group.yml
+- Install-Docker-Group.yml
+- Update-Development-Group.yml

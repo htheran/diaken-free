@@ -1,164 +1,70 @@
 ---
-- name: Instalar y configurar vsftpd con variables externas
+# Install and Configure vsftpd (FTP Server)
+# This playbook installs and configures vsftpd on RedHat-based systems
+
+- name: Install and Configure vsftpd
   hosts: target_host
   become: yes
-
-  pre_tasks:
-    - name: Verificar que el sistema sea RHEL 9
-      fail:
-        msg: "Este playbook está diseñado solo para RHEL 9.x"
-      when: ansible_facts['os_family'] != "RedHat" or ansible_facts['distribution_major_version'] != "9"
-
+  gather_facts: yes
+  
   tasks:
-    - name: Instalar paquetes necesarios
+    - name: Display hostname
+      debug:
+        msg: "Installing vsftpd on: {{ inventory_hostname }}"
+    
+    - name: Install vsftpd package
       dnf:
-        name:
-          - epel-release
-          - vsftpd
-          - wget
-          - policycoreutils-python-utils
-        state: present
-        update_cache: yes
-
-    - name: Añadir shell a /etc/shells si falta
-      lineinfile:
-        path: /etc/shells
-        line: "{{ vsftpd_shell }}"
-        state: present
-
-    - name: Crear usuario si no existe
-      user:
-        name: "{{ vsftpd_username }}"
-        shell: "{{ vsftpd_shell }}"
-        home: "{{ vsftpd_dir }}"
-        create_home: no
-      register: user_creation
-
-    - name: Establecer contraseña del usuario
-      ansible.builtin.shell: echo "{{ vsftpd_username }}:{{ vsftpd_password }}" | chpasswd
-      no_log: true
-
-    - name: Agregar usuario al grupo
-      user:
-        name: "{{ vsftpd_username }}"
-        groups: "{{ vsftpd_group }}"
-        append: yes
-
-    - name: Crear directorio FTP
-      file:
-        path: "{{ vsftpd_dir }}"
-        state: directory
-        owner: "{{ vsftpd_username }}"
-        group: "{{ vsftpd_group }}"
-        mode: '0755'
-        recurse: yes
-
-    - name: Respaldar configuración si existe
-      copy:
-        src: "{{ vsftpd_conf_file }}"
-        dest: "{{ vsftpd_conf_file }}.bak"
-        remote_src: yes
-      when: 
-        - ansible_facts['files'][vsftpd_conf_file] is defined
-        - ansible_facts['files'][vsftpd_conf_file]['exists']
-
-    - name: Configurar vsftpd
-      copy:
-        dest: "{{ vsftpd_conf_file }}"
-        content: |
-          listen=YES
-          listen_ipv6=NO
-          anonymous_enable=NO
-          local_enable=YES
-          write_enable=YES
-          local_umask=022
-          dirmessage_enable=YES
-          use_localtime=YES
-          xferlog_enable=YES
-          connect_from_port_20=YES
-          chroot_local_user=YES
-          allow_writeable_chroot=YES
-          user_sub_token=$USER
-          local_root={{ vsftpd_dir }}
-          pam_service_name=vsftpd
-          userlist_enable=YES
-          userlist_file={{ vsftpd_allowed_users_file }}
-          userlist_deny=NO
-          ssl_enable=NO
-          listen_port={{ vsftpd_port }}
-          pasv_enable=YES
-          pasv_min_port={{ vsftpd_passive_min_port }}
-          pasv_max_port={{ vsftpd_passive_max_port }}
-      notify: restart vsftpd
-
-    - name: Verificar si firewalld está activo
-      command: systemctl is-active firewalld
-      register: firewalld_status
-      ignore_errors: true
-      changed_when: false
-
-    - name: Abrir puertos FTP en firewalld de forma permanente
-      firewalld:
-        port: "{{ item }}/tcp"
-        permanent: yes
-        immediate: yes
-        state: enabled
-      loop:
-        - "{{ vsftpd_port }}"
-        - "{{ vsftpd_passive_min_port }}-{{ vsftpd_passive_max_port }}"
-      when: firewalld_status.stdout == "active"
-
-    - name: Crear archivo de usuarios permitidos
-      file:
-        path: "{{ vsftpd_allowed_users_file }}"
-        state: touch
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Asegurar que el usuario esté en el archivo de usuarios
-      lineinfile:
-        path: "{{ vsftpd_allowed_users_file }}"
-        line: "{{ vsftpd_username }}"
-        state: present
-
-    - name: Comprobar si el booleano ftp_home_dir existe
-      command: getsebool -a
-      register: sebools
-      changed_when: false
-      when: ansible_selinux.status == "enabled"
-
-    - name: Activar booleano de SELinux para FTP
-      seboolean:
-        name: ftp_home_dir
-        state: true
-        persistent: yes
-      when:
-        - ansible_selinux.status == "enabled"
-        - "'ftp_home_dir' in sebools.stdout"
-      ignore_errors: yes
-
-    - name: Etiquetar directorio para SELinux
-      command: semanage fcontext -a -t public_content_rw_t "{{ vsftpd_dir }}(/.*)?"
-      when: ansible_selinux.status == "enabled"
-      notify: restore selinux context
-      ignore_errors: yes
-
-  handlers:
-    - name: restart vsftpd
-      systemd:
         name: vsftpd
-        state: restarted
-        enabled: yes
-
-    - name: Asegurar que vsftpd esté iniciado y habilitado
+        state: present
+      when: ansible_os_family == "RedHat"
+    
+    - name: Configure vsftpd
+      lineinfile:
+        path: /etc/vsftpd/vsftpd.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^anonymous_enable=', line: 'anonymous_enable=NO' }
+        - { regexp: '^local_enable=', line: 'local_enable=YES' }
+        - { regexp: '^write_enable=', line: 'write_enable=YES' }
+        - { regexp: '^chroot_local_user=', line: 'chroot_local_user=YES' }
+        - { regexp: '^allow_writeable_chroot=', line: 'allow_writeable_chroot=YES' }
+      when: ansible_os_family == "RedHat"
+    
+    - name: Start and enable vsftpd service
       systemd:
         name: vsftpd
         state: started
         enabled: yes
-
-
-    - name: restore selinux context
-      command: restorecon -Rv "{{ vsftpd_dir }}"
-      when: ansible_selinux.status == "enabled"
-      listen: restore selinux context
+      when: ansible_os_family == "RedHat"
+    
+    - name: Open firewall for FTP
+      firewalld:
+        service: ftp
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+    
+    - name: Set SELinux boolean for FTP home directories
+      seboolean:
+        name: ftp_home_dir
+        state: yes
+        persistent: yes
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_selinux.status == "enabled"
+      ignore_errors: yes
+    
+    - name: Display success message
+      debug:
+        msg: "✅ vsftpd installed and configured successfully"
+    
+    - name: Display FTP access information
+      debug:
+        msg: |
+          FTP Server is now running on {{ inventory_hostname }}
+          Connect using: ftp://{{ ansible_default_ipv4.address | default(inventory_hostname) }}
+          Use local system users for authentication

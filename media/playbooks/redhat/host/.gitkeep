@@ -1,0 +1,9 @@
+# Playbooks para hosts individuales RedHat/CentOS/Rocky Linux
+
+Coloca aquí los playbooks que se ejecutarán contra hosts individuales RedHat.
+
+Ejemplos:
+- Install-Httpd-Host.yml
+- Install-Vsftpd-Host.yml
+- Update-Redhat-Host.yml
+- Configure-SSL-Host.yml

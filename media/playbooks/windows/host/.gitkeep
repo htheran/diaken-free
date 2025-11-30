@@ -1,0 +1,9 @@
+# Playbooks para hosts individuales Windows
+
+Coloca aquí los playbooks que se ejecutarán contra hosts individuales Windows Server.
+
+Ejemplos:
+- Update-Windows-Host.yml
+- BasicInfo-Windows-Host.yml
+- Install-IIS-Host.yml
+- Configure-Firewall-Host.yml

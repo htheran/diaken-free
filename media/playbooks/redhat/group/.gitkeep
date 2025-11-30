@@ -1,0 +1,8 @@
+# Playbooks para grupos de hosts RedHat/CentOS/Rocky Linux
+
+Coloca aquí los playbooks que se ejecutarán contra grupos de hosts RedHat.
+
+Ejemplos:
+- Configure-WebServers-Group.yml
+- Install-Monitoring-Group.yml
+- Update-Production-Group.yml

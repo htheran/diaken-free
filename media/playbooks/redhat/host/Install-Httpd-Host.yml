@@ -1,192 +1,68 @@
 ---
-- name: Instalación y configuración de servidor web (HTTPD)
+# Install and Configure Apache HTTP Server (httpd)
+# This playbook installs and configures Apache on RedHat-based systems
+
+- name: Install and Configure Apache HTTP Server
   hosts: target_host
   become: yes
-
-  vars:
-    ansible_remote_tmp: /tmp/.ansible/tmp
-    # Las demás variables vienen de Global Settings, no necesitan redefinirse
-
+  gather_facts: yes
+  
   tasks:
-    - name: Asegurar /tmp/.ansible/tmp existe y tiene permisos correctos
-      ansible.builtin.file:
-        path: /tmp/.ansible/tmp
-        state: directory
-        mode: '1777'
-      become: yes
-      tags: ansible_tmp
-
-    - name: Cambiar el hostname del sistema
-      ansible.builtin.hostname:
-        name: "{{ inventory_hostname }}"
-      tags: hostname
-
-    - name: Actualizar sistema operativo
-      ansible.builtin.dnf:
-        name: '*'
-        state: latest
-        update_cache: yes
-      tags: system_update
-
-    - name: Instalar Apache (httpd)
-      ansible.builtin.dnf:
+    - name: Display hostname
+      debug:
+        msg: "Installing Apache on: {{ inventory_hostname }}"
+    
+    - name: Install httpd package
+      dnf:
         name: httpd
         state: present
-      tags: httpd
-
-    - name: Asegurar que el servicio httpd esté iniciado y habilitado
-      ansible.builtin.service:
+      when: ansible_os_family == "RedHat"
+    
+    - name: Start and enable httpd service
+      systemd:
         name: httpd
         state: started
-        enabled: true
-      tags: httpd
-
-    - name: Recolectar información de paquetes instalados
-      ansible.builtin.package_facts:
-        manager: auto
-      tags: firewall
-
-    - block:
-        - name: Instalar firewalld si no está presente
-          ansible.builtin.dnf:
-            name: firewalld
-            state: present
-          when: "'firewalld' not in ansible_facts.packages"
-          tags: firewall
-
-        - name: Iniciar y habilitar firewalld
-          ansible.builtin.service:
-            name: firewalld
-            state: started
-            enabled: true
-          tags: firewall
-
-        - name: Abrir puerto HTTP
-          ansible.builtin.command: firewall-cmd --permanent --add-port={{ http_port }}/tcp
-          ignore_errors: true
-          tags: firewall
-
-        - name: Abrir puerto HTTPS
-          ansible.builtin.command: firewall-cmd --permanent --add-port={{ https_port }}/tcp
-          ignore_errors: true
-          tags: firewall
-
-        - name: Recargar firewalld
-          ansible.builtin.command: firewall-cmd --reload
-          ignore_errors: true
-          tags: firewall
-      tags: firewall
-
-    - name: Configurar SELinux
-      block:
-        - name: Deshabilitar SELinux temporalmente
-          ansible.builtin.command: setenforce 0
-          ignore_errors: true
-          tags: selinux
-
-        - name: Deshabilitar SELinux permanentemente
-          ansible.builtin.replace:
-            path: /etc/selinux/config
-            regexp: '^SELINUX=.*'
-            replace: 'SELINUX=disabled'
-          ignore_errors: true
-          tags: selinux
-      tags: selinux
-
-    - name: Limpiar directorios no deseados en /opt/www/
-      ansible.builtin.file:
-        path: "/opt/www/{{ item }}"
-        state: absent
-      loop:
-        - "diaken"
-        - "Python-3.13.0"
-        - "Python-3.13.0.tgz"
-      ignore_errors: true
-      when: item != 'sites' and item != 'logs' and item != '.ansible'
-      tags: httpd
-
-    - name: Asegurar estructura de directorios base
-      ansible.builtin.file:
-        path: "{{ item.path }}"
-        state: directory
-        mode: "{{ item.mode | default('0755') }}"
-        owner: "{{ item.owner | default('root') }}"
-        group: "{{ item.group | default('root') }}"
-      loop:
-        - { path: "{{ server_root }}" }
-        - { path: "{{ log_root }}" }
-      tags: httpd
-
-    - name: Crear directorio del host para sitios web
-      ansible.builtin.file:
-        path: "{{ server_root }}/{{ inventory_hostname }}"
-        state: directory
-        mode: '0775'
-        owner: "{{ apache_user }}"
-        group: "{{ apache_group }}"
-      tags: httpd
-
-    - name: Crear directorio de logs del host
-      ansible.builtin.file:
-        path: "{{ log_root }}/{{ inventory_hostname }}"
-        state: directory
-        mode: '0775'
-        owner: "{{ apache_user }}"
-        group: "{{ apache_group }}"
-      tags: httpd
-
-    - name: Asegurar directorio de configuración de Apache
-      ansible.builtin.file:
-        path: "/etc/httpd/conf.d"
-        state: directory
-        mode: '0755'
-        owner: root
-        group: root
-      tags: httpd
-
-    - name: Configurar Apache
-      block:
-        - name: Hacer copia de seguridad de httpd.conf
-          ansible.builtin.command:
-            cmd: cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/httpd.conf.bak
-            creates: /etc/httpd/conf/httpd.conf.bak
-          ignore_errors: true
-          tags: httpd
-
-        - name: Copiar configuración de Apache
-          ansible.builtin.template:
-            src: /opt/www/app/diaken-pdn/media/j2/host/httpd.conf.j2
-            dest: /etc/httpd/conf/httpd.conf
-            owner: root
-            group: root
-            mode: '0644'
-          tags: httpd
-
-        - name: Configurar VirtualHost
-          ansible.builtin.template:
-            src: /opt/www/app/diaken-pdn/media/j2/host/virtualhost.conf.j2
-            dest: "/etc/httpd/conf.d/{{ inventory_hostname }}.conf"
-            owner: root
-            group: root
-            mode: '0644'
-          tags: httpd
-
-        - name: Copiar página de inicio
-          ansible.builtin.template:
-            src: /opt/www/app/diaken-pdn/media/j2/host/index.html.j2
-            dest: "{{ server_root }}/{{ inventory_hostname }}/index.html"
-            owner: "{{ apache_user }}"
-            group: "{{ apache_group }}"
-            mode: '0664'
-          tags: httpd
-      tags: httpd
-
-    - name: Verificar sintaxis de Apache
-      ansible.builtin.command: apachectl configtest
-      tags: httpd
-
-    - name: Reiniciar Apache
-      ansible.builtin.service:
-        name: httpd
-        state: restarted
-      tags: httpd
+        enabled: yes
+      when: ansible_os_family == "RedHat"
+    
+    - name: Open firewall for HTTP
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+    
+    - name: Open firewall for HTTPS
+      firewalld:
+        service: https
+        permanent: yes
+        state: enabled
+        immediate: yes
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+    
+    - name: Create default index.html
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Welcome to {{ inventory_hostname }}</title>
+          </head>
+          <body>
+              <h1>Apache HTTP Server is running!</h1>
+              <p>Hostname: {{ inventory_hostname }}</p>
+              <p>IP Address: {{ ansible_default_ipv4.address | default('N/A') }}</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: apache
+        group: apache
+        mode: '0644'
+      when: ansible_os_family == "RedHat"
+    
+    - name: Display success message
+      debug:
+        msg: "✅ Apache HTTP Server installed and configured successfully"

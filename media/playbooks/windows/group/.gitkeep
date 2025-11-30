@@ -1,0 +1,8 @@
+# Playbooks para grupos de hosts Windows
+
+Coloca aquí los playbooks que se ejecutarán contra grupos de hosts Windows Server.
+
+Ejemplos:
+- Configure-DomainControllers-Group.yml
+- Install-Updates-Group.yml
+- Configure-WebServers-Group.yml
