@@ -784,30 +784,54 @@
           </div>
         </form>
         
-        <!-- Progress Area -->
+        <!-- Progress Area - Modern Terminal Style -->
         <div id="progressArea" style="display:none;" class="mt-4">
-          <div class="card">
-            <div class="card-header bg-primary text-white">
-              <h5 class="mb-0" id="progressTitle"><i class="bi bi-spinner fa-spin"></i> Deploying VM...</h5>
+          <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); border-radius: 15px; overflow: hidden;">
+            <div class="card-header border-0" style="background: linear-gradient(90deg, #00d4ff 0%, #0066ff 100%); padding: 20px;">
+              <h5 class="mb-0 text-white" id="progressTitle" style="font-weight: 600; letter-spacing: 0.5px;">
+                <i class="bi bi-rocket-takeoff fa-spin" style="margin-right: 10px;"></i> 
+                Deploying VM...
+              </h5>
             </div>
-            <div class="card-body">
-              <div class="progress" style="height: 30px;">
+            <div class="card-body" style="padding: 30px; background-color: #000000;">
+              <!-- Progress Bar -->
+              <div class="progress" style="height: 40px; background-color: #1a1a1a; border-radius: 10px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);">
                 <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                  <span id="progressText">0%</span>
+                     role="progressbar" style="width: 0%; background: linear-gradient(90deg, #00d4ff 0%, #0066ff 100%); font-size: 16px; font-weight: 600; border-radius: 10px;" 
+                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                  <span id="progressText" style="text-shadow: 0 1px 3px rgba(0,0,0,0.5);">0%</span>
                 </div>
               </div>
-              <p class="mt-3 mb-0" id="progressStatus">Initializing deployment...</p>
-              <p class="mt-2 mb-0 text-muted small" id="progressTime">Time elapsed: 0s</p>
               
-              <!-- Real-time Output Collapsible -->
-              <div class="mt-3" id="realtimeOutputContainer" style="display:none;">
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#realtimeOutput" aria-expanded="false" aria-controls="realtimeOutput">
-                  <i class="bi bi-terminal"></i> Show Real-time Output
-                </button>
-                <div class="collapse mt-2" id="realtimeOutput">
-                  <div class="card card-body bg-dark text-light" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
-                    <pre id="realtimeOutputContent" class="mb-0" style="color: #00ff00;"></pre>
+              <!-- Status Text -->
+              <div class="mt-4" style="background-color: #0d0d0d; padding: 15px; border-radius: 8px; border-left: 4px solid #00d4ff;">
+                <p class="mb-2" id="progressStatus" style="color: #00ff88; font-size: 15px; font-weight: 500; margin: 0;">
+                  <i class="bi bi-gear-fill fa-spin" style="margin-right: 8px;"></i>
+                  Initializing deployment...
+                </p>
+                <p class="mb-0" id="progressTime" style="color: #888; font-size: 13px; margin-top: 8px;">
+                  <i class="bi bi-clock" style="margin-right: 5px;"></i>
+                  Time elapsed: 0s
+                </p>
+              </div>
+              
+              <!-- Real-time Output - Always Visible -->
+              <div class="mt-4" id="realtimeOutputContainer" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="mb-0" style="color: #00d4ff; font-weight: 600;">
+                    <i class="bi bi-terminal-fill"></i> Real-time Output
+                  </h6>
+                  <button class="btn btn-sm" type="button" data-toggle="collapse" data-target="#realtimeOutput" 
+                          aria-expanded="true" aria-controls="realtimeOutput"
+                          style="background-color: #1a1a1a; color: #00d4ff; border: 1px solid #00d4ff; border-radius: 5px; padding: 5px 15px;">
+                    <i class="bi bi-chevron-down"></i> Toggle
+                  </button>
+                </div>
+                <div class="collapse show" id="realtimeOutput">
+                  <div class="card border-0" style="background-color: #000000; border-radius: 8px; box-shadow: inset 0 2px 10px rgba(0,212,255,0.1);">
+                    <div class="card-body" style="padding: 20px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;">
+                      <pre id="realtimeOutputContent" class="mb-0" style="color: #00ff88; text-shadow: 0 0 5px rgba(0,255,136,0.3); white-space: pre-wrap; word-wrap: break-word;"></pre>
+                    </div>
                   </div>
                 </div>
               </div>
