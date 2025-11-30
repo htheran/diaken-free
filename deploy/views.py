@@ -37,8 +37,12 @@ def deploy_vm(request):
     vcenter_host = cred.host
     vcenter_user = cred.user
     vcenter_password = cred.get_password()
-    deploy_env = GlobalSetting.objects.filter(key='deploy_env').first().value
-    deploy_group = GlobalSetting.objects.filter(key='deploy_group').first().value
+    
+    # Obtener configuraciones globales con valores por defecto
+    deploy_env_obj = GlobalSetting.objects.filter(key='deploy_env').first()
+    deploy_group_obj = GlobalSetting.objects.filter(key='deploy_group').first()
+    deploy_env = deploy_env_obj.value if deploy_env_obj else None
+    deploy_group = deploy_group_obj.value if deploy_group_obj else None
 
     datacenters = []
     templates = []
