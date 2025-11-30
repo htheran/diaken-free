@@ -311,6 +311,18 @@ create_directories() {
         print_success "Created: $dir"
     done
     
+    # Jinja2 templates directory structure
+    print_info "Creating Jinja2 templates directory structure..."
+    local j2_dirs=(
+        "media/j2/host"
+        "media/j2/group"
+    )
+    
+    for dir in "${j2_dirs[@]}"; do
+        mkdir -p "$dir"
+        print_success "Created: $dir"
+    done
+    
     # Set proper permissions
     chmod -R 755 media logs
     print_success "Directories created and permissions set"
