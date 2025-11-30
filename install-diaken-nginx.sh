@@ -777,27 +777,32 @@ configure_firewall() {
     
     # Check if firewalld is installed
     if ! command -v firewall-cmd &> /dev/null; then
-        print_warning "firewalld not found, installing..."
-        sudo dnf install -y firewalld || sudo yum install -y firewalld
+        print_warning "firewalld not found, skipping firewall configuration..."
+        print_info "Please configure firewall manually if needed"
+        return 0
     fi
     
-    # Start and enable firewalld
-    print_info "Starting firewalld service..."
-    sudo systemctl start firewalld
-    sudo systemctl enable firewalld
-    
-    # Check if port is already open
-    if sudo firewall-cmd --list-ports | grep -q "${PORT}/tcp"; then
-        print_success "Port $PORT is already open"
-    else
-        print_info "Opening port $PORT..."
-        sudo firewall-cmd --permanent --add-port=${PORT}/tcp
-        sudo firewall-cmd --reload
-        print_success "Port $PORT opened permanently"
+    # Check if firewalld is running
+    if ! sudo systemctl is-active --quiet firewalld; then
+        print_info "Starting firewalld service..."
+        sudo systemctl start firewalld
+        sudo systemctl enable firewalld
     fi
     
-    print_info "Current firewall ports:"
-    sudo firewall-cmd --list-ports
+    # Open HTTP and HTTPS ports for nginx
+    print_info "Opening HTTP (80) and HTTPS (443) ports for nginx..."
+    sudo firewall-cmd --permanent --add-service=http 2>/dev/null || true
+    sudo firewall-cmd --permanent --add-service=https 2>/dev/null || true
+    sudo firewall-cmd --permanent --add-port=80/tcp 2>/dev/null || true
+    sudo firewall-cmd --permanent --add-port=443/tcp 2>/dev/null || true
+    
+    # Reload firewall
+    sudo firewall-cmd --reload
+    
+    print_success "Firewall configured"
+    print_info "Open ports: HTTP (80), HTTPS (443)"
+    print_info "Current firewall status:"
+    sudo firewall-cmd --list-services 2>/dev/null || true
 }
 
 configure_redis() {
@@ -888,20 +893,28 @@ create_systemd_service() {
     
     print_info "Creating systemd service file..."
     
+    # With nginx, Django should listen only on localhost
+    # Without nginx, it can listen on all interfaces
+    local LISTEN_ADDRESS="127.0.0.1:${PORT}"
+    
     sudo tee /etc/systemd/system/diaken.service > /dev/null << EOF
 [Unit]
 Description=Diaken Django Application
-After=network.target redis.service celery.service
+After=network.target redis.service celery.service nginx.service
 
 [Service]
 Type=simple
 User=${INSTALL_USER}
 Group=${INSTALL_USER}
 WorkingDirectory=${INSTALL_DIR}
-Environment="PATH=${INSTALL_DIR}/venv/bin"
-ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver 0.0.0.0:${PORT}
+Environment="PATH=${INSTALL_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver ${LISTEN_ADDRESS}
 Restart=always
 RestartSec=10
+
+# Logs
+StandardOutput=append:${DJANGO_LOG_DIR}/server.log
+StandardError=append:${DJANGO_LOG_DIR}/server_error.log
 
 [Install]
 WantedBy=multi-user.target
@@ -909,9 +922,10 @@ EOF
     
     sudo systemctl daemon-reload
     sudo systemctl enable diaken.service
+    sudo systemctl start diaken.service
     
-    print_success "Systemd service created: diaken.service"
-    print_info "You can start it with: sudo systemctl start diaken"
+    print_success "Systemd service created and started: diaken.service"
+    print_info "Django listening on ${LISTEN_ADDRESS} (behind nginx proxy)"
 }
 
 configure_crontab() {

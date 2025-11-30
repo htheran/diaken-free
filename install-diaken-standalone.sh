@@ -710,6 +710,9 @@ create_systemd_service() {
     
     print_info "Creating systemd service file..."
     
+    # Without nginx, Django listens on all interfaces
+    local LISTEN_ADDRESS="0.0.0.0:${PORT}"
+    
     sudo tee /etc/systemd/system/diaken.service > /dev/null << EOF
 [Unit]
 Description=Diaken Django Application
@@ -720,10 +723,14 @@ Type=simple
 User=${INSTALL_USER}
 Group=${INSTALL_USER}
 WorkingDirectory=${INSTALL_DIR}
-Environment="PATH=${INSTALL_DIR}/venv/bin"
-ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver 0.0.0.0:${PORT}
+Environment="PATH=${INSTALL_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver ${LISTEN_ADDRESS}
 Restart=always
 RestartSec=10
+
+# Logs
+StandardOutput=append:${DJANGO_LOG_DIR}/server.log
+StandardError=append:${DJANGO_LOG_DIR}/server_error.log
 
 [Install]
 WantedBy=multi-user.target
@@ -731,6 +738,7 @@ EOF
     
     sudo systemctl daemon-reload
     sudo systemctl enable diaken.service
+    sudo systemctl start diaken.service
     
     print_success "Systemd service created: diaken.service"
     print_info "You can start it with: sudo systemctl start diaken"
