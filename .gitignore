@@ -134,4 +134,3 @@ venv/
 media/ssh/*.pem
 
 # Installation scripts (download from GitHub releases)
-install-diaken*.sh
