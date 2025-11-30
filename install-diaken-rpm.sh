@@ -1,7 +1,7 @@
 #!/bin/bash
 ################################################################################
 # DIAKEN RPM INSTALLER - Interactive Installation Script
-# Version: 2.3.6
+# Version: 2.4.2
 # Description: Professional RPM-based installer for RedHat/CentOS/Rocky Linux
 # Author: Diaken Team
 # License: Proprietary
@@ -47,7 +47,7 @@ print_header() {
     clear
     echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${CYAN}║${NC}     ${BOLD}DIAKEN RPM INSTALLER - Interactive Setup${NC}           ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}     Version 2.3.6                                         ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}     Version 2.4.2                                         ${CYAN}║${NC}"
     echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -73,20 +73,6 @@ print_warning() {
 
 print_info() {
     echo -e "${CYAN}ℹ${NC} $1"
-}
-
-show_progress() {
-    local current=$1
-    local total=$2
-    local width=50
-    local percentage=$((current * 100 / total))
-    local filled=$((width * current / total))
-    local empty=$((width - filled))
-    
-    printf "\r${CYAN}Progress: [${NC}"
-    printf "%${filled}s" | tr ' ' '█'
-    printf "%${empty}s" | tr ' ' '░'
-    printf "${CYAN}] ${BOLD}%3d%%${NC}" $percentage
 }
 
 check_root() {
@@ -251,14 +237,12 @@ install_dependencies() {
     local packages=(
         "python3"
         "python3-pip"
-        "python3-virtualenv"
         "python3-devel"
         "nginx"
         "redis"
         "git"
         "gcc"
         "openssl"
-        "ansible-core"
     )
     
     if [[ "$DB_TYPE" == "mariadb" ]]; then
@@ -267,15 +251,21 @@ install_dependencies() {
         packages+=("postgresql-server" "postgresql-devel")
     fi
     
-    local total=${#packages[@]}
-    local current=0
+    print_info "Installing ${#packages[@]} packages..."
     
-    for pkg in "${packages[@]}"; do
-        current=$((current + 1))
-        show_progress $current $total
-        dnf install -y "$pkg" &>/dev/null || yum install -y "$pkg" &>/dev/null
-    done
-    echo ""
+    # Install all packages at once
+    if command -v dnf &> /dev/null; then
+        dnf install -y "${packages[@]}" || {
+            print_error "Failed to install dependencies with dnf"
+            exit 1
+        }
+    else
+        yum install -y "${packages[@]}" || {
+            print_error "Failed to install dependencies with yum"
+            exit 1
+        }
+    fi
+    
     print_success "Dependencies installed"
 }
 
@@ -309,21 +299,67 @@ setup_database() {
     fi
 }
 
+create_user_and_directories() {
+    print_step "Creating user and directories"
+    
+    # Create diaken user if it doesn't exist
+    if ! id -u $USER >/dev/null 2>&1; then
+        useradd -r -s /bin/bash -d $INSTALL_DIR -m $USER
+        print_success "User $USER created"
+    else
+        print_info "User $USER already exists"
+    fi
+    
+    # Create directories
+    mkdir -p $INSTALL_DIR
+    mkdir -p $LOG_DIR/{ansible,celery}
+    mkdir -p /var/run/celery
+    
+    chown -R $USER:$USER $INSTALL_DIR
+    chown -R $USER:$USER $LOG_DIR
+    chown -R $USER:$USER /var/run/celery
+    
+    print_success "Directories created"
+}
+
+clone_repository() {
+    print_step "Cloning Diaken repository"
+    
+    if [[ -d "$INSTALL_DIR/.git" ]]; then
+        print_info "Repository already exists, pulling latest changes"
+        cd $INSTALL_DIR
+        sudo -u $USER git pull
+    else
+        print_info "Cloning from GitHub"
+        sudo -u $USER git clone https://github.com/htheran/diaken-free.git $INSTALL_DIR
+    fi
+    
+    print_success "Repository ready"
+}
+
 setup_virtualenv() {
     print_step "Setting up Python virtual environment"
     
     cd "$INSTALL_DIR"
-    python3 -m venv "$VENV_DIR"
-    source "$VENV_DIR/bin/activate"
     
-    pip install --upgrade pip setuptools wheel
-    pip install -r requirements.txt
+    # Install virtualenv if not present
+    python3 -m pip install --upgrade pip virtualenv
+    
+    # Create virtual environment
+    sudo -u $USER python3 -m venv "$VENV_DIR"
+    
+    # Install requirements
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && pip install --upgrade pip setuptools wheel"
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && pip install -r requirements.txt"
     
     if [[ "$DB_TYPE" == "mariadb" ]]; then
-        pip install mysqlclient
+        sudo -u $USER bash -c "source $VENV_DIR/bin/activate && pip install mysqlclient"
     elif [[ "$DB_TYPE" == "postgresql" ]]; then
-        pip install psycopg2-binary
+        sudo -u $USER bash -c "source $VENV_DIR/bin/activate && pip install psycopg2-binary"
     fi
+    
+    # Install gunicorn
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && pip install gunicorn"
     
     print_success "Virtual environment configured"
 }
@@ -332,7 +368,6 @@ configure_django() {
     print_step "Configuring Django application"
     
     cd "$INSTALL_DIR"
-    source "$VENV_DIR/bin/activate"
     
     # Generate secret key
     local secret_key=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
@@ -371,10 +406,8 @@ run_migrations() {
     print_step "Running database migrations"
     
     cd "$INSTALL_DIR"
-    source "$VENV_DIR/bin/activate"
-    
-    python manage.py makemigrations
-    python manage.py migrate
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && python manage.py makemigrations"
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && python manage.py migrate"
     
     print_success "Migrations completed"
 }
@@ -383,9 +416,7 @@ create_superuser() {
     print_step "Creating admin superuser"
     
     cd "$INSTALL_DIR"
-    source "$VENV_DIR/bin/activate"
-    
-    python manage.py shell << EOF
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && python manage.py shell" << EOF
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='$ADMIN_USER').exists():
@@ -399,28 +430,41 @@ collect_static() {
     print_step "Collecting static files"
     
     cd "$INSTALL_DIR"
-    source "$VENV_DIR/bin/activate"
-    
-    python manage.py collectstatic --noinput
+    sudo -u $USER bash -c "source $VENV_DIR/bin/activate && python manage.py collectstatic --noinput"
     
     print_success "Static files collected"
 }
 
-setup_services() {
-    print_step "Configuring systemd services"
+setup_systemd_services() {
+    print_step "Setting up systemd services"
     
+    # Copy service files
+    cp packaging/*.service /etc/systemd/system/
+    
+    # Reload systemd
     systemctl daemon-reload
+    
+    # Enable services
     systemctl enable diaken.service
     systemctl enable diaken-celery.service
     systemctl enable diaken-celery-beat.service
     systemctl enable redis
     systemctl enable nginx
     
-    print_success "Services configured"
+    print_success "Systemd services configured"
 }
 
 configure_nginx() {
     print_step "Configuring Nginx"
+    
+    # Copy nginx configuration
+    cp packaging/diaken-nginx.conf /etc/nginx/conf.d/diaken.conf
+    
+    # Test nginx configuration
+    nginx -t || {
+        print_error "Nginx configuration test failed"
+        exit 1
+    }
     
     if [[ "$USE_SSL" == "yes" ]]; then
         # Generate self-signed certificate
@@ -433,7 +477,6 @@ configure_nginx() {
         print_info "Self-signed SSL certificate generated"
     fi
     
-    systemctl restart nginx
     print_success "Nginx configured"
 }
 
@@ -453,7 +496,10 @@ configure_firewall() {
 setup_cron_jobs() {
     print_step "Setting up scheduled tasks"
     
-    # Add cron jobs for cleanup scripts
+    # Make scripts executable
+    chmod +x $INSTALL_DIR/sc/*.sh
+    
+    # Add cron jobs
     (crontab -u $USER -l 2>/dev/null; cat << EOF
 # Diaken scheduled tasks
 0 */6 * * * /opt/diaken/sc/cleanup_stuck_deployments.sh >> /var/log/diaken/cleanup.log 2>&1
@@ -463,22 +509,6 @@ EOF
     ) | crontab -u $USER -
     
     print_success "Cron jobs configured"
-}
-
-set_permissions() {
-    print_step "Setting file permissions"
-    
-    chown -R $USER:$USER "$INSTALL_DIR"
-    chown -R $USER:$USER "$LOG_DIR"
-    
-    chmod -R 755 "$INSTALL_DIR"
-    chmod -R 755 "$LOG_DIR"
-    
-    # Secure sensitive files
-    chmod 600 "$INSTALL_DIR/.env"
-    chmod 600 "$INSTALL_DIR/diaken/settings.py"
-    
-    print_success "Permissions set"
 }
 
 start_services() {
@@ -497,6 +527,7 @@ start_services() {
         print_success "Diaken service started"
     else
         print_error "Diaken service failed to start"
+        journalctl -u diaken.service -n 20
     fi
     
     if systemctl is-active --quiet diaken-celery.service; then
@@ -565,16 +596,17 @@ main() {
     
     install_dependencies
     setup_database
+    create_user_and_directories
+    clone_repository
     setup_virtualenv
     configure_django
     run_migrations
     create_superuser
     collect_static
-    setup_services
+    setup_systemd_services
     configure_nginx
     configure_firewall
     setup_cron_jobs
-    set_permissions
     start_services
     
     show_completion
