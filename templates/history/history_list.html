@@ -6,7 +6,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
       <h3 class="card-title mb-0"><i class="bi bi-clock-history"></i> Deployment History</h3>
       <a href="{% url 'history:cleanup_stuck_deployments' %}" class="btn btn-warning btn-sm">
-        <i class="bi fa-broom"></i> Cleanup Stuck Deployments
+        <i class="bi bi-broom"></i> Cleanup Stuck Deployments
       </a>
     </div>
     
@@ -48,7 +48,7 @@
           
           <div class="col-md-2 mb-2">
             <button type="submit" class="btn btn-primary btn-sm btn-block"><i class="bi bi-search"></i> Filter</button>
-            <a href="{% url 'history:history_list' %}" class="btn btn-secondary btn-sm btn-block mt-1"><i class="bi fa-eraser"></i> Clear</a>
+            <a href="{% url 'history:history_list' %}" class="btn btn-secondary btn-sm btn-block mt-1"><i class="bi bi-eraser"></i> Clear</a>
           </div>
         </div>
       </form>
@@ -76,7 +76,7 @@
             <td><i class="bi bi-person"></i> {{ deployment.user.username|default:"Unknown" }}</td>
             <td>
               {% if deployment.target_type == 'host' %}
-                <i class="bi fa-desktop"></i>
+                <i class="bi bi-desktop"></i>
               {% else %}
                 <i class="bi bi-people"></i>
               {% endif %}
@@ -95,7 +95,7 @@
                     <i class="bi bi-exclamation-triangle"></i> Stuck ({{ deployment.running_hours|floatformat:1 }}h)
                   </span>
                 {% else %}
-                  <span class="badge badge-warning"><i class="bi fa-spinner fa-spin"></i> Running</span>
+                  <span class="badge badge-warning"><i class="bi bi-spinner fa-spin"></i> Running</span>
                 {% endif %}
               {% endif %}
             </td>

@@ -7,7 +7,7 @@
 <div class="container-fluid">
   <div class="row mb-4">
     <div class="col-12">
-      <h2><i class="bi fa-camera"></i> Snapshot Detail</h2>
+      <h2><i class="bi bi-camera"></i> Snapshot Detail</h2>
       <a href="{% url 'snapshot_history' %}" class="btn btn-secondary">
         <i class="bi bi-arrow-left"></i> Back to History
       </a>
@@ -127,7 +127,7 @@
     <div class="col-md-4">
       <div class="card">
         <div class="card-header bg-secondary text-white">
-          <i class="bi fa-link"></i> Related Objects
+          <i class="bi bi-link"></i> Related Objects
         </div>
         <div class="card-body">
           <h6><i class="bi bi-hdd-rack"></i> Host</h6>
@@ -143,7 +143,7 @@
 
           <hr>
 
-          <h6><i class="bi fa-layer-group"></i> Group</h6>
+          <h6><i class="bi bi-layer-group"></i> Group</h6>
           <p>
             {% if snapshot.group %}
               <span class="badge badge-info">{{ snapshot.group.name }}</span>

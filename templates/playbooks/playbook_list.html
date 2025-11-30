@@ -27,11 +27,11 @@
                 <div class="card-header {% if 'RedHat' in os_family %}bg-danger{% elif 'Debian' in os_family %}bg-warning{% elif 'Windows' in os_family %}bg-primary{% else %}bg-secondary{% endif %} text-white">
                     <h4 class="mb-0">
                         {% if 'RedHat' in os_family %}
-                            <i class="bi fa-redhat"></i>
+                            <i class="bi bi-redhat"></i>
                         {% elif 'Debian' in os_family %}
-                            <i class="bi fa-ubuntu"></i>
+                            <i class="bi bi-ubuntu"></i>
                         {% elif 'Windows' in os_family %}
-                            <i class="bi fa-windows"></i>
+                            <i class="bi bi-windows"></i>
                         {% else %}
                             <i class="bi bi-hdd-rack"></i>
                         {% endif %}
@@ -122,7 +122,7 @@
                         <!-- Group Playbooks -->
                         <div class="col-md-6">
                             <h5 class="border-bottom pb-2 mb-3">
-                                <i class="bi fa-layer-group"></i> Group Playbooks
+                                <i class="bi bi-layer-group"></i> Group Playbooks
                                 <span class="badge bg-success">{{ types.group|length }}</span>
                             </h5>
                             {% if types.group %}

@@ -49,7 +49,7 @@
                                     <th>Target Type:</th>
                                     <td>
                                         <span class="badge bg-primary">
-                                            <i class="bi fa-{% if script.target_type == 'host' %}server{% else %}layer-group{% endif %}"></i>
+                                            <i class="bi bi-{% if script.target_type == 'host' %}server{% else %}layer-group{% endif %}"></i>
                                             {{ script.get_target_type_display }}
                                         </span>
                                     </td>
@@ -58,7 +58,7 @@
                                     <th>OS Family:</th>
                                     <td>
                                         <span class="badge bg-secondary">
-                                            <i class="bi fa-{% if script.os_family == 'windows' %}windows{% else %}linux{% endif %}"></i>
+                                            <i class="bi bi-{% if script.os_family == 'windows' %}windows{% else %}linux{% endif %}"></i>
                                             {{ script.get_os_family_display }}
                                         </span>
                                     </td>

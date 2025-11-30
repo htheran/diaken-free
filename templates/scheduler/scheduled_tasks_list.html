@@ -74,7 +74,7 @@
                   {% if task.status == 'pending' %}
                     <span class="badge badge-warning"><i class="bi bi-clock"></i> Pending</span>
                   {% elif task.status == 'running' %}
-                    <span class="badge badge-info"><i class="bi fa-spinner fa-spin"></i> In Progress</span>
+                    <span class="badge badge-info"><i class="bi bi-spinner fa-spin"></i> In Progress</span>
                   {% elif task.status == 'completed' %}
                     <span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Completed</span>
                   {% elif task.status == 'failed' %}
@@ -139,7 +139,7 @@ $(document).ready(function() {
               if (response.status === 'pending') {
                 badgeHtml = '<span class="badge badge-warning"><i class="bi bi-clock"></i> Pending</span>';
               } else if (response.status === 'running') {
-                badgeHtml = '<span class="badge badge-info"><i class="bi fa-spinner fa-spin"></i> In Progress</span>';
+                badgeHtml = '<span class="badge badge-info"><i class="bi bi-spinner fa-spin"></i> In Progress</span>';
               } else if (response.status === 'completed') {
                 badgeHtml = '<span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Completed</span>';
                 if (response.history_id && !$row.find('.view-result-btn').length) {

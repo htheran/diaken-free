@@ -37,7 +37,7 @@
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="bi fa-{% if 'Windows' in os_family %}windows{% else %}linux{% endif %}"></i>
+                        <i class="bi bi-{% if 'Windows' in os_family %}windows{% else %}linux{% endif %}"></i>
                         {{ os_family }}
                     </h5>
                 </div>
@@ -106,7 +106,7 @@
                         <!-- Group Scripts -->
                         <div class="col-md-6">
                             <h6 class="border-bottom pb-2">
-                                <i class="bi fa-layer-group"></i> Group Scripts
+                                <i class="bi bi-layer-group"></i> Group Scripts
                             </h6>
                             {% if targets.group %}
                                 <div class="table-responsive">

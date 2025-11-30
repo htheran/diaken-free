@@ -99,7 +99,7 @@
                                class="btn btn-sm {% if user_obj.is_active %}btn-secondary{% else %}btn-success{% endif %}" 
                                title="{% if user_obj.is_active %}Deactivate{% else %}Activate{% endif %}"
                                onclick="return confirm('Are you sure you want to {% if user_obj.is_active %}deactivate{% else %}activate{% endif %} this user?')">
-                              <i class="bi fa-{% if user_obj.is_active %}ban{% else %}check{% endif %}"></i>
+                              <i class="bi bi-{% if user_obj.is_active %}ban{% else %}check{% endif %}"></i>
                             </a>
                             <a href="{% url 'user_delete' user_obj.id %}" 
                                class="btn btn-sm btn-danger" 

@@ -100,7 +100,7 @@
           <i class="bi bi-list-ul"></i> All
         </button>
         <button class="btn btn-primary filter-btn" data-filter="tasks">
-          <i class="bi fa-tasks"></i> Tasks
+          <i class="bi bi-list-check"></i> Tasks
         </button>
         <button class="btn btn-success filter-btn" data-filter="success">
           <i class="bi bi-check-lg-circle"></i> Success (<span id="count-success">0</span>)
@@ -109,7 +109,7 @@
           <i class="bi bi-arrow-repeat-alt"></i> Changed (<span id="count-changed">0</span>)
         </button>
         <button class="btn btn-info filter-btn" data-filter="skipped">
-          <i class="bi fa-forward"></i> Skipped (<span id="count-skipped">0</span>)
+          <i class="bi bi-forward"></i> Skipped (<span id="count-skipped">0</span>)
         </button>
         <button class="btn btn-danger filter-btn" data-filter="errors">
           <i class="bi bi-exclamation-circle"></i> Errors (<span id="count-errors">0</span>)
@@ -121,7 +121,7 @@
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h5 class="card-title" style="margin: 0;">Ansible Output</h5>
           <button id="expand-btn" class="btn btn-sm btn-secondary" title="Expand output">
-            <i class="bi fa-expand"></i> Expand
+            <i class="bi bi-expand"></i> Expand
           </button>
         </div>
         <div class="card-body p-0">
@@ -317,10 +317,10 @@
             outputCard.classList.toggle('fullscreen');
             
             if (outputCard.classList.contains('fullscreen')) {
-              expandBtn.innerHTML = '<i class="bi fa-compress"></i> Collapse';
+              expandBtn.innerHTML = '<i class="bi bi-compress"></i> Collapse';
               expandBtn.title = 'Collapse output';
             } else {
-              expandBtn.innerHTML = '<i class="bi fa-expand"></i> Expand';
+              expandBtn.innerHTML = '<i class="bi bi-expand"></i> Expand';
               expandBtn.title = 'Expand output';
             }
           });
@@ -329,7 +329,7 @@
           document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && outputCard.classList.contains('fullscreen')) {
               outputCard.classList.remove('fullscreen');
-              expandBtn.innerHTML = '<i class="bi fa-expand"></i> Expand';
+              expandBtn.innerHTML = '<i class="bi bi-expand"></i> Expand';
               expandBtn.title = 'Expand output';
             }
           });

@@ -7,7 +7,7 @@
 <div class="container-fluid">
   <div class="row mb-4">
     <div class="col-12">
-      <h2><i class="bi fa-camera"></i> Snapshot History</h2>
+      <h2><i class="bi bi-camera"></i> Snapshot History</h2>
       <p class="text-muted">Track all snapshots created and their expiration times</p>
     </div>
   </div>
@@ -130,7 +130,7 @@
             {% for snapshot in snapshots %}
             <tr>
               <td>
-                <i class="bi fa-camera text-primary"></i>
+                <i class="bi bi-camera text-primary"></i>
                 {{ snapshot.snapshot_name }}
               </td>
               <td>
@@ -200,7 +200,7 @@
             {% empty %}
             <tr>
               <td colspan="10" class="text-center text-muted">
-                <i class="bi fa-inbox fa-3x mb-3"></i>
+                <i class="bi bi-inbox fa-3x mb-3"></i>
                 <p>No snapshots found</p>
               </td>
             </tr>

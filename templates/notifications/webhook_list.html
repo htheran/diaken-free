@@ -52,7 +52,7 @@
             <div class="card webhook-card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="bi fa-microsoft"></i> {{ webhook.name }}
+                        <i class="bi bi-microsoft"></i> {{ webhook.name }}
                     </h5>
                     <span class="badge {% if webhook.active %}bg-success{% else %}bg-secondary{% endif %}">
                         {% if webhook.active %}Active{% else %}Inactive{% endif %}
@@ -111,7 +111,7 @@
                     <div class="btn-group btn-group-sm w-100 mb-2" role="group">
                         <a href="{% url 'notifications:webhook_test' webhook.pk %}" 
                            class="btn btn-outline-info" title="Send Test">
-                            <i class="bi fa-paper-plane"></i> Test
+                            <i class="bi bi-paper-plane"></i> Test
                         </a>
                         <a href="{% url 'notifications:webhook_edit' webhook.pk %}" 
                            class="btn btn-outline-primary" title="Edit">
@@ -122,7 +122,7 @@
                                 data-webhook-id="{{ webhook.pk }}"
                                 data-active="{{ webhook.active|yesno:'true,false' }}"
                                 title="{% if webhook.active %}Deactivate{% else %}Activate{% endif %}">
-                            <i class="bi fa-{% if webhook.active %}pause{% else %}play{% endif %}"></i>
+                            <i class="bi bi-{% if webhook.active %}pause{% else %}play{% endif %}"></i>
                         </button>
                     </div>
                     <a href="{% url 'notifications:webhook_configure' webhook.pk %}" 
@@ -152,7 +152,7 @@
 
             <div class="card mt-4">
                 <div class="card-header">
-                    <h5><i class="bi fa-question-circle"></i> How to Get a Webhook URL</h5>
+                    <h5><i class="bi bi-question-circle"></i> How to Get a Webhook URL</h5>
                 </div>
                 <div class="card-body">
                     <ol>

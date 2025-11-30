@@ -14,7 +14,7 @@
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            <i class="bi fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
             {{ message }}
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
@@ -89,27 +89,27 @@
             <td>
               {% if host.operating_system == 'redhat' %}
                 <span class="badge" style="background-color: #EE0000; color: white;">
-                  <i class="bi fa-redhat"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-redhat"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'debian' %}
                 <span class="badge" style="background-color: #A80030; color: white;">
-                  <i class="bi fa-debian"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-debian"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'ubuntu' %}
                 <span class="badge" style="background-color: #E95420; color: white;">
-                  <i class="bi fa-ubuntu"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-ubuntu"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'windows' %}
                 <span class="badge" style="background-color: #0078D4; color: white;">
-                  <i class="bi fa-windows"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-windows"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'centos' %}
                 <span class="badge" style="background-color: #932279; color: white;">
-                  <i class="bi fa-centos"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-centos"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'suse' %}
                 <span class="badge" style="background-color: #73BA25; color: white;">
-                  <i class="bi fa-suse"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-suse"></i> {{ host.get_operating_system_display }}
                 </span>
               {% else %}
                 <span class="badge badge-secondary">

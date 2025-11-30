@@ -251,11 +251,11 @@
                                     <td>
                                         {% if vm.power_state == 'poweredOn' %}
                                             <span class="badge badge-power-on">
-                                                <i class="bi fa-power-off"></i> ON
+                                                <i class="bi bi-power-off"></i> ON
                                             </span>
                                         {% elif vm.power_state == 'poweredOff' %}
                                             <span class="badge badge-power-off">
-                                                <i class="bi fa-power-off"></i> OFF
+                                                <i class="bi bi-power-off"></i> OFF
                                             </span>
                                         {% elif vm.power_state == 'suspended' %}
                                             <span class="badge badge-suspended">
@@ -278,12 +278,12 @@
                             {% if vms.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?page=1{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="bi fa-angle-double-left"></i>
+                                    <i class="bi bi-angle-double-left"></i>
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ vms.previous_page_number }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="bi fa-angle-left"></i>
+                                    <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
                             {% endif %}
@@ -297,12 +297,12 @@
                             {% if vms.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ vms.next_page_number }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="bi fa-angle-right"></i>
+                                    <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ vms.paginator.num_pages }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="bi fa-angle-double-right"></i>
+                                    <i class="bi bi-angle-double-right"></i>
                                 </a>
                             </li>
                             {% endif %}
