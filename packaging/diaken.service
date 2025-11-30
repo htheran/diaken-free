@@ -1,0 +1,34 @@
+[Unit]
+Description=Diaken Django Application
+After=network.target mariadb.service postgresql.service redis.service
+Wants=mariadb.service postgresql.service redis.service
+
+[Service]
+Type=notify
+User=diaken
+Group=diaken
+WorkingDirectory=/opt/diaken
+Environment="PATH=/opt/diaken/venv/bin"
+ExecStart=/opt/diaken/venv/bin/gunicorn \
+    --workers 4 \
+    --bind unix:/opt/diaken/diaken.sock \
+    --timeout 120 \
+    --access-logfile /var/log/diaken/access.log \
+    --error-logfile /var/log/diaken/error.log \
+    --log-level info \
+    diaken.wsgi:application
+
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/diaken /var/log/diaken
+
+[Install]
+WantedBy=multi-user.target

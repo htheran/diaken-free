@@ -1,0 +1,28 @@
+[Unit]
+Description=Diaken Celery Beat Scheduler
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=forking
+User=diaken
+Group=diaken
+WorkingDirectory=/opt/diaken
+Environment="PATH=/opt/diaken/venv/bin"
+ExecStart=/opt/diaken/venv/bin/celery -A diaken beat \
+    --loglevel=info \
+    --logfile=/var/log/diaken/celery/beat.log \
+    --pidfile=/var/run/celery/beat.pid \
+    --detach
+
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
