@@ -132,3 +132,6 @@ docker/
 venv/
 .encryption_key
 media/ssh/*.pem
+
+# Installation scripts (download from GitHub releases)
+install-diaken*.sh
