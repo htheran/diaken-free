@@ -267,7 +267,8 @@ create_directories() {
     
     cd "$INSTALL_DIR"
     
-    local dirs=("logs" "media/playbooks" "media/scripts" "media/ssh" "media/ssl")
+    # Base directories
+    local dirs=("logs" "media/scripts" "media/ssh" "media/ssl")
     
     for dir in "${dirs[@]}"; do
         if [ ! -d "$dir" ]; then
@@ -276,6 +277,22 @@ create_directories() {
         else
             print_info "Directory already exists: $dir"
         fi
+    done
+    
+    # Playbooks directory structure (RedHat, Debian, Windows)
+    print_info "Creating playbooks directory structure..."
+    local playbook_dirs=(
+        "media/playbooks/redhat/host"
+        "media/playbooks/redhat/group"
+        "media/playbooks/debian/host"
+        "media/playbooks/debian/group"
+        "media/playbooks/windows/host"
+        "media/playbooks/windows/group"
+    )
+    
+    for dir in "${playbook_dirs[@]}"; do
+        mkdir -p "$dir"
+        print_success "Created: $dir"
     done
     
     # Set proper permissions

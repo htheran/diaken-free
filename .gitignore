@@ -35,8 +35,15 @@ env/
 db.sqlite3
 db.sqlite3-journal
 media/*
-!media/playbooks/
 !media/j2/
+!media/playbooks/
+!media/playbooks/README.md
+!media/playbooks/*/
+!media/playbooks/*/*/
+!media/playbooks/*/*/*
+media/playbooks/**/*.yml
+media/playbooks/**/*.yaml
+!media/playbooks/**/.gitkeep
 staticfiles/
 
 # Secrets and sensitive files
