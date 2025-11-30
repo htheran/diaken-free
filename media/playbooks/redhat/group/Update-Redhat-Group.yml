@@ -1,0 +1,87 @@
+---
+- name: Actualización de sistemas Oracle Linux 9
+  hosts: target_group
+  become: yes
+  gather_facts: yes
+
+  tasks:
+
+    - name: Mostrar ruta y nombre real del log que se usará
+      debug:
+        msg: "Log file para este host: {{ log_file_update }}"
+
+    - name: Crear directorio de logs en el host
+      file:
+        path: "{{ log_dir_update }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Verificar actualizaciones disponibles
+      command: dnf check-update
+      register: check_updates
+      changed_when: false
+      failed_when: false
+
+    - name: Mostrar en pantalla las actualizaciones pendientes
+      debug:
+        msg: |
+          ==== Actualizaciones disponibles en {{ inventory_hostname }} ====
+          {% if check_updates.stdout %}
+          {{ check_updates.stdout }}
+          {% else %}
+          No hay actualizaciones disponibles
+          {% endif %}
+
+    - name: Guardar lista de actualizaciones en log
+      copy:
+        dest: "{{ log_file_update }}"
+        content: |
+          ==== Reporte de actualizaciones disponibles ====
+          Fecha: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+          Host: {{ inventory_hostname }}
+          ================================================
+          {% if check_updates.stdout %}
+          {{ check_updates.stdout }}
+          {% else %}
+          No hay actualizaciones disponibles
+          {% endif %}
+          ------------------------------------------------
+
+    - name: Aplicar actualizaciones con DNF
+      command: dnf -y update
+      register: update_result
+
+    - name: Guardar detalle de lo actualizado
+      lineinfile:
+        path: "{{ log_file_update }}"
+        insertafter: EOF
+        line: |
+          ==== Paquetes actualizados ====
+          {{ update_result.stdout }}
+
+    - name: Mostrar log final en salida Ansible
+      command: cat "{{ log_file_update }}"
+      register: final_log
+      changed_when: false
+
+    - name: Imprimir log en pantalla
+      debug:
+        msg: "{{ final_log.stdout_lines }}"
+
+    - name: Mostrar resumen de lo actualizado
+      debug:
+        msg: |
+          ==== Resumen de actualización en {{ inventory_hostname }} ====
+          {{ update_result.stdout }}
+
+    - name: Verificar existencia del log en el host
+      stat:
+        path: "{{ log_file_update }}"
+      register: log_stat
+
+    - name: Confirmar existencia del log
+      debug:
+        msg: "El log {{ log_file_update }} existe en el host"
+      when: log_stat.stat.exists

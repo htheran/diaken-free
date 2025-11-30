@@ -43,3 +43,53 @@ Los playbooks en las carpetas `group/` se ejecutan contra grupos de hosts defini
 
 Los logs de ejecución de playbooks se guardan en:
 - `/var/log/diaken/ansible/`
+
+## Playbooks de Ejemplo Incluidos
+
+### RedHat/CentOS/Rocky Linux
+
+**Host Playbooks:**
+- `Update-Redhat-Host.yml` - Actualiza paquetes del sistema
+- `Install-Httpd-Host.yml` - Instala y configura Apache HTTP Server
+- `Install-Vsftpd-Host.yml` - Instala y configura servidor FTP
+- `Configure-SSL-Host.yml` - Configura certificados SSL
+- `Configure-RemoveOldKernels-Host.yml` - Limpia kernels antiguos
+- `Mount-HDD-Host.yml` - Monta discos adicionales
+
+**Group Playbooks:**
+- `Update-Redhat-Group.yml` - Actualiza grupo de servidores
+- `Configure-SSL-Group.yml` - Configura SSL en grupo
+
+### Debian/Ubuntu
+
+**Host Playbooks:**
+- `Update-Debian-Host.yml` - Actualiza paquetes del sistema
+- `Install-Apache-Debian-Host.yml` - Instala Apache en Debian
+
+### Windows
+
+**Host Playbooks:**
+- `Update-Windows-Host.yml` - Actualiza Windows
+- `BasicInfo-Windows-Host.yml` - Obtiene información del sistema
+
+## Crear Playbooks Personalizados
+
+1. Navega a la carpeta correspondiente según el OS y tipo (host/group)
+2. Crea tu playbook con la convención de nombres
+3. Los playbooks aparecerán automáticamente en la interfaz web
+4. Selecciona el playbook al crear un deployment
+
+## Notas Importantes
+
+⚠️ **Los playbooks de ejemplo están incluidos en el repositorio**
+⚠️ **Tus playbooks personalizados NO se subirán al repositorio (excluidos por .gitignore)**
+⚠️ **Solo los archivos que comienzan con `temp_` son temporales**
+
+## Variables Disponibles
+
+Los playbooks tienen acceso a las siguientes variables de Diaken:
+- `ansible_host` - IP del host
+- `ansible_user` - Usuario SSH
+- `ansible_ssh_private_key_file` - Llave SSH
+- Variables personalizadas definidas en el deployment
+

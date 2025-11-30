@@ -39,8 +39,13 @@ media/*
 !media/playbooks/README.md
 !media/playbooks/*/
 !media/playbooks/*/*/
-!media/playbooks/*/*/*
-media/playbooks/**/*.yml
+# Exclude user playbooks but keep examples
+media/playbooks/**/temp_*.yml
+media/playbooks/**/temp_*.yaml
+# Include example playbooks (these are in the repo)
+!media/playbooks/redhat/**/*.yml
+!media/playbooks/debian/**/*.yml
+!media/playbooks/windows/**/*.yml
 media/playbooks/**/*.yaml
 !media/playbooks/**/.gitkeep
 !media/scripts/

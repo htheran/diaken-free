@@ -1,0 +1,323 @@
+---
+- name: Actualización completa del sistema Debian/Ubuntu
+  hosts: target_host
+  become: yes
+
+  vars:
+    ansible_remote_tmp: /tmp/.ansible/tmp
+    report_dir: "/var/log/ansible-updates"
+    timestamp: "{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}{{ ansible_date_time.second }}"
+    report_before: "{{ report_dir }}/update_before_{{ inventory_hostname }}_{{ timestamp }}.txt"
+    report_after: "{{ report_dir }}/update_after_{{ inventory_hostname }}_{{ timestamp }}.txt"
+    log_file: "{{ report_dir }}/update_log_{{ inventory_hostname }}_{{ timestamp }}.txt"
+
+  tasks:
+
+    # =====================================================================
+    # Preparación
+    # =====================================================================
+    - name: Asegurar /tmp/.ansible/tmp existe
+      ansible.builtin.file:
+        path: /tmp/.ansible/tmp
+        state: directory
+        mode: '1777'
+      tags: [preparation]
+
+    - name: Crear directorio para reportes
+      ansible.builtin.file:
+        path: "{{ report_dir }}"
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      tags: [preparation]
+
+    # =====================================================================
+    # Reporte ANTES de actualizar
+    # =====================================================================
+    - name: Recopilar información del sistema (antes)
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - hardware
+          - network
+          - virtual
+      tags: [report, before]
+
+    - name: Obtener información de paquetes actuales
+      ansible.builtin.shell: dpkg -l | wc -l
+      register: packages_before
+      changed_when: false
+      tags: [report, before]
+
+    - name: Actualizar caché de APT
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 0
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      tags: [update, cache]
+
+    - name: Verificar actualizaciones disponibles
+      ansible.builtin.shell: |
+        apt list --upgradable 2>/dev/null | grep -v "^Listing" | wc -l
+      register: updates_available
+      changed_when: false
+      tags: [report, before]
+
+    - name: Listar paquetes actualizables
+      ansible.builtin.shell: |
+        apt list --upgradable 2>/dev/null | grep -v "^Listing"
+      register: upgradable_packages
+      changed_when: false
+      failed_when: false
+      tags: [report, before]
+
+    - name: Generar reporte inicial
+      ansible.builtin.copy:
+        content: |
+          ================================================================================
+          REPORTE INICIAL - ANTES DE ACTUALIZAR
+          ================================================================================
+          
+          Servidor: {{ inventory_hostname }}
+          Fecha/Hora: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+          Usuario: {{ ansible_user_id }}
+          Sistema: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Arquitectura: {{ ansible_architecture }}
+          Uptime: {{ ansible_uptime_seconds | int // 86400 }} días
+          
+          --------------------------------------------------------------------------------
+          INFORMACIÓN DE MEMORIA:
+          --------------------------------------------------------------------------------
+          Total: {{ ansible_memtotal_mb }} MB
+          Libre: {{ ansible_memfree_mb }} MB
+          Disponible: {{ ansible_memory_mb.real.free }} MB
+          Swap Total: {{ ansible_swaptotal_mb }} MB
+          Swap Libre: {{ ansible_swapfree_mb }} MB
+          
+          --------------------------------------------------------------------------------
+          ESPACIO EN DISCO:
+          --------------------------------------------------------------------------------
+          {% for mount in ansible_mounts %}
+          {{ mount.mount }}: {{ mount.size_total | filesizeformat }} total, {{ mount.size_available | filesizeformat }} disponible ({{ mount.fstype }})
+          {% endfor %}
+          
+          --------------------------------------------------------------------------------
+          PAQUETES INSTALADOS:
+          --------------------------------------------------------------------------------
+          Total de paquetes: {{ packages_before.stdout }}
+          
+          --------------------------------------------------------------------------------
+          ACTUALIZACIONES DISPONIBLES:
+          --------------------------------------------------------------------------------
+          Paquetes actualizables: {{ updates_available.stdout }}
+          
+          {% if upgradable_packages.stdout_lines | length > 0 %}
+          Lista de paquetes:
+          {{ upgradable_packages.stdout }}
+          {% else %}
+          ✓ No hay actualizaciones disponibles
+          {% endif %}
+          
+          ================================================================================
+        dest: "{{ report_before }}"
+        mode: '0644'
+      tags: [report, before]
+
+    - name: Mostrar reporte inicial
+      ansible.builtin.debug:
+        msg: "Reporte inicial guardado en: {{ report_before }}"
+      tags: [report, before]
+
+    # =====================================================================
+    # Aplicar actualizaciones
+    # =====================================================================
+    - name: Aplicar actualizaciones del sistema
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: yes
+        autoclean: yes
+        autoremove: yes
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      register: update_result
+      tags: [update, upgrade]
+
+    - name: Guardar resultado de actualización
+      ansible.builtin.copy:
+        content: |
+          ================================================================================
+          RESULTADO DE ACTUALIZACIÓN
+          ================================================================================
+          Fecha/Hora: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+          Servidor: {{ inventory_hostname }}
+          
+          Estado: {% if update_result.changed %}CAMBIOS APLICADOS{% else %}SIN CAMBIOS{% endif %}
+          
+          {% if update_result.changed %}
+          Paquetes actualizados: Sí
+          {% else %}
+          Sistema ya estaba actualizado
+          {% endif %}
+          
+          ================================================================================
+        dest: "{{ log_file }}"
+        mode: '0644'
+      tags: [update, log]
+
+    # =====================================================================
+    # Verificar si se requiere reinicio
+    # =====================================================================
+    - name: Verificar si se requiere reinicio
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+      tags: [reboot, check]
+
+    - name: Leer razón del reinicio (si existe)
+      ansible.builtin.command: cat /var/run/reboot-required.pkgs
+      register: reboot_packages
+      when: reboot_required.stat.exists
+      changed_when: false
+      failed_when: false
+      tags: [reboot, check]
+
+    - name: Notificar sobre reinicio
+      ansible.builtin.debug:
+        msg: |
+          {% if reboot_required.stat.exists %}
+          ⚠️  REINICIO REQUERIDO
+          El sistema necesita reiniciarse para aplicar las actualizaciones.
+          Paquetes que requieren reinicio:
+          {{ reboot_packages.stdout if reboot_packages.stdout is defined else 'No especificado' }}
+          {% else %}
+          ✓ No se requiere reinicio del sistema
+          {% endif %}
+      tags: [reboot, check]
+
+    - name: Reiniciar sistema si es necesario
+      ansible.builtin.reboot:
+        msg: "Reiniciando para completar actualizaciones del sistema"
+        pre_reboot_delay: 30
+        post_reboot_delay: 30
+        reboot_timeout: 600
+        test_command: uptime
+      when: reboot_required.stat.exists
+      tags: [reboot, execute]
+
+    # =====================================================================
+    # Reporte DESPUÉS de actualizar
+    # =====================================================================
+    - name: Esperar a que el sistema esté listo (después del reinicio)
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+      when: reboot_required.stat.exists
+      tags: [report, after]
+
+    - name: Recopilar información del sistema (después)
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - hardware
+      tags: [report, after]
+
+    - name: Obtener información de paquetes actualizados
+      ansible.builtin.shell: dpkg -l | wc -l
+      register: packages_after
+      changed_when: false
+      tags: [report, after]
+
+    - name: Verificar actualizaciones pendientes
+      ansible.builtin.shell: |
+        apt list --upgradable 2>/dev/null | grep -v "^Listing" | wc -l
+      register: updates_pending
+      changed_when: false
+      tags: [report, after]
+
+    - name: Obtener historial de APT
+      ansible.builtin.shell: |
+        grep " upgrade " /var/log/apt/history.log 2>/dev/null | tail -n 20 || echo "No hay historial disponible"
+      register: apt_history
+      changed_when: false
+      tags: [report, after]
+
+    - name: Generar reporte final
+      ansible.builtin.copy:
+        content: |
+          ================================================================================
+          REPORTE FINAL - DESPUÉS DE ACTUALIZAR
+          ================================================================================
+          
+          Servidor: {{ inventory_hostname }}
+          Fecha/Hora: {{ ansible_date_time.date }} {{ ansible_date_time.time }}
+          Sistema: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Uptime: {{ ansible_uptime_seconds | int // 86400 }} días
+          
+          --------------------------------------------------------------------------------
+          ESPACIO EN DISCO (DESPUÉS):
+          --------------------------------------------------------------------------------
+          {% for mount in ansible_mounts %}
+          {{ mount.mount }}: {{ mount.size_total | filesizeformat }} total, {{ mount.size_available | filesizeformat }} disponible
+          {% endfor %}
+          
+          --------------------------------------------------------------------------------
+          PAQUETES:
+          --------------------------------------------------------------------------------
+          Antes: {{ packages_before.stdout }} paquetes
+          Después: {{ packages_after.stdout }} paquetes
+          Diferencia: {{ packages_after.stdout | int - packages_before.stdout | int }}
+          
+          --------------------------------------------------------------------------------
+          ACTUALIZACIONES PENDIENTES:
+          --------------------------------------------------------------------------------
+          Paquetes pendientes: {{ updates_pending.stdout }}
+          {% if updates_pending.stdout | int == 0 %}
+          ✓ Sistema completamente actualizado
+          {% else %}
+          ⚠️  Aún hay actualizaciones pendientes
+          {% endif %}
+          
+          --------------------------------------------------------------------------------
+          HISTORIAL DE APT (últimas actualizaciones):
+          --------------------------------------------------------------------------------
+          {{ apt_history.stdout }}
+          
+          --------------------------------------------------------------------------------
+          RESUMEN:
+          --------------------------------------------------------------------------------
+          Actualizaciones aplicadas: {{ updates_available.stdout }}
+          Reinicio ejecutado: {% if reboot_required.stat.exists %}Sí{% else %}No{% endif %}
+          Estado final: {% if updates_pending.stdout | int == 0 %}✓ ACTUALIZADO{% else %}⚠️  PENDIENTE{% endif %}
+          
+          Reportes generados:
+          - Antes: {{ report_before }}
+          - Después: {{ report_after }}
+          - Log: {{ log_file }}
+          
+          ================================================================================
+        dest: "{{ report_after }}"
+        mode: '0644'
+      tags: [report, after]
+
+    - name: Mostrar resumen final
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "ACTUALIZACIÓN COMPLETADA"
+          - "=========================================="
+          - "Servidor: {{ inventory_hostname }}"
+          - "Paquetes actualizados: {{ updates_available.stdout }}"
+          - "Reinicio: {% if reboot_required.stat.exists %}Sí{% else %}No{% endif %}"
+          - "Estado: {% if updates_pending.stdout | int == 0 %}✓ ACTUALIZADO{% else %}⚠️  PENDIENTE{% endif %}"
+          - "=========================================="
+          - "Reportes:"
+          - "  - Antes: {{ report_before }}"
+          - "  - Después: {{ report_after }}"
+          - "  - Log: {{ log_file }}"
+          - "=========================================="
+      tags: [summary]
