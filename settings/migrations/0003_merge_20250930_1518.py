@@ -7,7 +7,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('settings', '0002_alter_vcentercredential_description_and_more'),
-        ('settings', '0002_auto_deploy_params'),
     ]
 
     operations = [
