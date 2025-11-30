@@ -1,0 +1,225 @@
+/* ============================================================================
+   DIAKEN - NO ANIMATIONS - CRÍTICO
+   Elimina TODAS las animaciones, transiciones y efectos hover
+   ============================================================================ */
+
+/* ========== DESACTIVAR TODO ========== */
+*,
+*::before,
+*::after,
+html,
+body,
+div,
+span,
+a,
+button,
+input,
+select,
+textarea,
+.sidebar,
+.navbar,
+.card,
+.modal,
+.dropdown,
+.alert,
+.toast,
+.tooltip,
+.popover,
+.collapse,
+.collapsing,
+.fade,
+.show {
+    animation: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    transition-property: none !important;
+}
+
+/* ========== HOVER EFFECTS - DESACTIVAR ========== */
+*:hover,
+*:focus,
+*:active {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== SIDEBAR - SIN MOVIMIENTO ========== */
+.sidebar,
+.sidebar *,
+.sidebar:hover,
+.sidebar *:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== CARDS - SIN MOVIMIENTO ========== */
+.card,
+.card *,
+.card:hover,
+.card *:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== BUTTONS - SIN MOVIMIENTO ========== */
+.btn,
+.btn *,
+.btn:hover,
+.btn:focus,
+.btn:active {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== LINKS - SIN MOVIMIENTO ========== */
+a,
+a *,
+a:hover,
+a:focus,
+a:active {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== MODALS - SIN ANIMACIÓN ========== */
+.modal,
+.modal-dialog,
+.modal-content,
+.modal.fade .modal-dialog {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+.modal.show .modal-dialog {
+    transform: none !important;
+}
+
+/* ========== DROPDOWNS - SIN ANIMACIÓN ========== */
+.dropdown-menu,
+.dropdown-menu.show {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== COLLAPSE - SIN ANIMACIÓN ========== */
+.collapse,
+.collapsing {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ========== TOOLTIPS & POPOVERS - SIN ANIMACIÓN ========== */
+.tooltip,
+.popover {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== ALERTS - SIN ANIMACIÓN ========== */
+.alert {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== NAVBAR - SIN MOVIMIENTO ========== */
+.navbar,
+.navbar *,
+.navbar:hover,
+.navbar *:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== TABLES - SIN HOVER EFFECT ========== */
+.table tr,
+.table tr:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== FORMS - SIN ANIMACIÓN ========== */
+.form-control,
+.form-control:focus,
+.form-control:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== BADGES - SIN MOVIMIENTO ========== */
+.badge,
+.badge:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== PROGRESS BARS - SIN ANIMACIÓN ========== */
+.progress,
+.progress-bar {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== SPINNERS - DESACTIVAR ========== */
+.spinner-border,
+.spinner-grow {
+    animation: none !important;
+}
+
+/* ========== OFFCANVAS - SIN ANIMACIÓN ========== */
+.offcanvas {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ========== TABS - SIN ANIMACIÓN ========== */
+.nav-tabs,
+.nav-pills,
+.tab-content {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== ACCORDION - SIN ANIMACIÓN ========== */
+.accordion,
+.accordion-button,
+.accordion-collapse {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== CAROUSEL - SIN ANIMACIÓN ========== */
+.carousel,
+.carousel-item {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ========== PAGINATION - SIN HOVER ========== */
+.pagination,
+.page-link,
+.page-link:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}
+
+/* ========== LIST GROUP - SIN HOVER ========== */
+.list-group-item,
+.list-group-item:hover {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+}

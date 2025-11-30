@@ -13,12 +13,17 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
   <!-- AdminLTE CSS (CDN) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+  <!-- NO ANIMATIONS - MÁXIMA PRIORIDAD -->
+  <link rel="stylesheet" href="{% static 'css/no-animations.css' %}?v=1">
+  
   <!-- macOS Style Design System -->
   <link rel="stylesheet" href="{% static 'css/macos-style.css' %}?v=1">
-  <!-- Dark Mode CSS (optional) -->
-  <!-- Layout fixes and no animations -->
+  
+  <!-- Layout fixes -->
   <link rel="stylesheet" href="{% static 'css/fixes.css' %}?v=1">
-  <link rel="stylesheet" href="{% static 'css/dark.css' %}?v=5">
+  
+  <!-- Dark Mode macOS Style (optional) -->
+  <link rel="stylesheet" href="{% static 'css/dark-macos.css' %}?v=1">
   
   <!-- Estilos adicionales específicos de layout -->
   <style>

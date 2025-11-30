@@ -155,3 +155,23 @@ form[method="get"] {
     transition: none !important;
     animation: none !important;
 }
+
+/* ========== FIX ESPECÍFICO: FILTROS DEPLOYMENT HISTORY ========== */
+.form-inline .input-group,
+.form-inline select,
+.form-inline input[type="date"] {
+    min-width: 150px !important;
+    max-width: 200px !important;
+}
+
+/* Asegurar que el contenedor de filtros tenga espacio */
+.card-body form.form-inline {
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Fix para inputs de fecha */
+input[type="date"],
+input[type="datetime-local"] {
+    min-width: 150px !important;
+}
