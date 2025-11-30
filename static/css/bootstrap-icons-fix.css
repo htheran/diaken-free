@@ -180,3 +180,39 @@ h4 .bi, h5 .bi, h6 .bi {
 .dark-mode .bi {
     color: inherit !important;
 }
+
+/* ========== ASEGURAR QUE LOS ICONOS SE VEAN ========== */
+.bi::before {
+    display: inline-block !important;
+    font-family: "bootstrap-icons" !important;
+    font-style: normal !important;
+    font-weight: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    line-height: 1 !important;
+    vertical-align: -.125em !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* ========== ICONOS EN SIDEBAR ========== */
+.sidebar .nav-icon.bi {
+    font-size: 1.1rem !important;
+    width: auto !important;
+    margin-right: 0.5rem !important;
+}
+
+/* ========== SUB-ICONOS EN SIDEBAR ========== */
+.nav-treeview .nav-icon.bi {
+    font-size: 0.8rem !important;
+}
+
+/* ========== ICONOS EN BOTONES ========== */
+.btn .bi {
+    font-size: 1rem !important;
+    display: inline-block !important;
+}
+
+.btn-sm .bi {
+    font-size: 0.875rem !important;
+}
