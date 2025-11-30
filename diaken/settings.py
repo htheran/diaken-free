@@ -273,3 +273,26 @@ if not ENCRYPTION_KEY:
 
 # Export to environment for child processes
 os.environ['ENCRYPTION_KEY'] = ENCRYPTION_KEY
+
+# ============================================================
+# NGINX REVERSE PROXY CONFIGURATION
+# ============================================================
+# Django needs to trust the proxy headers sent by nginx
+
+# Trust proxy headers
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Security settings for HTTPS
+if not DEBUG:
+    # Force HTTPS in production
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+# Allowed hosts should include your domain
+# Example: ALLOWED_HOSTS = ['diaken.example.com', '192.168.1.100']
+
+# CSRF trusted origins should include https://
+# Example: CSRF_TRUSTED_ORIGINS = ['https://diaken.example.com', 'https://192.168.1.100']
