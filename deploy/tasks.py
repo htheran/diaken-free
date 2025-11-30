@@ -874,8 +874,21 @@ def provision_linux_vm_async(self, history_id, template_ip, new_ip, new_hostname
             try:
                 from inventory.models import Host, Environment, Group
                 
-                env = Environment.objects.get(name=deploy_env)
-                group = Group.objects.get(name=deploy_group, environment=env)
+                # Get or create environment and group
+                env, created = Environment.objects.get_or_create(
+                    name=deploy_env if deploy_env else 'Default',
+                    defaults={'description': 'Auto-created environment'}
+                )
+                if created:
+                    logger.info(f'[CELERY-LINUX-{self.request.id}] Created new environment: {env.name}')
+                
+                group, created = Group.objects.get_or_create(
+                    name=deploy_group if deploy_group else 'Default',
+                    environment=env,
+                    defaults={'description': 'Auto-created group'}
+                )
+                if created:
+                    logger.info(f'[CELERY-LINUX-{self.request.id}] Created new group: {group.name}')
                 
                 Host.objects.create(
                     name=new_hostname,

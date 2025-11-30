@@ -1,0 +1,26 @@
+---
+- name: Update RedHat/CentOS Host
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  tasks:
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+      
+    - name: Clean yum cache
+      command: yum clean all
+      when: ansible_os_family == "RedHat"
+      
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+      
+    - name: Display update status
+      debug:
+        msg: "System updated successfully. Reboot may be required."
