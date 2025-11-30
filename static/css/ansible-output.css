@@ -1,8 +1,8 @@
-/* Ansible Output Styling - Terminal-like appearance */
+/* Ansible Output Styling - Terminal-like appearance with black background */
 
 .ansible-output {
-    background-color: #2d2d30;
-    color: #d4d4d4;
+    background-color: #000000;
+    color: #00ff00;
     padding: 20px;
     border-radius: 5px;
     font-family: 'Courier New', Consolas, monospace;
@@ -11,7 +11,7 @@
     overflow-x: auto;
     white-space: pre;
     margin: 0;
-    border: 1px solid #3e3e42;
+    border: 1px solid #00ff00;
 }
 
 /* Success checkmark */

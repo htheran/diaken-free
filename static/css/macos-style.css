@@ -36,10 +36,10 @@
     --radius-lg: 14px;
     --radius-xl: 18px;
     
-    /* Transiciones suaves */
-    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-base: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transiciones deshabilitadas para mejor rendimiento */
+    --transition-fast: 0s;
+    --transition-base: 0s;
+    --transition-slow: 0s;
 }
 
 /* Aplicar tipografía a todo el documento */
@@ -110,15 +110,34 @@ body, html {
     color: #ffffff !important;
 }
 
+.nav-sidebar .nav-item .nav-link:hover i {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.05);
+}
+
 .nav-sidebar .nav-item .nav-link.active {
     background-color: rgba(255, 255, 255, 0.2) !important;
     color: white !important;
     box-shadow: var(--shadow-sm) !important;
 }
 
+.nav-sidebar .nav-item .nav-link.active i {
+    background: rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Iconos estilo macOS - más grandes y con mejor espaciado */
 .nav-sidebar .nav-item .nav-link i {
-    font-size: 16px !important;
-    margin-right: 12px !important;
+    font-size: 18px !important;
+    margin-right: 14px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    padding: 6px !important;
 }
 
 /* Submenu */
@@ -438,13 +457,14 @@ select.form-control {
 }
 
 /* ========== ANIMACIONES SUAVES ========== */
+/* Animaciones deshabilitadas */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 1; transform: translateY(0); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .fade-in {
-    animation: fadeIn var(--transition-base) ease-out;
+    animation: none;
 }
 
 /* ========== RESPONSIVE ========== */
