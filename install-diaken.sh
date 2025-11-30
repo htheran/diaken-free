@@ -46,6 +46,17 @@ LOG_DIR="/var/log/${PROJECT_NAME}"
 RUN_DIR="/var/run/${PROJECT_NAME}"
 CELERY_LOG_DIR="${LOG_DIR}/celery"
 CELERY_PID_DIR="${RUN_DIR}/celery"
+DJANGO_LOG_DIR="${LOG_DIR}/django"
+ANSIBLE_LOG_DIR="${LOG_DIR}/ansible"
+REDIS_LOG_DIR="${LOG_DIR}/redis"
+
+# Database configuration (will be set during installation)
+DB_TYPE=""
+DB_HOST=""
+DB_PORT=""
+DB_NAME=""
+DB_USER=""
+DB_PASSWORD=""
 
 ################################################################################
 # Helper Functions
@@ -270,6 +281,173 @@ create_directories() {
     # Set proper permissions
     chmod -R 755 media logs
     print_success "Directories created and permissions set"
+    
+    # Create centralized log directories
+    print_info "Creating centralized log directories..."
+    sudo mkdir -p "${CELERY_LOG_DIR}" "${DJANGO_LOG_DIR}" "${ANSIBLE_LOG_DIR}" "${REDIS_LOG_DIR}"
+    sudo mkdir -p "${CELERY_PID_DIR}"
+    sudo chown -R ${INSTALL_USER}:${INSTALL_USER} "${LOG_DIR}" "${RUN_DIR}"
+    print_success "Centralized log directories created at ${LOG_DIR}"
+}
+
+configure_database() {
+    print_header "Database Configuration"
+    
+    # Check if running in unattended mode
+    if [ -n "${DB_TYPE}" ]; then
+        print_info "Using pre-configured database type: ${DB_TYPE}"
+    else
+        print_info "Select database type:"
+        echo "  1) SQLite3 (Recommended for development/small deployments)"
+        echo "  2) MariaDB/MySQL"
+        echo "  3) PostgreSQL"
+        echo ""
+        read -p "Enter choice [1-3] (default: 1): " db_choice
+        db_choice=${db_choice:-1}
+        
+        case $db_choice in
+            1)
+                DB_TYPE="sqlite3"
+                ;;
+            2)
+                DB_TYPE="mariadb"
+                ;;
+            3)
+                DB_TYPE="postgresql"
+                ;;
+            *)
+                print_warning "Invalid choice. Using SQLite3."
+                DB_TYPE="sqlite3"
+                ;;
+        esac
+    fi
+    
+    print_info "Database type: ${DB_TYPE}"
+    
+    # Configure based on database type
+    if [ "$DB_TYPE" = "sqlite3" ]; then
+        print_success "SQLite3 selected - no additional configuration needed"
+        print_info "Database will be created at: ${INSTALL_DIR}/db.sqlite3"
+        
+        # Create .env file for SQLite
+        cat > "${INSTALL_DIR}/.env" << EOF
+# Diaken Environment Configuration
+# Generated on $(date)
+
+# Database Configuration
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=${INSTALL_DIR}/db.sqlite3
+
+# Celery Configuration  
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# Logging
+DJANGO_LOG_DIR=${DJANGO_LOG_DIR}
+ANSIBLE_LOG_DIR=${ANSIBLE_LOG_DIR}
+EOF
+        
+    elif [ "$DB_TYPE" = "mariadb" ] || [ "$DB_TYPE" = "postgresql" ]; then
+        # Get database connection details
+        if [ -z "${DB_HOST}" ]; then
+            read -p "Database Host (IP or hostname): " DB_HOST
+        fi
+        
+        if [ -z "${DB_PORT}" ]; then
+            if [ "$DB_TYPE" = "mariadb" ]; then
+                read -p "Database Port (default: 3306): " DB_PORT
+                DB_PORT=${DB_PORT:-3306}
+            else
+                read -p "Database Port (default: 5432): " DB_PORT
+                DB_PORT=${DB_PORT:-5432}
+            fi
+        fi
+        
+        if [ -z "${DB_NAME}" ]; then
+            read -p "Database Name: " DB_NAME
+        fi
+        
+        if [ -z "${DB_USER}" ]; then
+            read -p "Database User: " DB_USER
+        fi
+        
+        if [ -z "${DB_PASSWORD}" ]; then
+            read -sp "Database Password: " DB_PASSWORD
+            echo ""
+        fi
+        
+        # Install database client
+        if [ "$DB_TYPE" = "mariadb" ]; then
+            print_info "Installing MariaDB client..."
+            sudo dnf install -y mariadb-devel || sudo yum install -y mariadb-devel
+            
+            # Install Python MySQL client
+            cd "${INSTALL_DIR}"
+            source venv/bin/activate
+            pip install mysqlclient
+            
+            DB_ENGINE="django.db.backends.mysql"
+            
+        elif [ "$DB_TYPE" = "postgresql" ]; then
+            print_info "Installing PostgreSQL client..."
+            sudo dnf install -y postgresql-devel || sudo yum install -y postgresql-devel
+            
+            # Install Python PostgreSQL client
+            cd "${INSTALL_DIR}"
+            source venv/bin/activate
+            pip install psycopg2-binary
+            
+            DB_ENGINE="django.db.backends.postgresql"
+        fi
+        
+        # Test database connection
+        print_info "Testing database connection..."
+        if [ "$DB_TYPE" = "mariadb" ]; then
+            if mysql -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASSWORD}" -e "USE ${DB_NAME};" 2>/dev/null; then
+                print_success "Database connection successful!"
+            else
+                print_error "Failed to connect to database. Please check your credentials."
+                print_warning "Continuing with installation, but database configuration may need to be fixed."
+            fi
+        elif [ "$DB_TYPE" = "postgresql" ]; then
+            if PGPASSWORD="${DB_PASSWORD}" psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -c "SELECT 1;" >/dev/null 2>&1; then
+                print_success "Database connection successful!"
+            else
+                print_error "Failed to connect to database. Please check your credentials."
+                print_warning "Continuing with installation, but database configuration may need to be fixed."
+            fi
+        fi
+        
+        # Create .env file
+        cat > "${INSTALL_DIR}/.env" << EOF
+# Diaken Environment Configuration
+# Generated on $(date)
+
+# Database Configuration
+DB_ENGINE=${DB_ENGINE}
+DB_NAME=${DB_NAME}
+DB_USER=${DB_USER}
+DB_PASSWORD=${DB_PASSWORD}
+DB_HOST=${DB_HOST}
+DB_PORT=${DB_PORT}
+
+# Celery Configuration
+CELERY_BROKER_URL=redis://localhost:6379/0
+CELERY_RESULT_BACKEND=redis://localhost:6379/0
+
+# Logging
+DJANGO_LOG_DIR=${DJANGO_LOG_DIR}
+ANSIBLE_LOG_DIR=${ANSIBLE_LOG_DIR}
+EOF
+        
+        print_success "Database configured: ${DB_TYPE}"
+        print_info "Connection: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+    fi
+    
+    # Set permissions for .env file
+    chmod 600 "${INSTALL_DIR}/.env"
+    chown ${INSTALL_USER}:${INSTALL_USER} "${INSTALL_DIR}/.env"
+    print_success ".env file created with secure permissions (600)"
 }
 
 run_migrations() {
@@ -402,8 +580,18 @@ configure_firewall() {
 configure_redis() {
     print_header "Configuring Redis"
     
+    # Configure Redis to use centralized log directory
+    print_info "Configuring Redis logs..."
+    sudo sed -i "s|^logfile.*|logfile ${REDIS_LOG_DIR}/redis-server.log|" /etc/redis/redis.conf 2>/dev/null || 
+        sudo sed -i "s|^logfile.*|logfile ${REDIS_LOG_DIR}/redis-server.log|" /etc/redis.conf 2>/dev/null || true
+    
+    # Create log file with proper permissions
+    sudo touch "${REDIS_LOG_DIR}/redis-server.log"
+    sudo chown redis:redis "${REDIS_LOG_DIR}/redis-server.log"
+    sudo chmod 640 "${REDIS_LOG_DIR}/redis-server.log"
+    
     print_info "Starting and enabling Redis service..."
-    sudo systemctl start redis
+    sudo systemctl restart redis
     sudo systemctl enable redis
     
     # Wait a moment for Redis to start
@@ -412,9 +600,10 @@ configure_redis() {
     # Test Redis connection
     if redis-cli ping &> /dev/null; then
         print_success "Redis is running and responding"
+        print_info "Redis logs: ${REDIS_LOG_DIR}/redis-server.log"
     else
         print_error "Redis failed to start properly"
-        print_info "You may need to check Redis logs: sudo journalctl -u redis"
+        print_info "Check Redis logs: sudo journalctl -u redis"
     fi
 }
 
@@ -557,7 +746,7 @@ ${NC}
 
 ${BLUE}Installation Details:${NC}
   • Installation Directory: ${GREEN}$INSTALL_DIR${NC}
-  • Database: ${GREEN}SQLite (db.sqlite3)${NC}
+  • Database: ${GREEN}${DB_TYPE^^}${NC}$([ "$DB_TYPE" != "sqlite3" ] && echo " (${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME})" || echo " (${INSTALL_DIR}/db.sqlite3)")
   • Port: ${GREEN}$PORT${NC}
   • Admin User: ${GREEN}$DJANGO_USER${NC}
   • Install User: ${GREEN}$INSTALL_USER${NC}
@@ -565,6 +754,7 @@ ${BLUE}Installation Details:${NC}
   • Celery Worker: ${GREEN}Running as systemd service${NC}
   • govc (VMware CLI): ${GREEN}$(govc version 2>/dev/null | head -1 || echo 'Not installed')${NC}
   • Crontab: ${GREEN}Configured for automated cleanup${NC}
+  • Centralized Logs: ${GREEN}${LOG_DIR}${NC}
 
 ${BLUE}To Start the Application:${NC}
 
@@ -583,14 +773,18 @@ ${BLUE}Access the Application:${NC}
 
 ${BLUE}Useful Commands:${NC}
   • Check firewall status: ${YELLOW}sudo firewall-cmd --list-all${NC}
-  • View logs: ${YELLOW}tail -f $INSTALL_DIR/logs/*.log${NC}
-  • Restart firewall: ${YELLOW}sudo systemctl restart firewalld${NC}
   • Check Redis status: ${YELLOW}sudo systemctl status redis${NC}
   • Check Celery status: ${YELLOW}sudo systemctl status celery${NC}
-  • View Celery logs: ${YELLOW}sudo tail -f ${CELERY_LOG_DIR}/worker.log${NC}
   • Restart Celery: ${YELLOW}sudo systemctl restart celery${NC}
   • View crontab: ${YELLOW}crontab -l${NC}
-  • View cleanup logs: ${YELLOW}tail -f ${LOG_DIR}/cleanup_*.log${NC}
+  
+${BLUE}Centralized Logs (${GREEN}${LOG_DIR}${BLUE}):${NC}
+  • All logs: ${YELLOW}tail -f ${LOG_DIR}/**/*.log${NC}
+  • Celery logs: ${YELLOW}tail -f ${CELERY_LOG_DIR}/worker.log${NC}
+  • Django logs: ${YELLOW}tail -f ${DJANGO_LOG_DIR}/*.log${NC}
+  • Ansible logs: ${YELLOW}tail -f ${ANSIBLE_LOG_DIR}/*.log${NC}
+  • Redis logs: ${YELLOW}tail -f ${REDIS_LOG_DIR}/*.log${NC}
+  • Cleanup logs: ${YELLOW}tail -f ${LOG_DIR}/cleanup_*.log${NC}
 
 ${BLUE}Production Deployment:${NC}
   For production, consider using:
@@ -655,6 +849,7 @@ EOF
     install_python_packages
     install_govc
     create_directories
+    configure_database
     run_migrations
     collect_static
     initialize_default_settings
