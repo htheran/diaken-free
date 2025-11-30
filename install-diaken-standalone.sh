@@ -30,15 +30,9 @@ GITHUB_REPO="https://github.com/htheran/diaken-free.git"
 INSTALL_DIR="/opt/diaken"
 PYTHON_VERSION="3.12"
 PORT="9090"
-
-# Detect the user who invoked sudo (or current user if not using sudo)
-if [ -n "$SUDO_USER" ]; then
-    INSTALL_USER="$SUDO_USER"
-else
-    INSTALL_USER="$(whoami)"
-fi
-
-# Get user's home directory
+# System user for Diaken (like nginx, postgresql, redis)
+INSTALL_USER="diaken"
+INSTALL_GROUP="diaken"
 INSTALL_USER_HOME=$(eval echo ~$INSTALL_USER)
 
 # Dynamic paths (no hardcoded usernames)
@@ -93,11 +87,182 @@ check_root() {
 }
 
 check_os() {
-    if [ -f /etc/redhat-release ]; then
-        OS_VERSION=$(cat /etc/redhat-release)
-        print_success "Detected: $OS_VERSION"
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
     else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+    if [ -f /etc/redhat-release ]; then
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+        OS_VERSION=$(cat /etc/redhat-release)
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+        print_success "Detected: $OS_VERSION"
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+    else
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
         print_error "This script is designed for RedHat/CentOS/Rocky Linux"
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+        exit 1
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+    fi
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
+        exit 1
+    fi
+}
+}
+
+create_system_user() {
+    print_header "Creating System User for Diaken"
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_info "User '$INSTALL_USER' already exists"
+    else
+        print_info "Creating system user '$INSTALL_USER'..."
+        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    if id "$INSTALL_USER" &>/dev/null; then
+        print_success "User '$INSTALL_USER' verified"
+    else
+        print_error "Failed to create user '$INSTALL_USER'"
         exit 1
     fi
 }
@@ -504,6 +669,17 @@ run_migrations() {
     print_info "Running migrations..."
     python manage.py migrate
     
+    # Fix database permissions (critical for SQLite to avoid "readonly database" error)
+    print_info "Setting correct database permissions..."
+    if [ -f "${INSTALL_DIR}/db.sqlite3" ]; then
+        sudo chown ${INSTALL_USER}:${INSTALL_GROUP} "${INSTALL_DIR}/db.sqlite3"
+        sudo chmod 664 "${INSTALL_DIR}/db.sqlite3"
+        print_success "Database permissions set: ${INSTALL_USER}:${INSTALL_GROUP} (664)"
+    fi
+    
+    sudo chown -R ${INSTALL_USER}:${INSTALL_GROUP} "${INSTALL_DIR}"
+    sudo chmod 755 "${INSTALL_DIR}"
+    
     print_success "Database migrations completed"
 }
 
@@ -894,6 +1070,7 @@ EOF
     # Run installation steps
     check_root
     check_os
+    create_system_user
     install_epel
     install_dependencies
     check_python
