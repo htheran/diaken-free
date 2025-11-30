@@ -4,16 +4,16 @@
 <div class="container-fluid">
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h3 class="card-title mb-0"><i class="fas fa-history"></i> Scheduled Task Execution History</h3>
+      <h3 class="card-title mb-0"><i class="bi bi-clock-history"></i> Scheduled Task Execution History</h3>
       <a href="{% url 'history:cleanup_stuck_deployments' %}" class="btn btn-warning btn-sm">
-        <i class="fas fa-broom"></i> Cleanup Stuck Deployments
+        <i class="bi fa-broom"></i> Cleanup Stuck Deployments
       </a>
     </div>
     
     <!-- Filters -->
     <div class="card-body">
       <form method="get" class="form-inline mb-3">
-        <label class="mr-2"><i class="fas fa-filter"></i> Filters:</label>
+        <label class="mr-2"><i class="bi bi-funnel"></i> Filters:</label>
         
         <select name="status" class="form-control form-control-sm mr-2">
           <option value="">All Status</option>
@@ -33,8 +33,8 @@
         <label class="mr-2">To:</label>
         <input type="date" name="date_to" class="form-control form-control-sm mr-2" value="{{ date_to }}">
         
-        <button type="submit" class="btn btn-primary btn-sm mr-2"><i class="fas fa-search"></i> Filter</button>
-        <a href="{% url 'scheduled_task_history' %}" class="btn btn-secondary btn-sm"><i class="fas fa-eraser"></i> Clear</a>
+        <button type="submit" class="btn btn-primary btn-sm mr-2"><i class="bi bi-search"></i> Filter</button>
+        <a href="{% url 'scheduled_task_history' %}" class="btn btn-secondary btn-sm"><i class="bi fa-eraser"></i> Clear</a>
       </form>
     </div>
     
@@ -57,13 +57,13 @@
         <tbody>
           {% for h in history %}
           <tr>
-            <td><i class="fas fa-user"></i> {% if h.scheduled_task and h.scheduled_task.created_by %}{{ h.scheduled_task.created_by.username }}{% else %}Unknown{% endif %}</td>
+            <td><i class="bi bi-person"></i> {% if h.scheduled_task and h.scheduled_task.created_by %}{{ h.scheduled_task.created_by.username }}{% else %}Unknown{% endif %}</td>
             <td><span class="badge badge-info">{{ h.environment_name|default:"N/A" }}</span></td>
             <td>
               {% if h.task_type == 'host' %}
-                <i class="fas fa-desktop"></i>
+                <i class="bi fa-desktop"></i>
               {% else %}
-                <i class="fas fa-users"></i>
+                <i class="bi bi-people"></i>
               {% endif %}
               <strong>{{ h.target_name }}</strong>
               <span class="badge badge-secondary">{{ h.task_type|title }}</span>
@@ -71,34 +71,34 @@
                 <br><small class="text-muted">{{ h.target_ip }}</small>
               {% endif %}
             </td>
-            <td><i class="fas fa-file-code"></i> {{ h.playbook_name }}</td>
-            <td><i class="far fa-calendar"></i> {{ h.scheduled_for|date:"d/m/Y H:i:s" }}</td>
-            <td><i class="far fa-clock"></i> {{ h.executed_at|date:"d/m/Y H:i:s" }}</td>
+            <td><i class="bi bi-file-earmark-code"></i> {{ h.playbook_name }}</td>
+            <td><i class="bi bi-calendar"></i> {{ h.scheduled_for|date:"d/m/Y H:i:s" }}</td>
+            <td><i class="bi bi-clock"></i> {{ h.executed_at|date:"d/m/Y H:i:s" }}</td>
             <td>
               {% if h.execution_duration %}
-                <i class="fas fa-stopwatch"></i> {{ h.execution_duration }}s
+                <i class="bi bi-stopwatch"></i> {{ h.execution_duration }}s
               {% else %}
                 -
               {% endif %}
             </td>
             <td class="text-center">
               {% if h.status == 'success' %}
-                <span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>
+                <span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Success</span>
               {% elif h.status == 'failed' %}
-                <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+                <span class="badge badge-danger"><i class="bi bi-x-lg-circle"></i> Failed</span>
               {% else %}
                 {% if h.is_stuck %}
                   <span class="badge badge-danger" title="Running for {{ h.running_hours|floatformat:1 }} hours">
-                    <i class="fas fa-exclamation-triangle"></i> Stuck ({{ h.running_hours|floatformat:1 }}h)
+                    <i class="bi bi-exclamation-triangle"></i> Stuck ({{ h.running_hours|floatformat:1 }}h)
                   </span>
                 {% else %}
-                  <span class="badge badge-warning"><i class="fas fa-spinner fa-spin"></i> Running</span>
+                  <span class="badge badge-warning"><i class="bi fa-spinner fa-spin"></i> Running</span>
                 {% endif %}
               {% endif %}
             </td>
             <td class="text-center">
               <a href="{% url 'scheduled_task_history_detail' h.id %}" class="btn btn-sm btn-primary" title="View Details">
-                <i class="fas fa-eye"></i> View
+                <i class="bi bi-eye"></i> View
               </a>
             </td>
           </tr>
@@ -154,13 +154,13 @@ $(document).ready(function() {
           success: function(data) {
             // Update badge if status changed
             if (data.status === 'success') {
-              task.statusCell.html('<span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>');
+              task.statusCell.html('<span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Success</span>');
               console.log('Scheduled task history ' + task.id + ' completed successfully');
               
               // Update duration if available
               if (data.execution_duration) {
                 var durationCell = task.row.find('td:nth-child(7)');
-                durationCell.html('<i class="fas fa-stopwatch"></i> ' + data.execution_duration + 's');
+                durationCell.html('<i class="bi bi-stopwatch"></i> ' + data.execution_duration + 's');
               }
               
               // Remove from running list
@@ -169,13 +169,13 @@ $(document).ready(function() {
               });
               
             } else if (data.status === 'failed') {
-              task.statusCell.html('<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>');
+              task.statusCell.html('<span class="badge badge-danger"><i class="bi bi-x-lg-circle"></i> Failed</span>');
               console.log('Scheduled task history ' + task.id + ' failed');
               
               // Update duration if available
               if (data.execution_duration) {
                 var durationCell = task.row.find('td:nth-child(7)');
-                durationCell.html('<i class="fas fa-stopwatch"></i> ' + data.execution_duration + 's');
+                durationCell.html('<i class="bi bi-stopwatch"></i> ' + data.execution_duration + 's');
               }
               
               // Remove from running list

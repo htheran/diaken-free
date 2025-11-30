@@ -8,13 +8,13 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="fas fa-file-code"></i> Playbooks</h2>
+                <h2><i class="bi bi-file-earmark-code"></i> Playbooks</h2>
                 <div>
                     <a href="{% url 'playbook_create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Create Playbook
+                        <i class="bi bi-plus-lg"></i> Create Playbook
                     </a>
                     <a href="{% url 'playbook_upload' %}" class="btn btn-success">
-                        <i class="fas fa-upload"></i> Upload Playbook
+                        <i class="bi bi-upload"></i> Upload Playbook
                     </a>
                 </div>
             </div>
@@ -27,13 +27,13 @@
                 <div class="card-header {% if 'RedHat' in os_family %}bg-danger{% elif 'Debian' in os_family %}bg-warning{% elif 'Windows' in os_family %}bg-primary{% else %}bg-secondary{% endif %} text-white">
                     <h4 class="mb-0">
                         {% if 'RedHat' in os_family %}
-                            <i class="fab fa-redhat"></i>
+                            <i class="bi fa-redhat"></i>
                         {% elif 'Debian' in os_family %}
-                            <i class="fab fa-ubuntu"></i>
+                            <i class="bi fa-ubuntu"></i>
                         {% elif 'Windows' in os_family %}
-                            <i class="fab fa-windows"></i>
+                            <i class="bi fa-windows"></i>
                         {% else %}
-                            <i class="fas fa-server"></i>
+                            <i class="bi bi-hdd-rack"></i>
                         {% endif %}
                         {{ os_family }} Playbooks
                     </h4>
@@ -43,7 +43,7 @@
                         <!-- Host Playbooks -->
                         <div class="col-md-6">
                             <h5 class="border-bottom pb-2 mb-3">
-                                <i class="fas fa-server"></i> Host Playbooks
+                                <i class="bi bi-hdd-rack"></i> Host Playbooks
                                 <span class="badge bg-info">{{ types.host|length }}</span>
                             </h5>
                             {% if types.host %}
@@ -60,7 +60,7 @@
                                             {% for playbook in types.host %}
                                                 <tr>
                                                     <td>
-                                                        <i class="fas fa-file-code text-primary"></i>
+                                                        <i class="bi bi-file-earmark-code text-primary"></i>
                                                         <strong>{{ playbook.name }}</strong>
                                                     </td>
                                                     <td>
@@ -69,16 +69,16 @@
                                                     <td>
                                                         <div class="btn-group btn-group-sm" role="group">
                                                             <a href="{% url 'playbook_view' playbook.pk %}" class="btn btn-info" title="View">
-                                                                <i class="fas fa-eye"></i>
+                                                                <i class="bi bi-eye"></i>
                                                             </a>
                                                             <a href="{% url 'playbook_edit' playbook.pk %}" class="btn btn-warning" title="Edit">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="bi bi-pencil-square"></i>
                                                             </a>
                                                             <a href="{% url 'playbook_download' playbook.pk %}" class="btn btn-success" title="Download">
-                                                                <i class="fas fa-download"></i>
+                                                                <i class="bi bi-download"></i>
                                                             </a>
                                                             <button type="button" class="btn btn-danger" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ playbook.pk }}">
-                                                                <i class="fas fa-trash"></i>
+                                                                <i class="bi bi-trash"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -90,20 +90,20 @@
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-danger text-white">
                                                                 <h5 class="modal-title">
-                                                                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                                                                    <i class="bi bi-exclamation-triangle"></i> Confirm Delete
                                                                 </h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
                                                                 <p>Are you sure you want to delete <strong>{{ playbook.name }}</strong>?</p>
-                                                                <p class="text-danger"><i class="fas fa-exclamation-circle"></i> This action cannot be undone!</p>
+                                                                <p class="text-danger"><i class="bi bi-exclamation-circle"></i> This action cannot be undone!</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                                                 <form method="post" action="{% url 'playbook_delete' playbook.pk %}" style="display: inline;">
                                                                     {% csrf_token %}
                                                                     <button type="submit" class="btn btn-danger">
-                                                                        <i class="fas fa-trash"></i> Delete
+                                                                        <i class="bi bi-trash"></i> Delete
                                                                     </button>
                                                                 </form>
                                                             </div>
@@ -115,14 +115,14 @@
                                     </table>
                                 </div>
                             {% else %}
-                                <p class="text-muted"><i class="fas fa-info-circle"></i> No host playbooks found for {{ os_family }}</p>
+                                <p class="text-muted"><i class="bi bi-info-circle"></i> No host playbooks found for {{ os_family }}</p>
                             {% endif %}
                         </div>
                         
                         <!-- Group Playbooks -->
                         <div class="col-md-6">
                             <h5 class="border-bottom pb-2 mb-3">
-                                <i class="fas fa-layer-group"></i> Group Playbooks
+                                <i class="bi fa-layer-group"></i> Group Playbooks
                                 <span class="badge bg-success">{{ types.group|length }}</span>
                             </h5>
                             {% if types.group %}
@@ -139,7 +139,7 @@
                                             {% for playbook in types.group %}
                                                 <tr>
                                                     <td>
-                                                        <i class="fas fa-file-code text-success"></i>
+                                                        <i class="bi bi-file-earmark-code text-success"></i>
                                                         <strong>{{ playbook.name }}</strong>
                                                     </td>
                                                     <td>
@@ -148,16 +148,16 @@
                                                     <td>
                                                         <div class="btn-group btn-group-sm" role="group">
                                                             <a href="{% url 'playbook_view' playbook.pk %}" class="btn btn-info" title="View">
-                                                                <i class="fas fa-eye"></i>
+                                                                <i class="bi bi-eye"></i>
                                                             </a>
                                                             <a href="{% url 'playbook_edit' playbook.pk %}" class="btn btn-warning" title="Edit">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="bi bi-pencil-square"></i>
                                                             </a>
                                                             <a href="{% url 'playbook_download' playbook.pk %}" class="btn btn-success" title="Download">
-                                                                <i class="fas fa-download"></i>
+                                                                <i class="bi bi-download"></i>
                                                             </a>
                                                             <button type="button" class="btn btn-danger" title="Delete" data-bs-toggle="modal" data-bs-target="#deleteModal{{ playbook.pk }}">
-                                                                <i class="fas fa-trash"></i>
+                                                                <i class="bi bi-trash"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -169,20 +169,20 @@
                                                         <div class="modal-content">
                                                             <div class="modal-header bg-danger text-white">
                                                                 <h5 class="modal-title">
-                                                                    <i class="fas fa-exclamation-triangle"></i> Confirm Delete
+                                                                    <i class="bi bi-exclamation-triangle"></i> Confirm Delete
                                                                 </h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                             </div>
                                                             <div class="modal-body">
                                                                 <p>Are you sure you want to delete <strong>{{ playbook.name }}</strong>?</p>
-                                                                <p class="text-danger"><i class="fas fa-exclamation-circle"></i> This action cannot be undone!</p>
+                                                                <p class="text-danger"><i class="bi bi-exclamation-circle"></i> This action cannot be undone!</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                                                 <form method="post" action="{% url 'playbook_delete' playbook.pk %}" style="display: inline;">
                                                                     {% csrf_token %}
                                                                     <button type="submit" class="btn btn-danger">
-                                                                        <i class="fas fa-trash"></i> Delete
+                                                                        <i class="bi bi-trash"></i> Delete
                                                                     </button>
                                                                 </form>
                                                             </div>
@@ -194,7 +194,7 @@
                                     </table>
                                 </div>
                             {% else %}
-                                <p class="text-muted"><i class="fas fa-info-circle"></i> No group playbooks found for {{ os_family }}</p>
+                                <p class="text-muted"><i class="bi bi-info-circle"></i> No group playbooks found for {{ os_family }}</p>
                             {% endif %}
                         </div>
                     </div>
@@ -203,7 +203,7 @@
         {% endfor %}
     {% else %}
         <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No playbooks found. 
+            <i class="bi bi-info-circle"></i> No playbooks found. 
             <a href="{% url 'playbook_create' %}" class="alert-link">Create your first playbook</a> or 
             <a href="{% url 'playbook_upload' %}" class="alert-link">upload one</a>.
         </div>

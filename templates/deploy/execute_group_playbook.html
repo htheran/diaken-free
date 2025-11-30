@@ -50,7 +50,7 @@
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="create_snapshot" name="create_snapshot" value="1">
             <label class="custom-control-label" for="create_snapshot">
-              <i class="fas fa-camera"></i> Create snapshot before execution (all hosts)
+              <i class="bi fa-camera"></i> Create snapshot before execution (all hosts)
               <small class="text-muted d-block">Safety snapshots will be created for all hosts and auto-deleted after configured retention period</small>
             </label>
           </div>
@@ -58,10 +58,10 @@
         
         <div class="form-group">
           <button type="submit" class="btn btn-success">
-            <i class="fas fa-play"></i> Execute Playbook
+            <i class="bi bi-play"></i> Execute Playbook
           </button>
           <a href="{% url 'deploy:deploy_index' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back
+            <i class="bi bi-arrow-left"></i> Back
           </a>
         </div>
       </form>

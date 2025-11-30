@@ -8,7 +8,7 @@
   <div class="row mb-4">
     <div class="col-md-12">
       <h2>
-        <i class="fas fa-user-{% if action == 'Create' %}plus{% else %}edit{% endif %} mr-2"></i>
+        <i class="bi bi-person-{% if action == 'Create' %}plus{% else %}edit{% endif %} mr-2"></i>
         {{ action }} User
       </h2>
     </div>
@@ -18,7 +18,7 @@
     <div class="col-md-8">
       <div class="card">
         <div class="card-header bg-primary text-white">
-          <i class="fas fa-info-circle mr-2"></i>User Information
+          <i class="bi bi-info-circle mr-2"></i>User Information
         </div>
         <div class="card-body">
           <form method="post">
@@ -86,7 +86,7 @@
             <!-- Permissions -->
             <div class="card mt-4">
               <div class="card-header bg-light">
-                <i class="fas fa-shield-alt mr-2"></i>Permissions
+                <i class="bi bi-shield mr-2"></i>Permissions
               </div>
               <div class="card-body">
                 <div class="form-check">
@@ -141,10 +141,10 @@
             <!-- Buttons -->
             <div class="mt-4">
               <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save mr-2"></i>Save
+                <i class="bi bi-save mr-2"></i>Save
               </button>
               <a href="{% url 'user_list' %}" class="btn btn-secondary">
-                <i class="fas fa-times mr-2"></i>Cancel
+                <i class="bi bi-x-lg mr-2"></i>Cancel
               </a>
             </div>
           </form>
@@ -156,7 +156,7 @@
     <div class="col-md-4">
       <div class="card">
         <div class="card-header bg-info text-white">
-          <i class="fas fa-info-circle mr-2"></i>Information
+          <i class="bi bi-info-circle mr-2"></i>Information
         </div>
         <div class="card-body">
           {% if action == 'Create' %}

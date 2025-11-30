@@ -11,14 +11,14 @@
     
     <!-- Host Information -->
     <div class="alert alert-danger my-3" role="alert">
-      <i class="fas fa-exclamation-triangle"></i> <strong>{% trans "Host to delete:" %}</strong><br>
+      <i class="bi bi-exclamation-triangle"></i> <strong>{% trans "Host to delete:" %}</strong><br>
       <span class="h5 text-dark">{{ host.name }}</span><br>
       <small class="text-muted">IP: {{ host.ip }}</small>
     </div>
     
     <form method="post" class="d-inline">{% csrf_token %}
-      <button class="btn btn-danger mr-2"><i class="fas fa-trash"></i> {% trans "Delete" %}</button>
-      <a href="{% url 'host_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> {% trans "Cancel" %}</a>
+      <button class="btn btn-danger mr-2"><i class="bi bi-trash"></i> {% trans "Delete" %}</button>
+      <a href="{% url 'host_list' %}" class="btn btn-secondary"><i class="bi bi-x-lg"></i> {% trans "Cancel" %}</a>
     </form>
   </div>
 </div>

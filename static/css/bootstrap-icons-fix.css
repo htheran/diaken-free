@@ -1,0 +1,182 @@
+/* ============================================================================
+   DIAKEN - Bootstrap Icons Alignment & Styling
+   Mejora el alineamiento y apariencia de Bootstrap Icons
+   ============================================================================ */
+
+/* ========== ALINEAMIENTO VERTICAL ========== */
+.bi {
+    vertical-align: middle !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+}
+
+/* ========== TAMAÑO CONSISTENTE ========== */
+.bi {
+    font-size: 1rem !important;
+    width: 1em !important;
+    height: 1em !important;
+}
+
+/* ========== ESPACIADO CON TEXTO ========== */
+.bi.mr-1 {
+    margin-right: 0.25rem !important;
+}
+
+.bi.mr-2 {
+    margin-right: 0.5rem !important;
+}
+
+.bi.mr-3 {
+    margin-right: 0.75rem !important;
+}
+
+.bi.ml-1 {
+    margin-left: 0.25rem !important;
+}
+
+.bi.ml-2 {
+    margin-left: 0.5rem !important;
+}
+
+.bi.ml-3 {
+    margin-left: 0.75rem !important;
+}
+
+/* ========== ICONOS EN BOTONES ========== */
+.btn .bi {
+    vertical-align: middle !important;
+    margin-top: -2px !important;
+}
+
+.btn-sm .bi {
+    font-size: 0.875rem !important;
+}
+
+.btn-lg .bi {
+    font-size: 1.25rem !important;
+}
+
+/* ========== ICONOS EN HEADERS ========== */
+h1 .bi, h2 .bi, h3 .bi, h4 .bi, h5 .bi, h6 .bi {
+    vertical-align: middle !important;
+    margin-top: -3px !important;
+}
+
+h1 .bi {
+    font-size: 1.5rem !important;
+}
+
+h2 .bi {
+    font-size: 1.3rem !important;
+}
+
+h3 .bi {
+    font-size: 1.2rem !important;
+}
+
+h4 .bi, h5 .bi, h6 .bi {
+    font-size: 1rem !important;
+}
+
+/* ========== ICONOS EN TABLAS ========== */
+.table .bi {
+    vertical-align: middle !important;
+}
+
+/* ========== ICONOS EN BADGES ========== */
+.badge .bi {
+    vertical-align: middle !important;
+    margin-top: -1px !important;
+    font-size: 0.85em !important;
+}
+
+/* ========== ICONOS EN ALERTS ========== */
+.alert .bi {
+    vertical-align: middle !important;
+    margin-top: -2px !important;
+}
+
+/* ========== ICONOS EN CARDS ========== */
+.card-title .bi {
+    vertical-align: middle !important;
+    margin-top: -2px !important;
+}
+
+/* ========== ICONOS EN SIDEBAR ========== */
+.sidebar .bi {
+    vertical-align: middle !important;
+    margin-right: 0.5rem !important;
+    width: 1.2em !important;
+    text-align: center !important;
+}
+
+/* ========== ICONOS EN NAVBAR ========== */
+.navbar .bi {
+    vertical-align: middle !important;
+    margin-top: -2px !important;
+}
+
+/* ========== ICONOS EN DROPDOWNS ========== */
+.dropdown-item .bi {
+    vertical-align: middle !important;
+    margin-right: 0.5rem !important;
+    width: 1.2em !important;
+    text-align: center !important;
+}
+
+/* ========== ICONOS EN BREADCRUMBS ========== */
+.breadcrumb-item .bi {
+    vertical-align: middle !important;
+    margin-top: -1px !important;
+}
+
+/* ========== ICONOS EN PAGINATION ========== */
+.page-link .bi {
+    vertical-align: middle !important;
+    margin-top: -2px !important;
+}
+
+/* ========== ICONOS EN LIST GROUP ========== */
+.list-group-item .bi {
+    vertical-align: middle !important;
+    margin-right: 0.5rem !important;
+}
+
+/* ========== ICONOS GRANDES ========== */
+.bi-lg {
+    font-size: 1.5rem !important;
+}
+
+.bi-xl {
+    font-size: 2rem !important;
+}
+
+.bi-2x {
+    font-size: 2em !important;
+}
+
+.bi-3x {
+    font-size: 3em !important;
+}
+
+/* ========== ICONOS EN INPUTS ========== */
+.input-group-text .bi {
+    vertical-align: middle !important;
+}
+
+/* ========== FIX: ICONOS EN MODALS ========== */
+.modal-title .bi {
+    vertical-align: middle !important;
+    margin-top: -2px !important;
+}
+
+/* ========== FIX: ICONOS EN TOOLTIPS ========== */
+[data-toggle="tooltip"] .bi {
+    vertical-align: middle !important;
+}
+
+/* ========== DARK MODE ========== */
+[data-theme="dark"] .bi,
+.dark-mode .bi {
+    color: inherit !important;
+}

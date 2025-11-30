@@ -72,31 +72,31 @@
                 <td>{{ task.scheduled_datetime|date:"Y-m-d H:i:s" }}</td>
                 <td class="task-status" data-status="{{ task.status }}">
                   {% if task.status == 'pending' %}
-                    <span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>
+                    <span class="badge badge-warning"><i class="bi bi-clock"></i> Pending</span>
                   {% elif task.status == 'running' %}
-                    <span class="badge badge-info"><i class="fas fa-spinner fa-spin"></i> In Progress</span>
+                    <span class="badge badge-info"><i class="bi fa-spinner fa-spin"></i> In Progress</span>
                   {% elif task.status == 'completed' %}
-                    <span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>
+                    <span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Completed</span>
                   {% elif task.status == 'failed' %}
-                    <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+                    <span class="badge badge-danger"><i class="bi bi-x-lg-circle"></i> Failed</span>
                   {% elif task.status == 'cancelled' %}
-                    <span class="badge badge-secondary"><i class="fas fa-ban"></i> Cancelled</span>
+                    <span class="badge badge-secondary"><i class="bi bi-slash-circle"></i> Cancelled</span>
                   {% endif %}
                 </td>
                 <td>{{ task.created_by.username }}</td>
                 <td>
                   {% if task.status == 'pending' %}
                     <a href="{% url 'cancel_scheduled_task' task.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this task?')">
-                      <i class="fas fa-times"></i> Cancel
+                      <i class="bi bi-x-lg"></i> Cancel
                     </a>
                   {% endif %}
                   {% if task.scheduled_task_history_id %}
                     <a href="/scheduler/history/{{ task.scheduled_task_history_id }}/" class="btn btn-sm btn-info">
-                      <i class="fas fa-eye"></i> View Result
+                      <i class="bi bi-eye"></i> View Result
                     </a>
                   {% elif task.deployment_history_id %}
                     <a href="/scheduler/history/{{ task.id }}/" class="btn btn-sm btn-info">
-                      <i class="fas fa-eye"></i> View Result
+                      <i class="bi bi-eye"></i> View Result
                     </a>
                   {% endif %}
                 </td>
@@ -137,27 +137,27 @@ $(document).ready(function() {
               
               var badgeHtml = '';
               if (response.status === 'pending') {
-                badgeHtml = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>';
+                badgeHtml = '<span class="badge badge-warning"><i class="bi bi-clock"></i> Pending</span>';
               } else if (response.status === 'running') {
-                badgeHtml = '<span class="badge badge-info"><i class="fas fa-spinner fa-spin"></i> In Progress</span>';
+                badgeHtml = '<span class="badge badge-info"><i class="bi fa-spinner fa-spin"></i> In Progress</span>';
               } else if (response.status === 'completed') {
-                badgeHtml = '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Completed</span>';
+                badgeHtml = '<span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Completed</span>';
                 if (response.history_id && !$row.find('.view-result-btn').length) {
                   $row.find('td:last').append(
                     ' <a href="/scheduler/history/' + response.history_id + '/" class="btn btn-sm btn-info view-result-btn">' +
-                    '<i class="fas fa-eye"></i> View Result</a>'
+                    '<i class="bi bi-eye"></i> View Result</a>'
                   );
                 }
               } else if (response.status === 'failed') {
-                badgeHtml = '<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>';
+                badgeHtml = '<span class="badge badge-danger"><i class="bi bi-x-lg-circle"></i> Failed</span>';
                 if (response.history_id && !$row.find('.view-result-btn').length) {
                   $row.find('td:last').append(
                     ' <a href="/scheduler/history/' + response.history_id + '/" class="btn btn-sm btn-info view-result-btn">' +
-                    '<i class="fas fa-eye"></i> View Result</a>'
+                    '<i class="bi bi-eye"></i> View Result</a>'
                   );
                 }
               } else if (response.status === 'cancelled') {
-                badgeHtml = '<span class="badge badge-secondary"><i class="fas fa-ban"></i> Cancelled</span>';
+                badgeHtml = '<span class="badge badge-secondary"><i class="bi bi-slash-circle"></i> Cancelled</span>';
               }
               
               $statusCell.html(badgeHtml);

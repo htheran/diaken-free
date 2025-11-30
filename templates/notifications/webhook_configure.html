@@ -10,7 +10,7 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-cog"></i> Configure Notifications
+                        <i class="bi bi-gear"></i> Configure Notifications
                     </h4>
                     <small>{{ webhook.name }}</small>
                 </div>
@@ -21,7 +21,7 @@
                         <!-- General Settings -->
                         <div class="card mb-4">
                             <div class="card-header bg-light">
-                                <h5 class="mb-0"><i class="fas fa-sliders-h"></i> General Settings</h5>
+                                <h5 class="mb-0"><i class="bi fa-sliders-h"></i> General Settings</h5>
                             </div>
                             <div class="card-body">
                                 <div class="form-check form-switch mb-3">
@@ -38,7 +38,7 @@
                         <!-- VM Deployments -->
                         <div class="card mb-4">
                             <div class="card-header bg-info text-white">
-                                <h5 class="mb-0"><i class="fas fa-server"></i> VM Deployments</h5>
+                                <h5 class="mb-0"><i class="bi bi-hdd-rack"></i> VM Deployments</h5>
                             </div>
                             <div class="card-body">
                                 <div class="form-check form-switch mb-3">
@@ -56,14 +56,14 @@
                                         <input class="form-check-input" type="checkbox" id="notify_linux_deployments" 
                                                name="notify_linux_deployments" {% if webhook.notify_linux_deployments %}checked{% endif %}>
                                         <label class="form-check-label" for="notify_linux_deployments">
-                                            <i class="fab fa-linux text-dark"></i> Linux VM Deployments
+                                            <i class="bi fa-linux text-dark"></i> Linux VM Deployments
                                         </label>
                                     </div>
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" id="notify_windows_deployments" 
                                                name="notify_windows_deployments" {% if webhook.notify_windows_deployments %}checked{% endif %}>
                                         <label class="form-check-label" for="notify_windows_deployments">
-                                            <i class="fab fa-windows text-primary"></i> Windows VM Deployments
+                                            <i class="bi fa-windows text-primary"></i> Windows VM Deployments
                                         </label>
                                     </div>
                                 </div>
@@ -73,7 +73,7 @@
                         <!-- Playbook Executions -->
                         <div class="card mb-4">
                             <div class="card-header bg-success text-white">
-                                <h5 class="mb-0"><i class="fas fa-play-circle"></i> Playbook Executions</h5>
+                                <h5 class="mb-0"><i class="bi bi-play-circle"></i> Playbook Executions</h5>
                             </div>
                             <div class="card-body">
                                 <div class="form-check form-switch mb-3">
@@ -91,14 +91,14 @@
                                         <input class="form-check-input" type="checkbox" id="notify_linux_playbooks" 
                                                name="notify_linux_playbooks" {% if webhook.notify_linux_playbooks %}checked{% endif %}>
                                         <label class="form-check-label" for="notify_linux_playbooks">
-                                            <i class="fab fa-linux text-dark"></i> Linux Playbook Executions
+                                            <i class="bi fa-linux text-dark"></i> Linux Playbook Executions
                                         </label>
                                     </div>
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" id="notify_windows_playbooks" 
                                                name="notify_windows_playbooks" {% if webhook.notify_windows_playbooks %}checked{% endif %}>
                                         <label class="form-check-label" for="notify_windows_playbooks">
-                                            <i class="fab fa-windows text-primary"></i> Windows Playbook Executions
+                                            <i class="bi fa-windows text-primary"></i> Windows Playbook Executions
                                         </label>
                                     </div>
                                 </div>
@@ -108,7 +108,7 @@
                         <!-- Scheduled Tasks -->
                         <div class="card mb-4">
                             <div class="card-header bg-warning text-dark">
-                                <h5 class="mb-0"><i class="fas fa-clock"></i> Scheduled Tasks</h5>
+                                <h5 class="mb-0"><i class="bi bi-clock"></i> Scheduled Tasks</h5>
                             </div>
                             <div class="card-body">
                                 <div class="form-check form-switch mb-3">
@@ -125,10 +125,10 @@
                         <!-- Action Buttons -->
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'notifications:webhook_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Back
+                                <i class="bi bi-arrow-left"></i> Back
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Save Configuration
+                                <i class="bi bi-save"></i> Save Configuration
                             </button>
                         </div>
                     </form>

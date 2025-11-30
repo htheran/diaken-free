@@ -6,7 +6,7 @@
     <div class="card-header">
       <h3 class="card-title">Hosts</h3>
       <div class="card-tools">
-        <a href="{% url 'host_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Host</a>
+        <a href="{% url 'host_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add Host</a>
       </div>
     </div>
     <div class="card-body">
@@ -14,7 +14,7 @@
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            <i class="bi fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' or message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
             {{ message }}
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
@@ -27,7 +27,7 @@
         <div class="input-group input-group-sm mr-2 mb-2" style="width: 250px;">
           <input type="text" name="search" class="form-control" placeholder="Search by name, IP, group, env, OS..." value="{{ search_query }}">
           <div class="input-group-append">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
           </div>
         </div>
         <select name="environment" class="form-control form-control-sm mr-2 mb-2" style="width: 150px;">
@@ -54,8 +54,8 @@
             <option value="{{ vcenter }}" {% if request.GET.vcenter_server == vcenter %}selected{% endif %}>{{ vcenter }}</option>
           {% endfor %}
         </select>
-        <button type="submit" class="btn btn-sm btn-success mr-2 mb-2"><i class="fas fa-filter"></i> Filter</button>
-        <a href="{% url 'host_list' %}" class="btn btn-sm btn-secondary mb-2"><i class="fas fa-redo"></i> Clear</a>
+        <button type="submit" class="btn btn-sm btn-success mr-2 mb-2"><i class="bi bi-funnel"></i> Filter</button>
+        <a href="{% url 'host_list' %}" class="btn btn-sm btn-secondary mb-2"><i class="bi bi-arrow-clockwise"></i> Clear</a>
       </form>
     </div>
     <div class="card-body p-0">
@@ -79,7 +79,7 @@
             <td><code>{{ host.ip }}</code></td>
             <td>
               {% if host.vcenter_server %}
-                <i class="fas fa-server text-primary"></i> {{ host.get_vcenter_name }}
+                <i class="bi bi-hdd-rack text-primary"></i> {{ host.get_vcenter_name }}
               {% else %}
                 <span class="text-muted">-</span>
               {% endif %}
@@ -89,31 +89,31 @@
             <td>
               {% if host.operating_system == 'redhat' %}
                 <span class="badge" style="background-color: #EE0000; color: white;">
-                  <i class="fab fa-redhat"></i> {{ host.get_operating_system_display }}
+                  <i class="bi fa-redhat"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'debian' %}
                 <span class="badge" style="background-color: #A80030; color: white;">
-                  <i class="fab fa-debian"></i> {{ host.get_operating_system_display }}
+                  <i class="bi fa-debian"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'ubuntu' %}
                 <span class="badge" style="background-color: #E95420; color: white;">
-                  <i class="fab fa-ubuntu"></i> {{ host.get_operating_system_display }}
+                  <i class="bi fa-ubuntu"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'windows' %}
                 <span class="badge" style="background-color: #0078D4; color: white;">
-                  <i class="fab fa-windows"></i> {{ host.get_operating_system_display }}
+                  <i class="bi fa-windows"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'centos' %}
                 <span class="badge" style="background-color: #932279; color: white;">
-                  <i class="fab fa-centos"></i> {{ host.get_operating_system_display }}
+                  <i class="bi fa-centos"></i> {{ host.get_operating_system_display }}
                 </span>
               {% elif host.operating_system == 'suse' %}
                 <span class="badge" style="background-color: #73BA25; color: white;">
-                  <i class="fab fa-suse"></i> {{ host.get_operating_system_display }}
+                  <i class="bi fa-suse"></i> {{ host.get_operating_system_display }}
                 </span>
               {% else %}
                 <span class="badge badge-secondary">
-                  <i class="fas fa-server"></i> {{ host.get_operating_system_display }}
+                  <i class="bi bi-hdd-rack"></i> {{ host.get_operating_system_display }}
                 </span>
               {% endif %}
             </td>
@@ -125,8 +125,8 @@
               {% endif %}
             </td>
             <td class="text-center">
-              <a href="{% url 'host_update' host.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="fas fa-edit"></i></a>
-              <a href="{% url 'host_delete' host.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
+              <a href="{% url 'host_update' host.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="bi bi-pencil-square"></i></a>
+              <a href="{% url 'host_delete' host.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></a>
             </td>
           </tr>
           {% empty %}

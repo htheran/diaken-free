@@ -50,7 +50,7 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">
-                        <i class="fas fa-network-wired"></i> IP Addressing - VM Inventory
+                        <i class="bi bi-diagram-3"></i> IP Addressing - VM Inventory
                     </h4>
                 </div>
                 <div class="card-body">
@@ -60,13 +60,13 @@
                         {% for message in messages %}
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                             {% if message.tags == 'error' %}
-                                <i class="fas fa-exclamation-circle"></i>
+                                <i class="bi bi-exclamation-circle"></i>
                             {% elif message.tags == 'success' %}
-                                <i class="fas fa-check-circle"></i>
+                                <i class="bi bi-check-lg-circle"></i>
                             {% elif message.tags == 'warning' %}
-                                <i class="fas fa-exclamation-triangle"></i>
+                                <i class="bi bi-exclamation-triangle"></i>
                             {% else %}
-                                <i class="fas fa-info-circle"></i>
+                                <i class="bi bi-info-circle"></i>
                             {% endif %}
                             {{ message }}
                             <button type="button" class="close" data-dismiss="alert">
@@ -83,7 +83,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="vcenter">
-                                        <i class="fas fa-server"></i> vCenter Server
+                                        <i class="bi bi-hdd-rack"></i> vCenter Server
                                     </label>
                                     <select name="vcenter" id="vcenter" class="form-control vcenter-select" onchange="document.getElementById('filterForm').submit()">
                                         <option value="">---------------</option>
@@ -100,7 +100,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="vlan">
-                                        <i class="fas fa-network-wired"></i> VLAN
+                                        <i class="bi bi-diagram-3"></i> VLAN
                                     </label>
                                     <select name="vlan" id="vlan" class="form-control" {% if not selected_vcenter %}disabled{% endif %} onchange="document.getElementById('filterForm').submit()">
                                         <option value="">--------</option>
@@ -117,7 +117,7 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="search">
-                                        <i class="fas fa-search"></i> Search
+                                        <i class="bi bi-search"></i> Search
                                     </label>
                                     <div class="input-group search-box">
                                         <select name="search_field" class="form-control" style="max-width: 150px;">
@@ -131,7 +131,7 @@
                                                value="{{ search_query }}">
                                         <div class="input-group-append">
                                             <button class="btn btn-primary" type="submit">
-                                                <i class="fas fa-search"></i> Search
+                                                <i class="bi bi-search"></i> Search
                                             </button>
                                         </div>
                                     </div>
@@ -146,12 +146,12 @@
                                         {% if selected_vcenter %}
                                         <a href="{% url 'vm_export_csv' %}?vcenter={{ selected_vcenter.id }}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}" 
                                            class="btn btn-success btn-sm">
-                                            <i class="fas fa-file-csv"></i> CSV
+                                            <i class="bi bi-file-earmark-csv"></i> CSV
                                         </a>
                                         {% endif %}
                                         {% if search_query or selected_vcenter or vlan_filter %}
                                         <a href="{% url 'vm_list' %}" class="btn btn-secondary btn-sm">
-                                            <i class="fas fa-times"></i> Clear
+                                            <i class="bi bi-x-lg"></i> Clear
                                         </a>
                                         {% endif %}
                                     </div>
@@ -165,7 +165,7 @@
                     <!-- Información de Resultados -->
                     {% if selected_vcenter %}
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                        <i class="bi bi-info-circle"></i>
                         <strong>vCenter:</strong> {{ selected_vcenter.name }} ({{ selected_vcenter.host }})
                         {% if vlan_filter %}
                         | <strong>VLAN:</strong> {{ vlan_filter }}
@@ -251,15 +251,15 @@
                                     <td>
                                         {% if vm.power_state == 'poweredOn' %}
                                             <span class="badge badge-power-on">
-                                                <i class="fas fa-power-off"></i> ON
+                                                <i class="bi fa-power-off"></i> ON
                                             </span>
                                         {% elif vm.power_state == 'poweredOff' %}
                                             <span class="badge badge-power-off">
-                                                <i class="fas fa-power-off"></i> OFF
+                                                <i class="bi fa-power-off"></i> OFF
                                             </span>
                                         {% elif vm.power_state == 'suspended' %}
                                             <span class="badge badge-suspended">
-                                                <i class="fas fa-pause"></i> SUSPENDED
+                                                <i class="bi bi-pause"></i> SUSPENDED
                                             </span>
                                         {% else %}
                                             <span class="badge badge-secondary">{{ vm.power_state }}</span>
@@ -278,12 +278,12 @@
                             {% if vms.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?page=1{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="fas fa-angle-double-left"></i>
+                                    <i class="bi fa-angle-double-left"></i>
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ vms.previous_page_number }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="fas fa-angle-left"></i>
+                                    <i class="bi fa-angle-left"></i>
                                 </a>
                             </li>
                             {% endif %}
@@ -297,12 +297,12 @@
                             {% if vms.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ vms.next_page_number }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="fas fa-angle-right"></i>
+                                    <i class="bi fa-angle-right"></i>
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ vms.paginator.num_pages }}{% if selected_vcenter %}&vcenter={{ selected_vcenter.id }}{% endif %}{% if vlan_filter %}&vlan={{ vlan_filter }}{% endif %}{% if search_query %}&search={{ search_query }}&search_field={{ search_field }}{% endif %}">
-                                    <i class="fas fa-angle-double-right"></i>
+                                    <i class="bi fa-angle-double-right"></i>
                                 </a>
                             </li>
                             {% endif %}
@@ -312,12 +312,12 @@
 
                     {% elif selected_vcenter and not error_message %}
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="bi bi-exclamation-triangle"></i>
                         No VMs found{% if search_query %} matching "{{ search_query }}"{% endif %}.
                     </div>
                     {% elif not selected_vcenter %}
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                        <i class="bi bi-info-circle"></i>
                         Please select a vCenter server to view VM inventory.
                     </div>
                     {% endif %}

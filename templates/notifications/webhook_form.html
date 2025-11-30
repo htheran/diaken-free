@@ -7,7 +7,7 @@
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h2><i class="fas fa-bell"></i> {{ action }} Microsoft Teams Webhook</h2>
+            <h2><i class="bi bi-bell"></i> {{ action }} Microsoft Teams Webhook</h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'notifications:webhook_list' %}">Webhooks</a></li>
@@ -21,7 +21,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fab fa-microsoft"></i> Webhook Configuration</h5>
+                    <h5><i class="bi fa-microsoft"></i> Webhook Configuration</h5>
                 </div>
                 <div class="card-body">
                     <form method="post">
@@ -67,13 +67,13 @@
 
                         <hr>
 
-                        <h6><i class="fas fa-cog"></i> Notification Preferences</h6>
+                        <h6><i class="bi bi-gear"></i> Notification Preferences</h6>
                         
                         <div class="mb-3">
                             <div class="form-check">
                                 {{ form.notify_deployments }}
                                 <label class="form-check-label" for="{{ form.notify_deployments.id_for_label }}">
-                                    <i class="fas fa-server text-info"></i> {{ form.notify_deployments.label }}
+                                    <i class="bi bi-hdd-rack text-info"></i> {{ form.notify_deployments.label }}
                                 </label>
                                 {% if form.notify_deployments.help_text %}
                                 <small class="form-text text-muted d-block">{{ form.notify_deployments.help_text }}</small>
@@ -85,7 +85,7 @@
                             <div class="form-check">
                                 {{ form.notify_playbook_executions }}
                                 <label class="form-check-label" for="{{ form.notify_playbook_executions.id_for_label }}">
-                                    <i class="fas fa-play text-primary"></i> {{ form.notify_playbook_executions.label }}
+                                    <i class="bi bi-play text-primary"></i> {{ form.notify_playbook_executions.label }}
                                 </label>
                                 {% if form.notify_playbook_executions.help_text %}
                                 <small class="form-text text-muted d-block">{{ form.notify_playbook_executions.help_text }}</small>
@@ -97,7 +97,7 @@
                             <div class="form-check">
                                 {{ form.notify_scheduled_tasks }}
                                 <label class="form-check-label" for="{{ form.notify_scheduled_tasks.id_for_label }}">
-                                    <i class="fas fa-clock text-warning"></i> {{ form.notify_scheduled_tasks.label }}
+                                    <i class="bi bi-clock text-warning"></i> {{ form.notify_scheduled_tasks.label }}
                                 </label>
                                 {% if form.notify_scheduled_tasks.help_text %}
                                 <small class="form-text text-muted d-block">{{ form.notify_scheduled_tasks.help_text }}</small>
@@ -109,7 +109,7 @@
                             <div class="form-check">
                                 {{ form.notify_failures_only }}
                                 <label class="form-check-label" for="{{ form.notify_failures_only.id_for_label }}">
-                                    <i class="fas fa-exclamation-triangle text-danger"></i> {{ form.notify_failures_only.label }}
+                                    <i class="bi bi-exclamation-triangle text-danger"></i> {{ form.notify_failures_only.label }}
                                 </label>
                                 {% if form.notify_failures_only.help_text %}
                                 <small class="form-text text-muted d-block">{{ form.notify_failures_only.help_text }}</small>
@@ -121,10 +121,10 @@
 
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'notifications:webhook_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Cancel
+                                <i class="bi bi-x-lg"></i> Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Save Webhook
+                                <i class="bi bi-save"></i> Save Webhook
                             </button>
                         </div>
                     </form>
@@ -135,7 +135,7 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h6><i class="fas fa-info-circle"></i> Help</h6>
+                    <h6><i class="bi bi-info-circle"></i> Help</h6>
                 </div>
                 <div class="card-body">
                     <h6>Getting Your Webhook URL</h6>

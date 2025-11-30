@@ -4,10 +4,10 @@
 <div class="container-fluid">
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title"><i class="fas fa-file-code"></i> Ansible Templates</h3>
+      <h3 class="card-title"><i class="bi bi-file-earmark-code"></i> Ansible Templates</h3>
       <div class="card-tools">
         <a href="{% url 'template_upload' %}" class="btn btn-primary btn-sm">
-          <i class="fas fa-upload"></i> Upload Template
+          <i class="bi bi-upload"></i> Upload Template
         </a>
       </div>
     </div>
@@ -18,9 +18,9 @@
           <div>
             <h5 class="mb-1">
               {% if template.template_type == 'host' %}
-                <i class="fas fa-server text-info"></i>
+                <i class="bi bi-hdd-rack text-info"></i>
               {% else %}
-                <i class="fas fa-users text-success"></i>
+                <i class="bi bi-people text-success"></i>
               {% endif %}
               {{ template.name }}
               <span class="badge badge-secondary">{{ template.template_type|title }}</span>
@@ -29,20 +29,20 @@
               <p class="mb-1 text-muted">{{ template.description }}</p>
             {% endif %}
             <small class="text-muted">
-              <i class="far fa-calendar"></i> Created: {{ template.created_at|date:"d/m/Y H:i" }}
+              <i class="bi bi-calendar"></i> Created: {{ template.created_at|date:"d/m/Y H:i" }}
               {% if template.file %}
-                | <i class="fas fa-file"></i> {{ template.file.name }}
+                | <i class="bi bi-file-earmark"></i> {{ template.file.name }}
               {% endif %}
             </small>
           </div>
           <div>
             <a href="{% url 'template_edit' template.pk %}" class="btn btn-sm btn-warning" title="Edit">
-              <i class="fas fa-edit"></i> Edit
+              <i class="bi bi-pencil-square"></i> Edit
             </a>
             <form method="post" action="{% url 'template_delete' template.pk %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this template?');">
               {% csrf_token %}
               <button type="submit" class="btn btn-sm btn-danger" title="Delete">
-                <i class="fas fa-trash"></i> Delete
+                <i class="bi bi-trash"></i> Delete
               </button>
             </form>
           </div>

@@ -6,7 +6,7 @@
     <div class="card-header">
       <h3 class="card-title">Groups</h3>
       <div class="card-tools">
-        <a href="{% url 'group_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Group</a>
+        <a href="{% url 'group_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add Group</a>
       </div>
     </div>
     <div class="card-body p-0">
@@ -34,8 +34,8 @@
               {% endif %}
             </td>
             <td class="text-center">
-              <a href="{% url 'group_update' group.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="fas fa-edit"></i></a>
-              <a href="{% url 'group_delete' group.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
+              <a href="{% url 'group_update' group.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="bi bi-pencil-square"></i></a>
+              <a href="{% url 'group_delete' group.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></a>
             </td>
           </tr>
           {% empty %}

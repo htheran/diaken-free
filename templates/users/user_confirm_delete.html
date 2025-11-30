@@ -8,7 +8,7 @@
   <div class="row mb-4">
     <div class="col-md-12">
       <h2>
-        <i class="fas fa-trash mr-2"></i>
+        <i class="bi bi-trash mr-2"></i>
         Delete User
       </h2>
     </div>
@@ -18,11 +18,11 @@
     <div class="col-md-8">
       <div class="card border-danger">
         <div class="card-header bg-danger text-white">
-          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Deletion
+          <i class="bi bi-exclamation-triangle mr-2"></i>Confirm Deletion
         </div>
         <div class="card-body">
           <div class="alert alert-danger">
-            <h5><i class="fas fa-exclamation-circle mr-2"></i>Warning!</h5>
+            <h5><i class="bi bi-exclamation-circle mr-2"></i>Warning!</h5>
             <p class="mb-0">
               You are about to permanently delete the user <strong>{{ user_obj.username }}</strong>.
               This action cannot be undone.
@@ -55,10 +55,10 @@
           <form method="post" class="mt-4">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">
-              <i class="fas fa-trash mr-2"></i>Yes, Delete This User
+              <i class="bi bi-trash mr-2"></i>Yes, Delete This User
             </button>
             <a href="{% url 'user_list' %}" class="btn btn-secondary">
-              <i class="fas fa-times mr-2"></i>Cancel
+              <i class="bi bi-x-lg mr-2"></i>Cancel
             </a>
           </form>
         </div>
@@ -68,7 +68,7 @@
     <div class="col-md-4">
       <div class="card">
         <div class="card-header bg-warning text-dark">
-          <i class="fas fa-info-circle mr-2"></i>Important Notes
+          <i class="bi bi-info-circle mr-2"></i>Important Notes
         </div>
         <div class="card-body">
           <h6>What happens when you delete a user?</h6>

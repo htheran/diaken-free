@@ -7,7 +7,7 @@
       <h3 class="card-title">Scheduled Task Execution Detail</h3>
       <div class="card-tools">
         <a href="{% url 'scheduled_task_history' %}" class="btn btn-sm btn-secondary">
-          <i class="fas fa-arrow-left"></i> Back to History
+          <i class="bi bi-arrow-left"></i> Back to History
         </a>
       </div>
     </div>
@@ -89,7 +89,7 @@
       <!-- Error Message (if failed) -->
       {% if history.error_message %}
         <div class="alert alert-danger">
-          <h5><i class="fas fa-exclamation-triangle"></i> Error Message:</h5>
+          <h5><i class="bi bi-exclamation-triangle"></i> Error Message:</h5>
           <pre class="mb-0">{{ history.error_message }}</pre>
         </div>
       {% endif %}
@@ -97,22 +97,22 @@
       <!-- Filter Buttons -->
       <div class="mb-3" style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn btn-primary filter-btn active" data-filter="all">
-          <i class="fas fa-list"></i> All
+          <i class="bi bi-list-ul"></i> All
         </button>
         <button class="btn btn-primary filter-btn" data-filter="tasks">
-          <i class="fas fa-tasks"></i> Tasks
+          <i class="bi fa-tasks"></i> Tasks
         </button>
         <button class="btn btn-success filter-btn" data-filter="success">
-          <i class="fas fa-check-circle"></i> Success (<span id="count-success">0</span>)
+          <i class="bi bi-check-lg-circle"></i> Success (<span id="count-success">0</span>)
         </button>
         <button class="btn btn-warning filter-btn" data-filter="changed">
-          <i class="fas fa-sync-alt"></i> Changed (<span id="count-changed">0</span>)
+          <i class="bi bi-arrow-repeat-alt"></i> Changed (<span id="count-changed">0</span>)
         </button>
         <button class="btn btn-info filter-btn" data-filter="skipped">
-          <i class="fas fa-forward"></i> Skipped (<span id="count-skipped">0</span>)
+          <i class="bi fa-forward"></i> Skipped (<span id="count-skipped">0</span>)
         </button>
         <button class="btn btn-danger filter-btn" data-filter="errors">
-          <i class="fas fa-exclamation-circle"></i> Errors (<span id="count-errors">0</span>)
+          <i class="bi bi-exclamation-circle"></i> Errors (<span id="count-errors">0</span>)
         </button>
       </div>
       
@@ -121,7 +121,7 @@
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h5 class="card-title" style="margin: 0;">Ansible Output</h5>
           <button id="expand-btn" class="btn btn-sm btn-secondary" title="Expand output">
-            <i class="fas fa-expand"></i> Expand
+            <i class="bi fa-expand"></i> Expand
           </button>
         </div>
         <div class="card-body p-0">
@@ -317,10 +317,10 @@
             outputCard.classList.toggle('fullscreen');
             
             if (outputCard.classList.contains('fullscreen')) {
-              expandBtn.innerHTML = '<i class="fas fa-compress"></i> Collapse';
+              expandBtn.innerHTML = '<i class="bi fa-compress"></i> Collapse';
               expandBtn.title = 'Collapse output';
             } else {
-              expandBtn.innerHTML = '<i class="fas fa-expand"></i> Expand';
+              expandBtn.innerHTML = '<i class="bi fa-expand"></i> Expand';
               expandBtn.title = 'Expand output';
             }
           });
@@ -329,7 +329,7 @@
           document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && outputCard.classList.contains('fullscreen')) {
               outputCard.classList.remove('fullscreen');
-              expandBtn.innerHTML = '<i class="fas fa-expand"></i> Expand';
+              expandBtn.innerHTML = '<i class="bi fa-expand"></i> Expand';
               expandBtn.title = 'Expand output';
             }
           });

@@ -4,7 +4,7 @@
 <div class="container mt-4">
   <div class="card">
     <div class="card-header">
-      <h3><i class="fas fa-edit"></i> Edit Ansible Template</h3>
+      <h3><i class="bi bi-pencil-square"></i> Edit Ansible Template</h3>
     </div>
     <div class="card-body">
       <form method="post" enctype="multipart/form-data">
@@ -41,8 +41,8 @@
           {% endif %}
           <small class="form-text text-muted">Leave empty to keep the current file.</small>
         </div>
-        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Save Changes</button>
-        <a href="{% url 'template_list' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+        <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Save Changes</button>
+        <a href="{% url 'template_list' %}" class="btn btn-secondary"><i class="bi bi-x-lg"></i> Cancel</a>
       </form>
     </div>
   </div>

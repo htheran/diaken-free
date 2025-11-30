@@ -8,12 +8,12 @@
       <div class="card">
         <div class="card-header bg-warning text-white">
           <h3 class="card-title mb-0">
-            <i class="fas fa-broom"></i> Cleanup Stuck Deployments
+            <i class="bi fa-broom"></i> Cleanup Stuck Deployments
           </h3>
         </div>
         <div class="card-body">
           <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> <strong>What does this do?</strong><br>
+            <i class="bi bi-info-circle"></i> <strong>What does this do?</strong><br>
             This tool finds deployments and scheduled tasks that have been running for longer than the specified timeout 
             and marks them as "failed". This is useful when deployments get stuck due to server restarts or network issues.
           </div>
@@ -25,7 +25,7 @@
               <div class="col-md-3">
                 <div class="form-group">
                   <label for="{{ form.timeout_hours.id_for_label }}">
-                    <i class="fas fa-clock"></i> {{ form.timeout_hours.label }}
+                    <i class="bi bi-clock"></i> {{ form.timeout_hours.label }}
                   </label>
                   {{ form.timeout_hours }}
                   <small class="form-text text-muted">{{ form.timeout_hours.help_text }}</small>
@@ -47,10 +47,10 @@
                 <div class="form-group">
                   <label>&nbsp;</label><br>
                   <button type="submit" class="btn btn-warning">
-                    <i class="fas fa-search"></i> Check for Stuck Deployments
+                    <i class="bi bi-search"></i> Check for Stuck Deployments
                   </button>
                   <a href="{% url 'history:history_list' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to History
+                    <i class="bi bi-arrow-left"></i> Back to History
                   </a>
                 </div>
               </div>
@@ -64,9 +64,9 @@
             <div class="card-header {% if results.dry_run %}bg-warning{% else %}bg-success{% endif %} text-white">
               <h5 class="mb-0">
                 {% if results.dry_run %}
-                  <i class="fas fa-eye"></i> Preview Results (Dry Run)
+                  <i class="bi bi-eye"></i> Preview Results (Dry Run)
                 {% else %}
-                  <i class="fas fa-check-circle"></i> Cleanup Results
+                  <i class="bi bi-check-lg-circle"></i> Cleanup Results
                 {% endif %}
               </h5>
             </div>
@@ -77,7 +77,7 @@
               </p>
 
               {% if results.deployments %}
-              <h6><i class="fas fa-server"></i> Stuck Deployments ({{ results.deployments|length }})</h6>
+              <h6><i class="bi bi-hdd-rack"></i> Stuck Deployments ({{ results.deployments|length }})</h6>
               <div class="table-responsive mb-3">
                 <table class="table table-sm table-hover">
                   <thead class="thead-light">
@@ -105,7 +105,7 @@
               {% endif %}
 
               {% if results.tasks %}
-              <h6><i class="fas fa-calendar-check"></i> Stuck Scheduled Tasks ({{ results.tasks|length }})</h6>
+              <h6><i class="bi bi-calendar-check"></i> Stuck Scheduled Tasks ({{ results.tasks|length }})</h6>
               <div class="table-responsive">
                 <table class="table table-sm table-hover">
                   <thead class="thead-light">
@@ -134,13 +134,13 @@
 
               {% if results.total == 0 %}
               <div class="alert alert-success mb-0">
-                <i class="fas fa-check-circle"></i> No stuck deployments or tasks found!
+                <i class="bi bi-check-lg-circle"></i> No stuck deployments or tasks found!
               </div>
               {% endif %}
 
               {% if results.dry_run and results.total > 0 %}
               <div class="alert alert-warning mt-3 mb-0">
-                <i class="fas fa-exclamation-triangle"></i> <strong>This was a dry run.</strong> 
+                <i class="bi bi-exclamation-triangle"></i> <strong>This was a dry run.</strong> 
                 Uncheck "Dry Run" and submit again to actually mark these items as failed.
               </div>
               {% endif %}
@@ -153,7 +153,7 @@
           <div class="card">
             <div class="card-header bg-info text-white">
               <h5 class="mb-0">
-                <i class="fas fa-tasks"></i> Currently Running Deployments
+                <i class="bi fa-tasks"></i> Currently Running Deployments
               </h5>
             </div>
             <div class="card-body">
@@ -188,9 +188,9 @@
                       </td>
                       <td>
                         {% if dep.running_hours > 2 %}
-                          <span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Likely Stuck</span>
+                          <span class="badge badge-danger"><i class="bi bi-exclamation-triangle"></i> Likely Stuck</span>
                         {% else %}
-                          <span class="badge badge-success"><i class="fas fa-check"></i> Normal</span>
+                          <span class="badge badge-success"><i class="bi bi-check-lg"></i> Normal</span>
                         {% endif %}
                       </td>
                     </tr>
@@ -200,7 +200,7 @@
               </div>
               {% else %}
               <div class="alert alert-success mb-0">
-                <i class="fas fa-check-circle"></i> No deployments currently running
+                <i class="bi bi-check-lg-circle"></i> No deployments currently running
               </div>
               {% endif %}
             </div>
@@ -211,18 +211,18 @@
           <div class="card">
             <div class="card-header bg-secondary text-white">
               <h5 class="mb-0">
-                <i class="fas fa-question-circle"></i> Help & Information
+                <i class="bi fa-question-circle"></i> Help & Information
               </h5>
             </div>
             <div class="card-body">
-              <h6><i class="fas fa-info-circle"></i> When to use this tool:</h6>
+              <h6><i class="bi bi-info-circle"></i> When to use this tool:</h6>
               <ul>
                 <li>After a server restart when deployments might have been interrupted</li>
                 <li>When you see deployments stuck in "Running" status for a long time</li>
                 <li>To clean up orphaned deployment records</li>
               </ul>
 
-              <h6><i class="fas fa-exclamation-triangle"></i> Important Notes:</h6>
+              <h6><i class="bi bi-exclamation-triangle"></i> Important Notes:</h6>
               <ul>
                 <li><strong>Dry Run:</strong> Always use "Dry Run" first to preview what will be affected</li>
                 <li><strong>Timeout:</strong> Adjust the timeout based on your playbooks. Some may legitimately take longer</li>
@@ -230,7 +230,7 @@
                 <li><strong>Automatic Cleanup:</strong> A cron job runs every 30 minutes with a 6-hour timeout</li>
               </ul>
 
-              <h6><i class="fas fa-cog"></i> Cron Job Configuration:</h6>
+              <h6><i class="bi bi-gear"></i> Cron Job Configuration:</h6>
               <p>The automatic cleanup runs every 30 minutes:</p>
               <pre class="bg-dark text-light p-2"><code>*/30 * * * * /opt/www/app/sc/cleanup_stuck_deployments.sh >> /var/log/cleanup_stuck_deployments.log 2>&1</code></pre>
               <p class="mb-0">

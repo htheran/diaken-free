@@ -3,7 +3,7 @@
   <div class="container mt-4">
     <div class="card">
       <div class="card-header bg-primary text-white">
-        <h2><i class="fab fa-linux"></i> Deploy Linux Server VM</h2>
+        <h2><i class="bi fa-linux"></i> Deploy Linux Server VM</h2>
       </div>
       <div class="card-body">
         {% if messages %}
@@ -17,7 +17,7 @@
           <!-- vCenter Configuration -->
           <div class="card mb-3">
             <div class="card-header bg-secondary text-white">
-              <i class="fas fa-server"></i> vCenter Configuration
+              <i class="bi bi-hdd-rack"></i> vCenter Configuration
             </div>
             <div class="card-body">
               <div class="form-group">
@@ -69,7 +69,7 @@
           <!-- VM Configuration -->
           <div class="card mb-3">
             <div class="card-header bg-info text-white">
-              <i class="fas fa-cog"></i> VM Configuration
+              <i class="bi bi-gear"></i> VM Configuration
             </div>
             <div class="card-body">
               <div class="form-group">
@@ -103,7 +103,7 @@
           <!-- Playbook Selection -->
           <div class="card mb-3">
             <div class="card-header bg-success text-white">
-              <i class="fas fa-tasks"></i> Post-Deployment Playbooks
+              <i class="bi fa-tasks"></i> Post-Deployment Playbooks
             </div>
             <div class="card-body">
               <p class="text-muted small">Choose which configurations to apply after VM deployment</p>
@@ -114,7 +114,7 @@
                 <div class="card playbook-card border-primary" style="opacity: 0.95;">
                   <div class="card-body text-center p-3">
                     <div class="playbook-icon mb-2">
-                      <i class="fas fa-cog fa-4x text-primary"></i>
+                      <i class="bi bi-gear fa-4x text-primary"></i>
                       <!-- Placeholder for custom image: <img src="/static/images/playbooks/basic.png" alt="Basic" style="width: 64px; height: 64px;"> -->
                     </div>
                     <h6 class="card-title font-weight-bold">Basic Setup</h6>
@@ -134,7 +134,7 @@
                 <div class="card playbook-card border-info" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_update')">
                   <div class="card-body text-center p-3">
                     <div class="playbook-icon mb-2">
-                      <i class="fas fa-sync-alt fa-4x text-info"></i>
+                      <i class="bi bi-arrow-repeat-alt fa-4x text-info"></i>
                       <!-- Placeholder for custom image: <img src="/static/images/playbooks/update.png" alt="Update" style="width: 64px; height: 64px;"> -->
                     </div>
                     <h6 class="card-title font-weight-bold">Update System</h6>
@@ -154,7 +154,7 @@
                 <div class="card playbook-card border-warning" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_httpd')">
                   <div class="card-body text-center p-3">
                     <div class="playbook-icon mb-2">
-                      <i class="fas fa-server fa-4x text-warning"></i>
+                      <i class="bi bi-hdd-rack fa-4x text-warning"></i>
                       <!-- Placeholder for custom image: <img src="/static/images/playbooks/httpd.png" alt="HTTPD" style="width: 64px; height: 64px;"> -->
                     </div>
                     <h6 class="card-title font-weight-bold">Install HTTPD</h6>
@@ -174,7 +174,7 @@
                 <div class="card playbook-card border-success" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_vsftpd')">
                   <div class="card-body text-center p-3">
                     <div class="playbook-icon mb-2">
-                      <i class="fas fa-folder-open fa-4x text-success"></i>
+                      <i class="bi bi-folder-open fa-4x text-success"></i>
                       <!-- Placeholder for custom image: <img src="/static/images/playbooks/vsftpd.png" alt="VSFTPD" style="width: 64px; height: 64px;"> -->
                     </div>
                     <h6 class="card-title font-weight-bold">Install VSFTPD</h6>
@@ -194,7 +194,7 @@
                 <div class="card playbook-card border-info" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_update_debian')">
                   <div class="card-body text-center p-3">
                     <div class="playbook-icon mb-2">
-                      <i class="fas fa-sync-alt fa-4x text-info"></i>
+                      <i class="bi bi-arrow-repeat-alt fa-4x text-info"></i>
                       <!-- Placeholder for custom image: <img src="/static/images/playbooks/update-debian.png" alt="Update Debian" style="width: 64px; height: 64px;"> -->
                     </div>
                     <h6 class="card-title font-weight-bold">Update System</h6>
@@ -214,7 +214,7 @@
                 <div class="card playbook-card border-warning" style="cursor: pointer;" onclick="togglePlaybookDeploy('playbook_apache_debian')">
                   <div class="card-body text-center p-3">
                     <div class="playbook-icon mb-2">
-                      <i class="fas fa-server fa-4x text-warning"></i>
+                      <i class="bi bi-hdd-rack fa-4x text-warning"></i>
                       <!-- Placeholder for custom image: <img src="/static/images/playbooks/apache-debian.png" alt="Apache Debian" style="width: 64px; height: 64px;"> -->
                     </div>
                     <h6 class="card-title font-weight-bold">Install Apache</h6>
@@ -474,34 +474,34 @@
               
               if (success) {
                 $('#resultHeader').removeClass('bg-danger').addClass('bg-success text-white');
-                $('#resultTitle').html('<i class="fas fa-check-circle"></i> Deployment Successful');
+                $('#resultTitle').html('<i class="bi bi-check-lg-circle"></i> Deployment Successful');
                 
                 $('#resultContent').html(
                   '<div class="alert alert-success">' +
-                  '<i class="fas fa-check-circle"></i> <strong>' + message + '</strong>' +
+                  '<i class="bi bi-check-lg-circle"></i> <strong>' + message + '</strong>' +
                   '</div>' +
                   '<pre class="bg-dark text-light p-3" style="max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 12px;">' +
                   (output || 'No output available') +
                   '</pre>' +
                   '<div class="mt-3">' +
-                  '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="fas fa-list"></i> View Deployment History</a> ' +
-                  '<button onclick="location.reload()" class="btn btn-secondary"><i class="fas fa-redo"></i> Deploy Another VM</button>' +
+                  '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="bi bi-list-ul"></i> View Deployment History</a> ' +
+                  '<button onclick="location.reload()" class="btn btn-secondary"><i class="bi bi-arrow-clockwise"></i> Deploy Another VM</button>' +
                   '</div>'
                 );
               } else {
                 $('#resultHeader').removeClass('bg-success').addClass('bg-danger text-white');
-                $('#resultTitle').html('<i class="fas fa-times-circle"></i> Deployment Failed');
+                $('#resultTitle').html('<i class="bi bi-x-lg-circle"></i> Deployment Failed');
                 
                 $('#resultContent').html(
                   '<div class="alert alert-danger">' +
-                  '<i class="fas fa-times-circle"></i> <strong>' + message + '</strong>' +
+                  '<i class="bi bi-x-lg-circle"></i> <strong>' + message + '</strong>' +
                   '</div>' +
                   '<pre class="bg-dark text-light p-3" style="max-height: 600px; overflow-y: auto; font-family: monospace; font-size: 12px;">' +
                   (output || 'No output available') +
                   '</pre>' +
                   '<div class="mt-3">' +
-                  '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="fas fa-list"></i> View Deployment History</a> ' +
-                  '<button onclick="location.reload()" class="btn btn-secondary"><i class="fas fa-redo"></i> Try Again</button>' +
+                  '<a href="{% url "history:history_list" %}" class="btn btn-primary"><i class="bi bi-list-ul"></i> View Deployment History</a> ' +
+                  '<button onclick="location.reload()" class="btn btn-secondary"><i class="bi bi-arrow-clockwise"></i> Try Again</button>' +
                   '</div>'
                 );
               }
@@ -676,7 +676,7 @@
                   $('#progressMessage').html(`<strong>Step ${s.step}/${totalSteps}:</strong> ${s.message}`);
                   
                   // Mark step as completed
-                  $('#step' + s.step + ' i').removeClass('text-muted').addClass('text-success').removeClass('fa-circle').addClass('fa-check-circle');
+                  $('#step' + s.step + ' i').removeClass('text-muted').addClass('text-success').removeClass('fa-circle').addClass('bi-check-lg-circle');
                   
                   currentStep++;
                   
@@ -694,7 +694,7 @@
                 $('#progressBar').removeClass('progress-bar-animated').addClass('bg-info');
                 $('#progressBar').css('width', '100%').attr('aria-valuenow', 100);
                 $('#progressPercent').text('100%');
-                $('#progressMessage').html('<strong><i class="fas fa-rocket text-info"></i> Deployment Started!</strong><br><small>Redirecting to deployment history...</small>');
+                $('#progressMessage').html('<strong><i class="bi fa-rocket text-info"></i> Deployment Started!</strong><br><small>Redirecting to deployment history...</small>');
                 $('.spinner-border').hide();
                 
                 // Redirigir al historial después de 1 segundo
@@ -732,7 +732,7 @@
                   $('#progressMessage').html(`<strong>Step ${s.step}/7:</strong> ${s.message}`);
                   
                   // Mark step as completed
-                  $('#step' + s.step + ' i').removeClass('text-muted').addClass('text-success').removeClass('fa-circle').addClass('fa-check-circle');
+                  $('#step' + s.step + ' i').removeClass('text-muted').addClass('text-success').removeClass('fa-circle').addClass('bi-check-lg-circle');
                   
                   currentStep++;
                   
@@ -779,7 +779,7 @@
           
           <div class="text-center mt-4">
             <button type="submit" class="btn btn-primary btn-lg" id="deployButton">
-              <i class="fas fa-rocket"></i> Deploy VM
+              <i class="bi fa-rocket"></i> Deploy VM
             </button>
           </div>
         </form>
@@ -788,7 +788,7 @@
         <div id="progressArea" style="display:none;" class="mt-4">
           <div class="card">
             <div class="card-header bg-primary text-white">
-              <h5 class="mb-0" id="progressTitle"><i class="fas fa-spinner fa-spin"></i> Deploying VM...</h5>
+              <h5 class="mb-0" id="progressTitle"><i class="bi fa-spinner fa-spin"></i> Deploying VM...</h5>
             </div>
             <div class="card-body">
               <div class="progress" style="height: 30px;">
@@ -803,7 +803,7 @@
               <!-- Real-time Output Collapsible -->
               <div class="mt-3" id="realtimeOutputContainer" style="display:none;">
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#realtimeOutput" aria-expanded="false" aria-controls="realtimeOutput">
-                  <i class="fas fa-terminal"></i> Show Real-time Output
+                  <i class="bi fa-terminal"></i> Show Real-time Output
                 </button>
                 <div class="collapse mt-2" id="realtimeOutput">
                   <div class="card card-body bg-dark text-light" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">

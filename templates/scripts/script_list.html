@@ -7,7 +7,7 @@
 <div class="container-fluid mt-4">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h2><i class="fas fa-file-code"></i> Scripts Management</h2>
+            <h2><i class="bi bi-file-earmark-code"></i> Scripts Management</h2>
             <p class="text-muted">Manage Bash and PowerShell scripts for execution on hosts or groups</p>
         </div>
     </div>
@@ -15,10 +15,10 @@
     <div class="row mb-3">
         <div class="col-md-12">
             <a href="{% url 'script_create' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Create New Script
+                <i class="bi bi-plus-lg"></i> Create New Script
             </a>
             <a href="{% url 'script_upload' %}" class="btn btn-success">
-                <i class="fas fa-upload"></i> Upload Script File
+                <i class="bi bi-upload"></i> Upload Script File
             </a>
         </div>
     </div>
@@ -37,7 +37,7 @@
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-{% if 'Windows' in os_family %}windows{% else %}linux{% endif %}"></i>
+                        <i class="bi fa-{% if 'Windows' in os_family %}windows{% else %}linux{% endif %}"></i>
                         {{ os_family }}
                     </h5>
                 </div>
@@ -46,7 +46,7 @@
                         <!-- Host Scripts -->
                         <div class="col-md-6">
                             <h6 class="border-bottom pb-2">
-                                <i class="fas fa-server"></i> Host Scripts
+                                <i class="bi bi-hdd-rack"></i> Host Scripts
                             </h6>
                             {% if targets.host %}
                                 <div class="table-responsive">
@@ -80,16 +80,16 @@
                                                     <td>
                                                         <div class="btn-group btn-group-sm" role="group">
                                                             <a href="{% url 'script_view' script.pk %}" class="btn btn-info btn-sm" title="View">
-                                                                <i class="fas fa-eye"></i>
+                                                                <i class="bi bi-eye"></i>
                                                             </a>
                                                             <a href="{% url 'script_edit' script.pk %}" class="btn btn-warning btn-sm" title="Edit">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="bi bi-pencil-square"></i>
                                                             </a>
                                                             <a href="{% url 'script_download' script.pk %}" class="btn btn-secondary btn-sm" title="Download">
-                                                                <i class="fas fa-download"></i>
+                                                                <i class="bi bi-download"></i>
                                                             </a>
                                                             <button type="button" class="btn btn-danger btn-sm" title="Delete" onclick="deleteScript({{ script.pk }}, '{{ script.name }}')">
-                                                                <i class="fas fa-trash"></i>
+                                                                <i class="bi bi-trash"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -106,7 +106,7 @@
                         <!-- Group Scripts -->
                         <div class="col-md-6">
                             <h6 class="border-bottom pb-2">
-                                <i class="fas fa-layer-group"></i> Group Scripts
+                                <i class="bi fa-layer-group"></i> Group Scripts
                             </h6>
                             {% if targets.group %}
                                 <div class="table-responsive">
@@ -140,16 +140,16 @@
                                                     <td>
                                                         <div class="btn-group btn-group-sm" role="group">
                                                             <a href="{% url 'script_view' script.pk %}" class="btn btn-info btn-sm" title="View">
-                                                                <i class="fas fa-eye"></i>
+                                                                <i class="bi bi-eye"></i>
                                                             </a>
                                                             <a href="{% url 'script_edit' script.pk %}" class="btn btn-warning btn-sm" title="Edit">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="bi bi-pencil-square"></i>
                                                             </a>
                                                             <a href="{% url 'script_download' script.pk %}" class="btn btn-secondary btn-sm" title="Download">
-                                                                <i class="fas fa-download"></i>
+                                                                <i class="bi bi-download"></i>
                                                             </a>
                                                             <button type="button" class="btn btn-danger btn-sm" title="Delete" onclick="deleteScript({{ script.pk }}, '{{ script.name }}')">
-                                                                <i class="fas fa-trash"></i>
+                                                                <i class="bi bi-trash"></i>
                                                             </button>
                                                         </div>
                                                     </td>
@@ -168,7 +168,7 @@
         {% endfor %}
     {% else %}
         <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> No scripts available. Create or upload your first script!
+            <i class="bi bi-info-circle"></i> No scripts available. Create or upload your first script!
         </div>
     {% endif %}
 </div>
@@ -183,7 +183,7 @@
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete the script <strong id="scriptName"></strong>?</p>
-                <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone and will also delete the script file.</p>
+                <p class="text-danger"><i class="bi bi-exclamation-triangle"></i> This action cannot be undone and will also delete the script file.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

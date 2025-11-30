@@ -9,12 +9,12 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2><i class="fas fa-history"></i> Notification Logs</h2>
+                    <h2><i class="bi bi-clock-history"></i> Notification Logs</h2>
                     <p class="text-muted">History of sent notifications</p>
                 </div>
                 <div>
                     <a href="{% url 'notifications:webhook_list' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Webhooks
+                        <i class="bi bi-arrow-left"></i> Back to Webhooks
                     </a>
                 </div>
             </div>
@@ -45,20 +45,20 @@
                                         <small>{{ log.created_at|date:"Y-m-d H:i:s" }}</small>
                                     </td>
                                     <td>
-                                        <i class="fab fa-microsoft"></i> {{ log.webhook.name }}
+                                        <i class="bi fa-microsoft"></i> {{ log.webhook.name }}
                                     </td>
                                     <td>
                                         {% if log.notification_type == 'deployment' %}
                                         <span class="badge bg-info">
-                                            <i class="fas fa-server"></i> Deployment
+                                            <i class="bi bi-hdd-rack"></i> Deployment
                                         </span>
                                         {% elif log.notification_type == 'playbook' %}
                                         <span class="badge bg-primary">
-                                            <i class="fas fa-play"></i> Playbook
+                                            <i class="bi bi-play"></i> Playbook
                                         </span>
                                         {% elif log.notification_type == 'scheduled_task' %}
                                         <span class="badge bg-warning">
-                                            <i class="fas fa-clock"></i> Scheduled
+                                            <i class="bi bi-clock"></i> Scheduled
                                         </span>
                                         {% endif %}
                                     </td>
@@ -66,11 +66,11 @@
                                     <td>
                                         {% if log.status == 'success' %}
                                         <span class="badge bg-success">
-                                            <i class="fas fa-check"></i> Success
+                                            <i class="bi bi-check-lg"></i> Success
                                         </span>
                                         {% else %}
                                         <span class="badge bg-danger">
-                                            <i class="fas fa-times"></i> Failed
+                                            <i class="bi bi-x-lg"></i> Failed
                                         </span>
                                         {% endif %}
                                     </td>
@@ -83,11 +83,11 @@
                         </table>
                     </div>
                     <p class="text-muted small mb-0">
-                        <i class="fas fa-info-circle"></i> Showing last 100 notifications
+                        <i class="bi bi-info-circle"></i> Showing last 100 notifications
                     </p>
                     {% else %}
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> No notification logs yet.
+                        <i class="bi bi-info-circle"></i> No notification logs yet.
                     </div>
                     {% endif %}
                 </div>

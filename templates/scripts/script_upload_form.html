@@ -7,7 +7,7 @@
 <div class="container-fluid mt-4">
     <div class="row mb-4">
         <div class="col-md-12">
-            <h2><i class="fas fa-upload"></i> {{ action }} Script File</h2>
+            <h2><i class="bi bi-upload"></i> {{ action }} Script File</h2>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'script_list' %}">Scripts</a></li>
@@ -34,7 +34,7 @@
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> 
+                        <i class="bi bi-info-circle"></i> 
                         <strong>Supported file types:</strong>
                         <ul class="mb-0 mt-2">
                             <li><strong>.sh</strong> - Bash scripts for RedHat/Debian Linux</li>
@@ -134,10 +134,10 @@
 
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'script_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Cancel
+                                <i class="bi bi-arrow-left"></i> Cancel
                             </a>
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-upload"></i> Upload Script
+                                <i class="bi bi-upload"></i> Upload Script
                             </button>
                         </div>
                     </form>

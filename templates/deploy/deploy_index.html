@@ -11,20 +11,20 @@
       <div class="card h-100">
         <div class="card-body">
           <h5 class="card-title">
-            <i class="fas fa-server text-primary"></i> Deploy New VM
+            <i class="bi bi-hdd-rack text-primary"></i> Deploy New VM
           </h5>
           <p class="card-text">
             Clone a new virtual machine from a vCenter template and configure it automatically with Ansible.
           </p>
           <ul class="list-unstyled">
-            <li><i class="fas fa-check text-success"></i> Clone from template</li>
-            <li><i class="fas fa-check text-success"></i> Configure hostname and IP</li>
-            <li><i class="fas fa-check text-success"></i> Auto-provision with Ansible</li>
+            <li><i class="bi bi-check-lg text-success"></i> Clone from template</li>
+            <li><i class="bi bi-check-lg text-success"></i> Configure hostname and IP</li>
+            <li><i class="bi bi-check-lg text-success"></i> Auto-provision with Ansible</li>
           </ul>
         </div>
         <div class="card-footer">
           <a href="{% url 'deploy:deploy_vm' %}" class="btn btn-primary btn-block">
-            <i class="fas fa-plus-circle"></i> Deploy New VM
+            <i class="bi bi-plus-lg-circle"></i> Deploy New VM
           </a>
         </div>
       </div>
@@ -35,20 +35,20 @@
       <div class="card h-100">
         <div class="card-body">
           <h5 class="card-title">
-            <i class="fas fa-play-circle text-success"></i> Execute Playbook
+            <i class="bi bi-play-circle text-success"></i> Execute Playbook
           </h5>
           <p class="card-text">
             Run an Ansible playbook on an existing host from your inventory.
           </p>
           <ul class="list-unstyled">
-            <li><i class="fas fa-check text-success"></i> Select from inventory</li>
-            <li><i class="fas fa-check text-success"></i> Choose playbook to run</li>
-            <li><i class="fas fa-check text-success"></i> View execution history</li>
+            <li><i class="bi bi-check-lg text-success"></i> Select from inventory</li>
+            <li><i class="bi bi-check-lg text-success"></i> Choose playbook to run</li>
+            <li><i class="bi bi-check-lg text-success"></i> View execution history</li>
           </ul>
         </div>
         <div class="card-footer">
           <a href="{% url 'deploy:deploy_playbook' %}" class="btn btn-success btn-block">
-            <i class="fas fa-terminal"></i> Execute Playbook
+            <i class="bi fa-terminal"></i> Execute Playbook
           </a>
         </div>
       </div>
@@ -59,20 +59,20 @@
       <div class="card h-100">
         <div class="card-body">
           <h5 class="card-title">
-            <i class="fas fa-clock text-info"></i> Scheduled Tasks
+            <i class="bi bi-clock text-info"></i> Scheduled Tasks
           </h5>
           <p class="card-text">
             View and manage scheduled playbook executions. Monitor task status in real-time.
           </p>
           <ul class="list-unstyled">
-            <li><i class="fas fa-check text-success"></i> View pending tasks</li>
-            <li><i class="fas fa-check text-success"></i> Monitor running tasks</li>
-            <li><i class="fas fa-check text-success"></i> Review execution history</li>
+            <li><i class="bi bi-check-lg text-success"></i> View pending tasks</li>
+            <li><i class="bi bi-check-lg text-success"></i> Monitor running tasks</li>
+            <li><i class="bi bi-check-lg text-success"></i> Review execution history</li>
           </ul>
         </div>
         <div class="card-footer">
           <a href="{% url 'scheduled_tasks_list' %}" class="btn btn-info btn-block">
-            <i class="fas fa-list"></i> View Scheduled Tasks
+            <i class="bi bi-list-ul"></i> View Scheduled Tasks
           </a>
         </div>
       </div>

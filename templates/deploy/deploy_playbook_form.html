@@ -4,7 +4,7 @@
 <div class="container-fluid mt-4">
   <div class="card">
     <div class="card-header">
-      <h3 class="card-title"><i class="fab fa-linux"></i> Execute Linux Script/Playbook</h3>
+      <h3 class="card-title"><i class="bi fa-linux"></i> Execute Linux Script/Playbook</h3>
     </div>
     <div class="card-body">
       <form id="playbookForm" method="post">
@@ -109,7 +109,7 @@
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="create_snapshot" name="create_snapshot" value="1">
             <label class="custom-control-label" for="create_snapshot">
-              <i class="fas fa-camera"></i> <span id="snapshot-label">Create snapshot before execution</span>
+              <i class="bi fa-camera"></i> <span id="snapshot-label">Create snapshot before execution</span>
               <small class="text-muted d-block" id="snapshot-help">Safety snapshot will be auto-deleted after configured retention period</small>
             </label>
           </div>
@@ -120,7 +120,7 @@
           <div class="custom-control custom-checkbox">
             <input type="checkbox" class="custom-control-input" id="scheduled" name="scheduled" value="1">
             <label class="custom-control-label" for="scheduled">
-              <i class="fas fa-clock"></i> Schedule for later execution
+              <i class="bi bi-clock"></i> Schedule for later execution
             </label>
           </div>
         </div>
@@ -132,15 +132,15 @@
           <small class="text-muted">Leave empty for immediate execution</small>
         </div>
         
-        <button type="submit" class="btn btn-primary"><i class="fas fa-play"></i> Execute Playbook</button>
-        <a href="{% url 'deploy:deploy_index' %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-play"></i> Execute Playbook</button>
+        <a href="{% url 'deploy:deploy_index' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
       </form>
       
       <!-- Progress Bar -->
       <div id="progressArea" style="display:none;" class="mt-4">
         <div class="card">
           <div class="card-header bg-primary text-white">
-            <h5 class="mb-0" id="progressTitle"><i class="fas fa-spinner fa-spin"></i> Executing...</h5>
+            <h5 class="mb-0" id="progressTitle"><i class="bi fa-spinner fa-spin"></i> Executing...</h5>
           </div>
           <div class="card-body">
             <div class="progress" style="height: 30px;">
@@ -154,7 +154,7 @@
             <!-- Real-time Output Collapsible -->
             <div class="mt-3" id="realtimeOutputContainer" style="display:none;">
               <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="collapse" data-target="#realtimeOutput" aria-expanded="false" aria-controls="realtimeOutput">
-                <i class="fas fa-terminal"></i> Show Real-time Output
+                <i class="bi fa-terminal"></i> Show Real-time Output
               </button>
               <div class="collapse mt-2" id="realtimeOutput">
                 <div class="card card-body bg-dark text-light" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
@@ -392,7 +392,7 @@ $(document).ready(function() {
     var executionLabel = executionType === 'script' ? 'Script' : 'Playbook';
     
     // Update progress title
-    $('#progressTitle').html('<i class="fas fa-spinner fa-spin"></i> Executing ' + executionLabel + '...');
+    $('#progressTitle').html('<i class="bi fa-spinner fa-spin"></i> Executing ' + executionLabel + '...');
     
     // Show progress bar
     $('#progressArea').show();
@@ -448,11 +448,11 @@ $(document).ready(function() {
             // Check if this was a scheduled task
             if (response.scheduled) {
               $('#resultHeader').removeClass('bg-danger').addClass('bg-info text-white');
-              $('#resultTitle').html('<i class="fas fa-clock"></i> Task Scheduled Successfully');
+              $('#resultTitle').html('<i class="bi bi-clock"></i> Task Scheduled Successfully');
               
               $('#resultContent').html(
                 '<div class="alert alert-info">' +
-                '<i class="fas fa-clock"></i> <strong>Task has been scheduled!</strong>' +
+                '<i class="bi bi-clock"></i> <strong>Task has been scheduled!</strong>' +
                 '<br><br>' +
                 '<strong>Scheduled Time:</strong> ' + response.scheduled_time + '<br>' +
                 '<strong>Task ID:</strong> ' + response.task_id +
@@ -464,7 +464,7 @@ $(document).ready(function() {
             } else {
               // Immediate execution
               $('#resultHeader').removeClass('bg-danger').addClass('bg-success text-white');
-              $('#resultTitle').html('<i class="fas fa-check-circle"></i> ' + executionLabel + ' Executed Successfully');
+              $('#resultTitle').html('<i class="bi bi-check-lg-circle"></i> ' + executionLabel + ' Executed Successfully');
               
               // Parse output to count tasks (for playbooks)
               var output = response.output || '';
@@ -478,7 +478,7 @@ $(document).ready(function() {
               
               $('#resultContent').html(
                 '<div class="alert alert-success">' +
-                '<i class="fas fa-check-circle"></i> ' + successMessage +
+                '<i class="bi bi-check-lg-circle"></i> ' + successMessage +
                 '</div>' +
                 '<pre class="bg-dark text-light p-3" style="max-height: 400px; overflow-y: auto;">' +
                 output +
@@ -487,10 +487,10 @@ $(document).ready(function() {
             }
           } else {
             $('#resultHeader').removeClass('bg-success').addClass('bg-danger text-white');
-            $('#resultTitle').html('<i class="fas fa-exclamation-circle"></i> ' + executionLabel + ' Execution Failed');
+            $('#resultTitle').html('<i class="bi bi-exclamation-circle"></i> ' + executionLabel + ' Execution Failed');
             $('#resultContent').html(
               '<div class="alert alert-danger">' +
-              '<i class="fas fa-exclamation-circle"></i> ' + (response.error || 'Execution failed') +
+              '<i class="bi bi-exclamation-circle"></i> ' + (response.error || 'Execution failed') +
               '</div>' +
               '<pre class="bg-dark text-light p-3" style="max-height: 400px; overflow-y: auto;">' +
               (response.output || response.traceback || 'No output available') +
@@ -507,10 +507,10 @@ $(document).ready(function() {
         $('#progressArea').hide();
         $('#resultArea').show();
         $('#resultHeader').removeClass('bg-success').addClass('bg-danger text-white');
-        $('#resultTitle').html('<i class="fas fa-exclamation-circle"></i> Communication Error');
+        $('#resultTitle').html('<i class="bi bi-exclamation-circle"></i> Communication Error');
         $('#resultContent').html(
           '<div class="alert alert-danger">' +
-          '<i class="fas fa-exclamation-circle"></i> An error occurred while communicating with the server.' +
+          '<i class="bi bi-exclamation-circle"></i> An error occurred while communicating with the server.' +
           '</div>' +
           '<p><strong>Status:</strong> ' + status + '</p>' +
           '<p><strong>Error:</strong> ' + error + '</p>' +
@@ -580,10 +580,10 @@ $(document).ready(function() {
               
               if (data.status === 'success') {
                 $('#resultHeader').removeClass('bg-danger').addClass('bg-success text-white');
-                $('#resultTitle').html('<i class="fas fa-check-circle"></i> Playbook Executed Successfully');
+                $('#resultTitle').html('<i class="bi bi-check-lg-circle"></i> Playbook Executed Successfully');
               } else {
                 $('#resultHeader').removeClass('bg-success').addClass('bg-danger text-white');
-                $('#resultTitle').html('<i class="fas fa-times-circle"></i> Execution Failed');
+                $('#resultTitle').html('<i class="bi bi-x-lg-circle"></i> Execution Failed');
               }
               
               // Show output
@@ -593,8 +593,8 @@ $(document).ready(function() {
                 output +
                 '</pre>' +
                 '<div class="mt-3">' +
-                '<a href="/history/" class="btn btn-primary"><i class="fas fa-history"></i> View History</a> ' +
-                '<button type="button" class="btn btn-secondary" onclick="location.reload()"><i class="fas fa-redo"></i> Execute Another</button>' +
+                '<a href="/history/" class="btn btn-primary"><i class="bi bi-clock-history"></i> View History</a> ' +
+                '<button type="button" class="btn btn-secondary" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Execute Another</button>' +
                 '</div>'
               );
             }, 500);
@@ -604,12 +604,12 @@ $(document).ready(function() {
             $('#progressStatus').text('Polling timeout - task may still be running');
             $('#resultArea').show();
             $('#resultHeader').removeClass('bg-success').addClass('bg-warning text-white');
-            $('#resultTitle').html('<i class="fas fa-exclamation-triangle"></i> Polling Timeout');
+            $('#resultTitle').html('<i class="bi bi-exclamation-triangle"></i> Polling Timeout');
             $('#resultContent').html(
               '<div class="alert alert-warning">' +
               'The task is taking longer than expected. It may still be running in the background.' +
               '<br><br>' +
-              '<a href="/history/" class="btn btn-primary"><i class="fas fa-history"></i> Check History</a>' +
+              '<a href="/history/" class="btn btn-primary"><i class="bi bi-clock-history"></i> Check History</a>' +
               '</div>'
             );
           } else {

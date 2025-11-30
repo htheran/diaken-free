@@ -4,9 +4,9 @@
 <div class="container-fluid">
   <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h3 class="card-title mb-0"><i class="fas fa-history"></i> Deployment History</h3>
+      <h3 class="card-title mb-0"><i class="bi bi-clock-history"></i> Deployment History</h3>
       <a href="{% url 'history:cleanup_stuck_deployments' %}" class="btn btn-warning btn-sm">
-        <i class="fas fa-broom"></i> Cleanup Stuck Deployments
+        <i class="bi fa-broom"></i> Cleanup Stuck Deployments
       </a>
     </div>
     
@@ -15,7 +15,7 @@
       <form method="get" class="mb-0">
         <div class="row align-items-end">
           <div class="col-12 mb-2">
-            <label class="font-weight-bold"><i class="fas fa-filter"></i> Filters:</label>
+            <label class="font-weight-bold"><i class="bi bi-funnel"></i> Filters:</label>
           </div>
           
           <div class="col-md-2 mb-2">
@@ -47,8 +47,8 @@
           </div>
           
           <div class="col-md-2 mb-2">
-            <button type="submit" class="btn btn-primary btn-sm btn-block"><i class="fas fa-search"></i> Filter</button>
-            <a href="{% url 'history:history_list' %}" class="btn btn-secondary btn-sm btn-block mt-1"><i class="fas fa-eraser"></i> Clear</a>
+            <button type="submit" class="btn btn-primary btn-sm btn-block"><i class="bi bi-search"></i> Filter</button>
+            <a href="{% url 'history:history_list' %}" class="btn btn-secondary btn-sm btn-block mt-1"><i class="bi fa-eraser"></i> Clear</a>
           </div>
         </div>
       </form>
@@ -72,36 +72,36 @@
           {% for deployment in deployments %}
           <tr>
             <td>{{ deployment.id }}</td>
-            <td><i class="far fa-calendar"></i> {{ deployment.created_at|date:"d/m/Y H:i:s" }}</td>
-            <td><i class="fas fa-user"></i> {{ deployment.user.username|default:"Unknown" }}</td>
+            <td><i class="bi bi-calendar"></i> {{ deployment.created_at|date:"d/m/Y H:i:s" }}</td>
+            <td><i class="bi bi-person"></i> {{ deployment.user.username|default:"Unknown" }}</td>
             <td>
               {% if deployment.target_type == 'host' %}
-                <i class="fas fa-desktop"></i>
+                <i class="bi fa-desktop"></i>
               {% else %}
-                <i class="fas fa-users"></i>
+                <i class="bi bi-people"></i>
               {% endif %}
               <strong>{{ deployment.target }}</strong>
               <span class="badge badge-secondary">{{ deployment.target_type|title }}</span>
             </td>
-            <td><i class="fas fa-file-code"></i> {{ deployment.playbook }}</td>
+            <td><i class="bi bi-file-earmark-code"></i> {{ deployment.playbook }}</td>
             <td class="text-center">
               {% if deployment.status == 'success' %}
-                <span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>
+                <span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Success</span>
               {% elif deployment.status == 'failed' %}
-                <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>
+                <span class="badge badge-danger"><i class="bi bi-x-lg-circle"></i> Failed</span>
               {% else %}
                 {% if deployment.is_stuck %}
                   <span class="badge badge-danger" title="Running for {{ deployment.running_hours|floatformat:1 }} hours">
-                    <i class="fas fa-exclamation-triangle"></i> Stuck ({{ deployment.running_hours|floatformat:1 }}h)
+                    <i class="bi bi-exclamation-triangle"></i> Stuck ({{ deployment.running_hours|floatformat:1 }}h)
                   </span>
                 {% else %}
-                  <span class="badge badge-warning"><i class="fas fa-spinner fa-spin"></i> Running</span>
+                  <span class="badge badge-warning"><i class="bi fa-spinner fa-spin"></i> Running</span>
                 {% endif %}
               {% endif %}
             </td>
             <td class="text-center">
               <a href="{% url 'history:history_detail' deployment.id %}" class="btn btn-sm btn-primary" title="View Details">
-                <i class="fas fa-eye"></i> View
+                <i class="bi bi-eye"></i> View
               </a>
             </td>
           </tr>
@@ -148,7 +148,7 @@ $(document).ready(function() {
             // Update badge if status changed
             if (data.status === 'success') {
               var statusCell = deployment.row.find('td:nth-child(6)');
-              statusCell.html('<span class="badge badge-success"><i class="fas fa-check-circle"></i> Success</span>');
+              statusCell.html('<span class="badge badge-success"><i class="bi bi-check-lg-circle"></i> Success</span>');
               console.log('Deployment ' + deployment.id + ' completed successfully');
               
               // Remove from running list
@@ -158,7 +158,7 @@ $(document).ready(function() {
               
             } else if (data.status === 'failed') {
               var statusCell = deployment.row.find('td:nth-child(6)');
-              statusCell.html('<span class="badge badge-danger"><i class="fas fa-times-circle"></i> Failed</span>');
+              statusCell.html('<span class="badge badge-danger"><i class="bi bi-x-lg-circle"></i> Failed</span>');
               console.log('Deployment ' + deployment.id + ' failed');
               
               // Remove from running list

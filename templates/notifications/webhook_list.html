@@ -30,15 +30,15 @@
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2><i class="fas fa-bell"></i> Microsoft Teams Webhooks</h2>
+                    <h2><i class="bi bi-bell"></i> Microsoft Teams Webhooks</h2>
                     <p class="text-muted">Manage Microsoft Teams incoming webhooks for notifications</p>
                 </div>
                 <div>
                     <a href="{% url 'notifications:notification_logs' %}" class="btn btn-outline-secondary me-2">
-                        <i class="fas fa-history"></i> Notification Logs
+                        <i class="bi bi-clock-history"></i> Notification Logs
                     </a>
                     <a href="{% url 'notifications:webhook_create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Webhook
+                        <i class="bi bi-plus-lg"></i> Add Webhook
                     </a>
                 </div>
             </div>
@@ -52,7 +52,7 @@
             <div class="card webhook-card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
-                        <i class="fab fa-microsoft"></i> {{ webhook.name }}
+                        <i class="bi fa-microsoft"></i> {{ webhook.name }}
                     </h5>
                     <span class="badge {% if webhook.active %}bg-success{% else %}bg-secondary{% endif %}">
                         {% if webhook.active %}Active{% else %}Inactive{% endif %}
@@ -68,22 +68,22 @@
                     <div class="mb-2">
                         {% if webhook.notify_deployments %}
                         <span class="badge badge-notification bg-info">
-                            <i class="fas fa-server"></i> Deployments
+                            <i class="bi bi-hdd-rack"></i> Deployments
                         </span>
                         {% endif %}
                         {% if webhook.notify_playbook_executions %}
                         <span class="badge badge-notification bg-primary">
-                            <i class="fas fa-play"></i> Playbooks
+                            <i class="bi bi-play"></i> Playbooks
                         </span>
                         {% endif %}
                         {% if webhook.notify_scheduled_tasks %}
                         <span class="badge badge-notification bg-warning">
-                            <i class="fas fa-clock"></i> Scheduled
+                            <i class="bi bi-clock"></i> Scheduled
                         </span>
                         {% endif %}
                         {% if webhook.notify_failures_only %}
                         <span class="badge badge-notification bg-danger">
-                            <i class="fas fa-exclamation-triangle"></i> Failures Only
+                            <i class="bi bi-exclamation-triangle"></i> Failures Only
                         </span>
                         {% endif %}
                     </div>
@@ -111,27 +111,27 @@
                     <div class="btn-group btn-group-sm w-100 mb-2" role="group">
                         <a href="{% url 'notifications:webhook_test' webhook.pk %}" 
                            class="btn btn-outline-info" title="Send Test">
-                            <i class="fas fa-paper-plane"></i> Test
+                            <i class="bi fa-paper-plane"></i> Test
                         </a>
                         <a href="{% url 'notifications:webhook_edit' webhook.pk %}" 
                            class="btn btn-outline-primary" title="Edit">
-                            <i class="fas fa-edit"></i> Edit
+                            <i class="bi bi-pencil-square"></i> Edit
                         </a>
                         <button type="button" 
                                 class="btn btn-outline-{% if webhook.active %}warning{% else %}success{% endif %} toggle-active-btn"
                                 data-webhook-id="{{ webhook.pk }}"
                                 data-active="{{ webhook.active|yesno:'true,false' }}"
                                 title="{% if webhook.active %}Deactivate{% else %}Activate{% endif %}">
-                            <i class="fas fa-{% if webhook.active %}pause{% else %}play{% endif %}"></i>
+                            <i class="bi fa-{% if webhook.active %}pause{% else %}play{% endif %}"></i>
                         </button>
                     </div>
                     <a href="{% url 'notifications:webhook_configure' webhook.pk %}" 
                        class="btn btn-sm btn-success w-100" title="Configure Notifications">
-                        <i class="fas fa-cog"></i> Configure Notifications
+                        <i class="bi bi-gear"></i> Configure Notifications
                     </a>
                         <a href="{% url 'notifications:webhook_delete' webhook.pk %}" 
                            class="btn btn-outline-danger" title="Delete">
-                            <i class="fas fa-trash"></i>
+                            <i class="bi bi-trash"></i>
                         </a>
                     </div>
                 </div>
@@ -143,16 +143,16 @@
     <div class="row">
         <div class="col-md-12">
             <div class="alert alert-info">
-                <h4><i class="fas fa-info-circle"></i> No Webhooks Configured</h4>
+                <h4><i class="bi bi-info-circle"></i> No Webhooks Configured</h4>
                 <p>You haven't configured any Microsoft Teams webhooks yet.</p>
                 <a href="{% url 'notifications:webhook_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add Your First Webhook
+                    <i class="bi bi-plus-lg"></i> Add Your First Webhook
                 </a>
             </div>
 
             <div class="card mt-4">
                 <div class="card-header">
-                    <h5><i class="fas fa-question-circle"></i> How to Get a Webhook URL</h5>
+                    <h5><i class="bi fa-question-circle"></i> How to Get a Webhook URL</h5>
                 </div>
                 <div class="card-body">
                     <ol>

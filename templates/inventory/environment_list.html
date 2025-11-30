@@ -6,7 +6,7 @@
     <div class="card-header">
       <h3 class="card-title">Environments</h3>
       <div class="card-tools">
-        <a href="{% url 'environment_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Environment</a>
+        <a href="{% url 'environment_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add Environment</a>
       </div>
     </div>
     <div class="card-body p-0">
@@ -32,8 +32,8 @@
               {% endif %}
             </td>
             <td class="text-center">
-              <a href="{% url 'environment_update' env.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="fas fa-edit"></i></a>
-              <a href="{% url 'environment_delete' env.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></a>
+              <a href="{% url 'environment_update' env.pk %}" class="btn btn-sm btn-info" title="Edit"><i class="bi bi-pencil-square"></i></a>
+              <a href="{% url 'environment_delete' env.pk %}" class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash"></i></a>
             </td>
           </tr>
           {% empty %}
