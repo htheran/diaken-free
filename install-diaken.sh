@@ -502,6 +502,49 @@ EOF
     print_info "You can start it with: sudo systemctl start diaken"
 }
 
+configure_crontab() {
+    print_header "Configuring Automated Cleanup Tasks (Crontab)"
+    
+    # Make scripts executable
+    chmod +x "${INSTALL_DIR}/sc/cleanup_stuck_deployments.sh" 2>/dev/null
+    chmod +x "${INSTALL_DIR}/sc/cleanup_snapshots.sh" 2>/dev/null
+    
+    # Check if crontab entries already exist
+    if crontab -l 2>/dev/null | grep -q "cleanup_stuck_deployments.sh"; then
+        print_info "Crontab entries already exist, skipping..."
+        return 0
+    fi
+    
+    print_info "Adding crontab entries for automated cleanup tasks..."
+    
+    # Create temporary crontab file
+    TEMP_CRON=$(mktemp)
+    
+    # Get existing crontab (if any)
+    crontab -l 2>/dev/null > "$TEMP_CRON" || true
+    
+    # Add cleanup tasks
+    cat >> "$TEMP_CRON" << EOF
+
+# Diaken Automated Cleanup Tasks
+# Clean up stuck deployments every 6 hours
+0 */6 * * * ${INSTALL_DIR}/sc/cleanup_stuck_deployments.sh >> ${LOG_DIR}/cleanup_stuck_deployments.log 2>&1
+
+# Clean up expired snapshots daily at 2 AM
+0 2 * * * ${INSTALL_DIR}/sc/cleanup_snapshots.sh >> ${LOG_DIR}/cleanup_snapshots.log 2>&1
+EOF
+    
+    # Install new crontab
+    crontab "$TEMP_CRON"
+    rm "$TEMP_CRON"
+    
+    print_success "Crontab configured successfully"
+    print_info "Cleanup tasks scheduled:"
+    print_info "  • Stuck deployments: Every 6 hours"
+    print_info "  • Expired snapshots: Daily at 2 AM"
+    print_info "  • Logs: ${LOG_DIR}/cleanup_*.log"
+}
+
 print_completion_message() {
     print_header "Installation Complete! 🎉"
     
@@ -521,6 +564,7 @@ ${BLUE}Installation Details:${NC}
   • Redis: ${GREEN}Running on localhost:6379${NC}
   • Celery Worker: ${GREEN}Running as systemd service${NC}
   • govc (VMware CLI): ${GREEN}$(govc version 2>/dev/null | head -1 || echo 'Not installed')${NC}
+  • Crontab: ${GREEN}Configured for automated cleanup${NC}
 
 ${BLUE}To Start the Application:${NC}
 
@@ -545,6 +589,8 @@ ${BLUE}Useful Commands:${NC}
   • Check Celery status: ${YELLOW}sudo systemctl status celery${NC}
   • View Celery logs: ${YELLOW}sudo tail -f ${CELERY_LOG_DIR}/worker.log${NC}
   • Restart Celery: ${YELLOW}sudo systemctl restart celery${NC}
+  • View crontab: ${YELLOW}crontab -l${NC}
+  • View cleanup logs: ${YELLOW}tail -f ${LOG_DIR}/cleanup_*.log${NC}
 
 ${BLUE}Production Deployment:${NC}
   For production, consider using:
@@ -617,6 +663,7 @@ EOF
     configure_redis
     configure_celery
     create_systemd_service
+    configure_crontab
     print_completion_message
     
     print_success "Installation completed successfully!"
