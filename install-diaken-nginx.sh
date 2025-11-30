@@ -629,7 +629,7 @@ configure_nginx() {
     
     # Create nginx configuration
     print_info "Creating nginx configuration..."
-    sudo tee /etc/nginx/conf.d/diaken.conf > /dev/null << 'NGINX_EOF'
+    sudo tee /etc/nginx/conf.d/diaken.conf > /dev/null << NGINX_EOF
 # Diaken - Nginx Reverse Proxy Configuration
 # Optimized for security and long-running Ansible playbooks
 
@@ -638,7 +638,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name _;
-    return 301 https://$host$request_uri;
+    return 301 https://\$host\$request_uri;
 }
 
 # Main HTTPS server
@@ -688,14 +688,14 @@ server {
     
     # Django static files
     location /static/ {
-        alias /opt/diaken/staticfiles/;
+        alias ${INSTALL_DIR}/staticfiles/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
     
     # Media files
     location /media/ {
-        alias /opt/diaken/media/;
+        alias ${INSTALL_DIR}/media/;
         expires 7d;
         add_header Cache-Control "public";
     }
@@ -706,15 +706,15 @@ server {
         proxy_http_version 1.1;
         
         # Django proxy headers
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_set_header X-Forwarded-Port \$server_port;
         
         # WebSocket support
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
         
         # Disable buffering for real-time responses
