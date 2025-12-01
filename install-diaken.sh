@@ -30,9 +30,15 @@ GITHUB_REPO="https://github.com/htheran/diaken-free.git"
 INSTALL_DIR="/opt/diaken"
 PYTHON_VERSION="3.12"
 PORT="9090"
-# System user for Diaken (like nginx, postgresql, redis)
-INSTALL_USER="diaken"
-INSTALL_GROUP="diaken"
+
+# Detect the user who invoked sudo (or current user if not using sudo)
+if [ -n "$SUDO_USER" ]; then
+    INSTALL_USER="$SUDO_USER"
+else
+    INSTALL_USER="$(whoami)"
+fi
+
+# Get user's home directory
 INSTALL_USER_HOME=$(eval echo ~$INSTALL_USER)
 
 # Dynamic paths (no hardcoded usernames)
@@ -87,394 +93,11 @@ check_root() {
 }
 
 check_os() {
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
     if [ -f /etc/redhat-release ]; then
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
         OS_VERSION=$(cat /etc/redhat-release)
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
         print_success "Detected: $OS_VERSION"
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
     else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
-    else
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
         print_error "This script is designed for RedHat/CentOS/Rocky Linux"
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
-
-configure_sudoers() {
-    print_header "Configuring Sudo Permissions for /etc/hosts Management"
-    
-    SUDOERS_FILE="/etc/sudoers.d/diaken-hosts"
-    
-    if [ -f "$SUDOERS_FILE" ]; then
-        print_info "Sudo permissions already configured"
-        return 0
-    fi
-    
-    print_info "Creating sudoers file for diaken user..."
-    
-    # Create sudoers file with proper permissions
-    sudo bash -c "cat > $SUDOERS_FILE" << 'SUDOEOF'
-# Allow diaken user to update /etc/hosts without password
-# This is required for automatic inventory management
-diaken ALL=(ALL) NOPASSWD: /usr/bin/mv /tmp/diaken_hosts_* /etc/hosts
-SUDOEOF
-    
-    # Set correct permissions (440 is required for sudoers files)
-    sudo chmod 440 "$SUDOERS_FILE"
-    
-    # Verify sudoers file syntax
-    if sudo visudo -c -f "$SUDOERS_FILE" &>/dev/null; then
-        print_success "Sudo permissions configured successfully"
-    else
-        print_error "Invalid sudoers file syntax, removing..."
-        sudo rm -f "$SUDOERS_FILE"
-        exit 1
-    fi
-}
-        exit 1
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
-    fi
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
-        exit 1
-    fi
-}
-}
-
-create_system_user() {
-    print_header "Creating System User for Diaken"
-    
-    # Check if user already exists
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_info "User '$INSTALL_USER' already exists"
-    else
-        print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user WITH home directory for SSH operations
-        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        print_success "System user '$INSTALL_USER' created"
-    fi
-    
-    # Ensure home directory and .ssh directory exist with correct permissions
-    # This is needed both for new users and existing users
-    if [ ! -d "/home/$INSTALL_USER" ]; then
-        print_info "Creating home directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 755 "/home/$INSTALL_USER"
-    fi
-    
-    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
-        print_info "Creating .ssh directory for '$INSTALL_USER'..."
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
-        print_success ".ssh directory created"
-    fi
-    
-    # Verify user was created
-    if id "$INSTALL_USER" &>/dev/null; then
-        print_success "User '$INSTALL_USER' verified"
-    else
-        print_error "Failed to create user '$INSTALL_USER'"
         exit 1
     fi
 }
@@ -867,9 +490,9 @@ EOF
     fi
     
     # Set permissions for .env file
-    chmod 640 "${INSTALL_DIR}/.env"
+    chmod 600 "${INSTALL_DIR}/.env"
     chown ${INSTALL_USER}:${INSTALL_USER} "${INSTALL_DIR}/.env"
-    print_success ".env file created with secure permissions (640)"
+    print_success ".env file created with secure permissions (600)"
 }
 
 run_migrations() {
@@ -880,18 +503,6 @@ run_migrations() {
     
     print_info "Running migrations..."
     python manage.py migrate
-    
-    # Fix database permissions (critical for SQLite to avoid "readonly database" error)
-    print_info "Setting correct database permissions..."
-    if [ -f "${INSTALL_DIR}/db.sqlite3" ]; then
-        sudo chown ${INSTALL_USER}:${INSTALL_GROUP} "${INSTALL_DIR}/db.sqlite3"
-        sudo chmod 664 "${INSTALL_DIR}/db.sqlite3"
-        print_success "Database permissions set: ${INSTALL_USER}:${INSTALL_GROUP} (664)"
-    fi
-    
-    # Ensure directory permissions are correct
-    sudo chown -R ${INSTALL_USER}:${INSTALL_GROUP} "${INSTALL_DIR}"
-    sudo chmod 755 "${INSTALL_DIR}"
     
     print_success "Database migrations completed"
 }
@@ -983,215 +594,32 @@ EOF
     print_success "Django superuser created: $DJANGO_USER"
 }
 
-
-configure_nginx() {
-    print_header "Configuring Nginx Reverse Proxy"
-    
-    # Install nginx if not already installed
-    if ! command -v nginx &> /dev/null; then
-        print_info "Installing nginx..."
-        if command -v dnf &> /dev/null; then
-            sudo dnf install -y nginx
-        elif command -v yum &> /dev/null; then
-            sudo yum install -y nginx
-        else
-            print_error "Package manager not found. Please install nginx manually."
-            return 1
-        fi
-    else
-        print_info "Nginx already installed"
-    fi
-    
-    # Generate self-signed SSL certificates
-    print_info "Generating self-signed SSL certificates..."
-    sudo mkdir -p /etc/nginx/ssl
-    if [ ! -f /etc/nginx/ssl/diaken.crt ]; then
-        sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout /etc/nginx/ssl/diaken.key \
-            -out /etc/nginx/ssl/diaken.crt \
-            -subj "/C=US/ST=State/L=City/O=Diaken/CN=diaken.local" \
-            &> /dev/null
-        print_success "SSL certificates generated"
-    else
-        print_info "SSL certificates already exist"
-    fi
-    
-    # Create nginx configuration
-    print_info "Creating nginx configuration..."
-    sudo tee /etc/nginx/conf.d/diaken.conf > /dev/null << NGINX_EOF
-# Diaken - Nginx Reverse Proxy Configuration
-# Optimized for security and long-running Ansible playbooks
-
-# Redirect HTTP to HTTPS
-server {
-    listen 80;
-    listen [::]:80;
-    server_name _;
-    return 301 https://\$host\$request_uri;
-}
-
-# Main HTTPS server
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name _;
-    
-    # SSL certificates (self-signed for development)
-    ssl_certificate /etc/nginx/ssl/diaken.crt;
-    ssl_certificate_key /etc/nginx/ssl/diaken.key;
-    
-    # Optimized SSL configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
-    # Security headers
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    
-    # Max file size (for uploads)
-    client_max_body_size 100M;
-    
-    # Optimized buffers
-    client_body_buffer_size 128k;
-    client_header_buffer_size 1k;
-    large_client_header_buffers 4 16k;
-    
-    # Timeouts for long-running Ansible playbooks
-    proxy_connect_timeout 600s;
-    proxy_send_timeout 600s;
-    proxy_read_timeout 600s;
-    send_timeout 600s;
-    client_body_timeout 300s;
-    client_header_timeout 300s;
-    keepalive_timeout 65s;
-    
-    # Logs
-    access_log /var/log/nginx/diaken_access.log;
-    error_log /var/log/nginx/diaken_error.log;
-    
-    # Django static files
-    location /static/ {
-        alias ${INSTALL_DIR}/staticfiles/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-    
-    # Media files
-    location /media/ {
-        alias ${INSTALL_DIR}/media/;
-        expires 7d;
-        add_header Cache-Control "public";
-    }
-    
-    # Proxy to Django/Gunicorn
-    location / {
-        proxy_pass http://127.0.0.1:9090;
-        proxy_http_version 1.1;
-        
-        # Django proxy headers
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$host;
-        proxy_set_header X-Forwarded-Port \$server_port;
-        
-        # WebSocket support
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        
-        # Disable buffering for real-time responses
-        proxy_buffering off;
-        proxy_request_buffering off;
-        proxy_redirect off;
-    }
-    
-    # Deny access to sensitive files
-    location ~ /\.(?!well-known) {
-        deny all;
-    }
-    
-    location ~ /\.(env|git) {
-        deny all;
-    }
-}
-NGINX_EOF
-    
-    # Add proxy configuration to Django settings
-    print_info "Adding proxy configuration to Django settings..."
-    if ! grep -q "NGINX REVERSE PROXY CONFIGURATION" "${INSTALL_DIR}/diaken/settings.py"; then
-        cat >> "${INSTALL_DIR}/diaken/settings.py" << 'DJANGO_EOF'
-
-# ============================================================
-# NGINX REVERSE PROXY CONFIGURATION
-# ============================================================
-USE_X_FORWARDED_HOST = True
-USE_X_FORWARDED_PORT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-DJANGO_EOF
-        print_success "Proxy configuration added to settings.py"
-    else
-        print_info "Proxy configuration already exists in settings.py"
-    fi
-    
-    # Enable and start nginx
-    print_info "Enabling and starting nginx..."
-    sudo systemctl enable nginx
-    sudo systemctl restart nginx
-    
-    # Verify nginx is running
-    if sudo systemctl is-active --quiet nginx; then
-        print_success "Nginx configured and running"
-        print_info "Access Diaken at: https://$(hostname -I | awk '{print $1}')"
-        print_warning "Using self-signed SSL certificate - browser will show security warning"
-    else
-        print_error "Nginx failed to start. Check logs with: sudo journalctl -u nginx -n 50"
-        return 1
-    fi
-}
-
 configure_firewall() {
     print_header "Configuring Firewall"
     
     # Check if firewalld is installed
     if ! command -v firewall-cmd &> /dev/null; then
-        print_warning "firewalld not found, skipping firewall configuration..."
-        print_info "Please configure firewall manually if needed"
-        return 0
+        print_warning "firewalld not found, installing..."
+        sudo dnf install -y firewalld || sudo yum install -y firewalld
     fi
     
-    # Check if firewalld is running
-    if ! sudo systemctl is-active --quiet firewalld; then
-        print_info "Starting firewalld service..."
-        sudo systemctl start firewalld
-        sudo systemctl enable firewalld
+    # Start and enable firewalld
+    print_info "Starting firewalld service..."
+    sudo systemctl start firewalld
+    sudo systemctl enable firewalld
+    
+    # Check if port is already open
+    if sudo firewall-cmd --list-ports | grep -q "${PORT}/tcp"; then
+        print_success "Port $PORT is already open"
+    else
+        print_info "Opening port $PORT..."
+        sudo firewall-cmd --permanent --add-port=${PORT}/tcp
+        sudo firewall-cmd --reload
+        print_success "Port $PORT opened permanently"
     fi
     
-    # Open HTTP and HTTPS ports for nginx
-    print_info "Opening HTTP (80) and HTTPS (443) ports for nginx..."
-    sudo firewall-cmd --permanent --add-service=http 2>/dev/null || true
-    sudo firewall-cmd --permanent --add-service=https 2>/dev/null || true
-    sudo firewall-cmd --permanent --add-port=80/tcp 2>/dev/null || true
-    sudo firewall-cmd --permanent --add-port=443/tcp 2>/dev/null || true
-    
-    # Reload firewall
-    sudo firewall-cmd --reload
-    
-    print_success "Firewall configured"
-    print_info "Open ports: HTTP (80), HTTPS (443)"
-    print_info "Current firewall status:"
-    sudo firewall-cmd --list-services 2>/dev/null || true
+    print_info "Current firewall ports:"
+    sudo firewall-cmd --list-ports
 }
 
 configure_redis() {
@@ -1242,16 +670,15 @@ Description=Celery Service for Diaken
 After=network.target redis.service
 
 [Service]
-Type=simple
+Type=forking
 User=${INSTALL_USER}
 Group=${INSTALL_USER}
 WorkingDirectory=${INSTALL_DIR}
 Environment="PATH=${INSTALL_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-ExecStart=${INSTALL_DIR}/venv/bin/celery -A ${PROJECT_NAME} worker --loglevel=info --logfile=${CELERY_LOG_DIR}/worker.log
+ExecStart=${INSTALL_DIR}/venv/bin/celery -A ${PROJECT_NAME} worker --loglevel=info --detach --logfile=${CELERY_LOG_DIR}/worker.log --pidfile=${CELERY_PID_DIR}/worker.pid
+PIDFile=${CELERY_PID_DIR}/worker.pid
 Restart=always
 RestartSec=10s
-StandardOutput=journal
-StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -1283,28 +710,20 @@ create_systemd_service() {
     
     print_info "Creating systemd service file..."
     
-    # With nginx, Django should listen only on localhost
-    # Without nginx, it can listen on all interfaces
-    local LISTEN_ADDRESS="127.0.0.1:${PORT}"
-    
     sudo tee /etc/systemd/system/diaken.service > /dev/null << EOF
 [Unit]
 Description=Diaken Django Application
-After=network.target redis.service celery.service nginx.service
+After=network.target redis.service celery.service
 
 [Service]
 Type=simple
 User=${INSTALL_USER}
 Group=${INSTALL_USER}
 WorkingDirectory=${INSTALL_DIR}
-Environment="PATH=${INSTALL_DIR}/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
-ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver ${LISTEN_ADDRESS}
+Environment="PATH=${INSTALL_DIR}/venv/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/python ${INSTALL_DIR}/manage.py runserver 0.0.0.0:${PORT}
 Restart=always
 RestartSec=10
-
-# Logs
-StandardOutput=append:${DJANGO_LOG_DIR}/server.log
-StandardError=append:${DJANGO_LOG_DIR}/server_error.log
 
 [Install]
 WantedBy=multi-user.target
@@ -1312,10 +731,9 @@ EOF
     
     sudo systemctl daemon-reload
     sudo systemctl enable diaken.service
-    sudo systemctl start diaken.service
     
-    print_success "Systemd service created and started: diaken.service"
-    print_info "Django listening on ${LISTEN_ADDRESS} (behind nginx proxy)"
+    print_success "Systemd service created: diaken.service"
+    print_info "You can start it with: sudo systemctl start diaken"
 }
 
 configure_crontab() {
@@ -1325,19 +743,19 @@ configure_crontab() {
     chmod +x "${INSTALL_DIR}/sc/cleanup_stuck_deployments.sh" 2>/dev/null
     chmod +x "${INSTALL_DIR}/sc/cleanup_snapshots.sh" 2>/dev/null
     
-    # Check if crontab entries already exist for diaken user
-    if sudo crontab -u ${INSTALL_USER} -l 2>/dev/null | grep -q "cleanup_stuck_deployments.sh"; then
-        print_info "Crontab entries already exist for user ${INSTALL_USER}, skipping..."
+    # Check if crontab entries already exist
+    if crontab -l 2>/dev/null | grep -q "cleanup_stuck_deployments.sh"; then
+        print_info "Crontab entries already exist, skipping..."
         return 0
     fi
     
-    print_info "Adding crontab entries for user ${INSTALL_USER}..."
+    print_info "Adding crontab entries for automated cleanup tasks..."
     
     # Create temporary crontab file
     TEMP_CRON=$(mktemp)
     
-    # Get existing crontab for diaken user (if any)
-    sudo crontab -u ${INSTALL_USER} -l 2>/dev/null > "$TEMP_CRON" || true
+    # Get existing crontab (if any)
+    crontab -l 2>/dev/null > "$TEMP_CRON" || true
     
     # Add cleanup tasks
     cat >> "$TEMP_CRON" << EOF
@@ -1348,21 +766,17 @@ configure_crontab() {
 
 # Clean up expired snapshots daily at 2 AM
 0 2 * * * ${INSTALL_DIR}/sc/cleanup_snapshots.sh >> ${LOG_DIR}/cleanup_snapshots.log 2>&1
-
-# Diaken Scheduled Tasks - Run every minute
-* * * * * cd ${INSTALL_DIR} && ${INSTALL_DIR}/venv/bin/python manage.py run_scheduled_tasks >> ${LOG_DIR}/scheduler.log 2>&1
 EOF
     
-    # Install new crontab for diaken user
-    sudo crontab -u ${INSTALL_USER} "$TEMP_CRON"
+    # Install new crontab
+    crontab "$TEMP_CRON"
     rm "$TEMP_CRON"
     
     print_success "Crontab configured successfully"
     print_info "Cleanup tasks scheduled:"
     print_info "  • Stuck deployments: Every 6 hours"
     print_info "  • Expired snapshots: Daily at 2 AM"
-    print_info "  • Scheduled tasks: Every minute"
-    print_info "  • Logs: ${LOG_DIR}/cleanup_*.log and ${LOG_DIR}/scheduler.log"
+    print_info "  • Logs: ${LOG_DIR}/cleanup_*.log"
 }
 
 print_completion_message() {
@@ -1378,9 +792,7 @@ ${NC}
 ${BLUE}Installation Details:${NC}
   • Installation Directory: ${GREEN}$INSTALL_DIR${NC}
   • Database: ${GREEN}${DB_TYPE^^}${NC}$([ "$DB_TYPE" != "sqlite3" ] && echo " (${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME})" || echo " (${INSTALL_DIR}/db.sqlite3)")
-  • Django Port: ${GREEN}$PORT${NC} (internal)
-  • Nginx: ${GREEN}HTTP (80) → HTTPS (443)${NC}
-  • SSL: ${YELLOW}Self-signed certificate${NC}
+  • Port: ${GREEN}$PORT${NC}
   • Admin User: ${GREEN}$DJANGO_USER${NC}
   • Install User: ${GREEN}$INSTALL_USER${NC}
   • Redis: ${GREEN}Running on localhost:6379${NC}
@@ -1401,16 +813,10 @@ ${BLUE}To Start the Application:${NC}
      ${YELLOW}python manage.py runserver 0.0.0.0:$PORT${NC}
 
 ${BLUE}Access the Application:${NC}
-  • URL: ${GREEN}https://$(hostname -I | awk '{print $1}')${NC}
-  • Admin: ${GREEN}https://$(hostname -I | awk '{print $1}')/admin${NC}
-  • ${YELLOW}Note: Your browser will show a security warning due to self-signed certificate${NC}
-  • ${YELLOW}For production, replace with a valid SSL certificate${NC}
+  • URL: ${GREEN}http://$(hostname -I | awk '{print $1}'):$PORT${NC}
+  • Admin: ${GREEN}http://$(hostname -I | awk '{print $1}'):$PORT/admin${NC}
 
 ${BLUE}Useful Commands:${NC}
-  • Check Nginx status: ${YELLOW}sudo systemctl status nginx${NC}
-  • Restart Nginx: ${YELLOW}sudo systemctl restart nginx${NC}
-  • Test Nginx config: ${YELLOW}sudo nginx -t${NC}
-  • View Nginx logs: ${YELLOW}sudo tail -f /var/log/nginx/diaken_*.log${NC}
   • Check firewall status: ${YELLOW}sudo firewall-cmd --list-all${NC}
   • Check Redis status: ${YELLOW}sudo systemctl status redis${NC}
   • Check Celery status: ${YELLOW}sudo systemctl status celery${NC}
@@ -1426,16 +832,11 @@ ${BLUE}Centralized Logs (${GREEN}${LOG_DIR}${BLUE}):${NC}
   • Cleanup logs: ${YELLOW}tail -f ${LOG_DIR}/cleanup_*.log${NC}
 
 ${BLUE}Production Deployment:${NC}
-  • ${GREEN}✓${NC} Nginx configured as reverse proxy with HTTPS
-  • ${GREEN}✓${NC} Redis and Celery running as systemd services
-  • ${GREEN}✓${NC} Automated cleanup tasks via crontab
-  • ${GREEN}✓${NC} Centralized logging
-  
-For enhanced production:
-  • Replace self-signed SSL with Let's Encrypt or commercial certificate
-  • Consider Gunicorn for Django (instead of runserver)
-  • Use PostgreSQL/MariaDB instead of SQLite for high load
-  • Set up automated backups
+  For production, consider using:
+  • Gunicorn or uWSGI instead of runserver
+  • Nginx as reverse proxy
+  • PostgreSQL instead of SQLite
+  • Systemd service for auto-start
 
 ${GREEN}Thank you for installing Diaken!${NC}
 ${BLUE}Documentation: https://github.com/htheran/diaken-free${NC}
@@ -1485,8 +886,6 @@ EOF
     # Run installation steps
     check_root
     check_os
-    create_system_user
-    configure_sudoers
     install_epel
     install_dependencies
     check_python
@@ -1500,7 +899,6 @@ EOF
     collect_static
     initialize_default_settings
     create_superuser
-    configure_nginx
     configure_firewall
     configure_redis
     configure_celery

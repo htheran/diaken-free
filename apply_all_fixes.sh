@@ -23,9 +23,15 @@ if [ ! -f "manage.py" ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}[1/7]${NC} Pull últimos cambios del repositorio..."
-git pull origin main
-echo -e "${GREEN}✅ Cambios descargados${NC}"
+echo -e "${YELLOW}[1/7]${NC} Verificar versión actual..."
+if [ -d ".git" ]; then
+    CURRENT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    echo "Commit actual: $CURRENT_COMMIT"
+    echo "Nota: Si necesitas actualizar, ejecuta 'git pull' manualmente"
+else
+    echo "No es un repositorio git"
+fi
+echo -e "${GREEN}✅ Verificación completada${NC}"
 echo ""
 
 echo -e "${YELLOW}[2/7]${NC} Verificar openssh-clients instalado..."
