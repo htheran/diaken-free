@@ -91,15 +91,27 @@
       </div>
       
       <!-- Ansible Output -->
-      <div class="card" id="output-card">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <h5 class="card-title" style="margin: 0;">Ansible Output</h5>
-          <button id="expand-btn" class="btn btn-sm btn-secondary" title="Expand output">
-            <i class="bi bi-expand"></i> Expand
+      <!-- Ansible Output - Mac Terminal Style -->
+      <div class="card border-0 shadow-lg" id="output-card" style="background: #000000; border-radius: 12px; overflow: hidden;">
+        <div class="card-header border-0" style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); display: flex; justify-content: space-between; align-items: center; padding: 15px 20px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <!-- Mac-style window buttons -->
+            <div style="display: flex; gap: 8px;">
+              <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+              <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+              <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+            </div>
+            <h5 class="card-title" style="margin: 0; color: #00ff88; font-weight: 600; font-size: 14px; margin-left: 10px;">
+              <i class="bi bi-terminal-fill"></i> Ansible Output
+            </h5>
+          </div>
+          <button id="expand-btn" class="btn btn-sm" title="Expand output" 
+                  style="background: #2a2a2a; color: #00d4ff; border: 1px solid #00d4ff; border-radius: 6px; padding: 5px 12px; font-size: 12px;">
+            <i class="bi bi-arrows-fullscreen"></i> Expand
           </button>
         </div>
-        <div class="card-body p-0">
-          <pre id="ansible-output" class="bg-dark text-light p-3 m-0" style="max-height: 600px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.4;">{{ deployment.ansible_output|default:"No output available" }}</pre>
+        <div class="card-body p-0" style="background: #000000;">
+          <pre id="ansible-output" class="p-4 m-0" style="background: #000000; color: #00ff88; max-height: 600px; overflow-y: auto; font-family: 'SF Mono', 'Monaco', 'Menlo', 'Courier New', monospace; font-size: 13px; line-height: 1.6; text-shadow: 0 0 5px rgba(0,255,136,0.3);">{{ deployment.ansible_output|default:"No output available" }}</pre>
         </div>
       </div>
     </div>
