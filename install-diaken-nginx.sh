@@ -2,6 +2,7 @@
 ################################################################################
 # Diaken Installer for RedHat/CentOS/Rocky Linux
 # Automated installation script for Diaken project
+# Version: 2.7.8 (2025-12-01)
 # 
 # This script will:
 # - Install all required dependencies
@@ -12,7 +13,7 @@
 # - Configure firewall
 # - Provide instructions to start the application
 #
-# Usage: sudo bash install-diaken.sh
+# Usage: sudo bash install-diaken-nginx.sh
 ################################################################################
 
 set -e  # Exit on any error
