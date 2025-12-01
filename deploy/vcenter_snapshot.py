@@ -17,6 +17,7 @@ def get_vcenter_connection(vcenter_host, vcenter_user, vcenter_password):
     Connect to vCenter server
     """
     try:
+        logger.info(f"[VCENTER] Connecting to {vcenter_host} as {vcenter_user}...")
         context = ssl._create_unverified_context()
         si = SmartConnect(
             host=vcenter_host,
@@ -25,9 +26,19 @@ def get_vcenter_connection(vcenter_host, vcenter_user, vcenter_password):
             port=443,
             sslContext=context
         )
+        logger.info(f"[VCENTER] ✓ Connected successfully to {vcenter_host}")
+        
+        # Verify we can access vCenter content
+        try:
+            content = si.RetrieveContent()
+            logger.info(f"[VCENTER] ✓ Retrieved vCenter content, API version: {content.about.version}")
+        except Exception as e:
+            logger.error(f"[VCENTER] ✗ Failed to retrieve vCenter content: {e}")
+            raise
+        
         return si
     except Exception as e:
-        logger.error(f"Failed to connect to vCenter {vcenter_host}: {e}")
+        logger.error(f"[VCENTER] ✗ Failed to connect to vCenter {vcenter_host}: {e}")
         raise
 
 
@@ -52,7 +63,17 @@ def find_vm_by_ip(si, vm_ip):
     vms = containerView.view
     containerView.Destroy()
     
-    logger.info(f"Searching for VM with IP/name: {vm_ip} among {len(vms)} VMs")
+    logger.info(f"[VM-SEARCH] Searching for VM with IP/name: {vm_ip} among {len(vms)} VMs")
+    
+    # Log first few VMs for debugging
+    if len(vms) > 0:
+        logger.info(f"[VM-SEARCH] Sample VMs in vCenter:")
+        for i, vm in enumerate(vms[:5]):
+            vm_name = vm.name if vm else "Unknown"
+            vm_ip_addr = vm.guest.ipAddress if vm and vm.guest else "No IP"
+            logger.info(f"[VM-SEARCH]   {i+1}. {vm_name} (IP: {vm_ip_addr})")
+        if len(vms) > 5:
+            logger.info(f"[VM-SEARCH]   ... and {len(vms) - 5} more VMs")
     
     for vm in vms:
         # Skip templates
@@ -62,7 +83,7 @@ def find_vm_by_ip(si, vm_ip):
         # Method 1: Check VM guest IP (from VMware Tools)
         if vm.guest and vm.guest.ipAddress:
             if vm.guest.ipAddress == vm_ip:
-                logger.info(f"Found VM by guest IP: {vm.name}")
+                logger.info(f"[VM-SEARCH] ✓ Found VM by guest IP: {vm.name}")
                 return vm
             
             # Check all NICs for matching IP
@@ -71,27 +92,28 @@ def find_vm_by_ip(si, vm_ip):
                     if nic.ipAddress:
                         for ip in nic.ipAddress:
                             if ip == vm_ip:
-                                logger.info(f"Found VM by NIC IP: {vm.name}")
+                                logger.info(f"[VM-SEARCH] ✓ Found VM by NIC IP: {vm.name}")
                                 return vm
         
         # Method 2: Check VM name (might be hostname or IP)
         if vm.name == vm_ip:
-            logger.info(f"Found VM by name: {vm.name}")
+            logger.info(f"[VM-SEARCH] ✓ Found VM by name: {vm.name}")
             return vm
         
         # Method 3: Check VM hostname (from VMware Tools)
         if vm.guest and vm.guest.hostName:
             # Try exact match
             if vm.guest.hostName == vm_ip:
-                logger.info(f"Found VM by hostname: {vm.name}")
+                logger.info(f"[VM-SEARCH] ✓ Found VM by hostname: {vm.name}")
                 return vm
             # Try hostname without domain
             hostname_short = vm.guest.hostName.split('.')[0]
             if hostname_short == vm_ip:
-                logger.info(f"Found VM by short hostname: {vm.name}")
+                logger.info(f"[VM-SEARCH] ✓ Found VM by short hostname: {vm.name}")
                 return vm
     
-    logger.error(f"VM not found with IP/name: {vm_ip}")
+    logger.error(f"[VM-SEARCH] ✗ VM not found with IP/name: {vm_ip}")
+    logger.error(f"[VM-SEARCH] Searched {len(vms)} VMs in vCenter. VM may not exist, VMware Tools may not be running, or IP address may be incorrect.")
     return None
 
 
@@ -145,19 +167,35 @@ def create_snapshot(si, vm_ip, snapshot_name, description=""):
             # Re-fetch the VM to get updated snapshot information
             vm = find_vm_by_ip(si, vm_ip)
             
+            if not vm:
+                error_msg = f"VM with IP {vm_ip} not found after snapshot creation"
+                logger.error(error_msg)
+                return False, error_msg, None
+            
             # Get snapshot ID from the refreshed VM object
             snapshot_id = None
-            if vm and vm.snapshot and vm.snapshot.rootSnapshotList:
+            snapshot_found = False
+            
+            if vm.snapshot and vm.snapshot.rootSnapshotList:
+                logger.info(f"VM has {len(vm.snapshot.rootSnapshotList)} snapshot(s)")
                 for snap in vm.snapshot.rootSnapshotList:
+                    logger.info(f"  - Snapshot: {snap.name} (ID: {snap.id})")
                     if snap.name == snapshot_name:
                         snapshot_id = str(snap.id)
-                        logger.info(f"Found snapshot ID: {snapshot_id}")
+                        snapshot_found = True
+                        logger.info(f"✓ Found our snapshot ID: {snapshot_id}")
                         break
+            else:
+                logger.warning(f"VM has no snapshots after creation task completed")
             
-            if not snapshot_id:
-                logger.warning(f"Snapshot created but ID not found. VM snapshot property: {vm.snapshot if vm else 'VM not found'}")
+            # CRITICAL: Verify snapshot was actually created
+            if not snapshot_found:
+                error_msg = f"Snapshot task succeeded but snapshot '{snapshot_name}' not found in vCenter. This may indicate insufficient permissions or vCenter configuration issue."
+                logger.error(error_msg)
+                logger.error(f"VM snapshot property: {vm.snapshot}")
+                return False, error_msg, None
             
-            logger.info(f"Snapshot created successfully: {snapshot_name}")
+            logger.info(f"✓ Snapshot created and verified in vCenter: {snapshot_name}")
             return True, f"Snapshot '{snapshot_name}' created successfully", snapshot_id
         else:
             error_msg = task.info.error.msg if task.info.error else "Unknown error"
