@@ -326,6 +326,38 @@ create_system_user() {
         exit 1
     fi
 }
+
+configure_sudoers() {
+    print_header "Configuring Sudo Permissions for /etc/hosts Management"
+    
+    SUDOERS_FILE="/etc/sudoers.d/diaken-hosts"
+    
+    if [ -f "$SUDOERS_FILE" ]; then
+        print_info "Sudo permissions already configured"
+        return 0
+    fi
+    
+    print_info "Creating sudoers file for diaken user..."
+    
+    # Create sudoers file with proper permissions
+    sudo bash -c "cat > $SUDOERS_FILE" << 'SUDOEOF'
+# Allow diaken user to update /etc/hosts without password
+# This is required for automatic inventory management
+diaken ALL=(ALL) NOPASSWD: /usr/bin/mv /tmp/diaken_hosts_* /etc/hosts
+SUDOEOF
+    
+    # Set correct permissions (440 is required for sudoers files)
+    sudo chmod 440 "$SUDOERS_FILE"
+    
+    # Verify sudoers file syntax
+    if sudo visudo -c -f "$SUDOERS_FILE" &>/dev/null; then
+        print_success "Sudo permissions configured successfully"
+    else
+        print_error "Invalid sudoers file syntax, removing..."
+        sudo rm -f "$SUDOERS_FILE"
+        exit 1
+    fi
+}
         exit 1
 
 create_system_user() {
@@ -1453,6 +1485,7 @@ EOF
     check_root
     check_os
     create_system_user
+    configure_sudoers
     install_epel
     install_dependencies
     check_python

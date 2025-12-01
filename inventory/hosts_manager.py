@@ -54,16 +54,45 @@ def update_hosts_file():
             # Add managed section at the end
             new_lines = lines + ['\n'] + managed_section
         
-        # Write to temporary file first
-        temp_file = HOSTS_FILE + '.tmp'
-        with open(temp_file, 'w') as f:
-            f.writelines(new_lines)
+        # Write to temporary file in /tmp (writable by diaken user)
+        import tempfile
+        import subprocess
         
-        # Move temporary file to /etc/hosts (atomic operation)
-        os.rename(temp_file, HOSTS_FILE)
+        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, prefix='diaken_hosts_')
+        temp_file.writelines(new_lines)
+        temp_file.close()
         
-        logger.info(f'HOSTS_FILE: Updated /etc/hosts with {hosts.count()} hosts')
-        return True, f'Successfully updated /etc/hosts with {hosts.count()} hosts'
+        # Move temporary file to /etc/hosts using sudo (atomic operation)
+        # The diaken user needs sudo permissions for this specific command
+        try:
+            result = subprocess.run(
+                ['sudo', 'mv', temp_file.name, HOSTS_FILE],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                error_msg = f'Failed to move temp file to /etc/hosts: {result.stderr}'
+                logger.error(f'HOSTS_FILE: {error_msg}')
+                # Clean up temp file
+                try:
+                    os.remove(temp_file.name)
+                except:
+                    pass
+                return False, error_msg
+            
+            logger.info(f'HOSTS_FILE: Updated /etc/hosts with {hosts.count()} hosts')
+            return True, f'Successfully updated /etc/hosts with {hosts.count()} hosts'
+            
+        except subprocess.TimeoutExpired:
+            error_msg = 'Timeout updating /etc/hosts'
+            logger.error(f'HOSTS_FILE: {error_msg}')
+            try:
+                os.remove(temp_file.name)
+            except:
+                pass
+            return False, error_msg
         
     except Exception as e:
         logger.error(f'HOSTS_FILE: Error updating /etc/hosts: {str(e)}', exc_info=True)
