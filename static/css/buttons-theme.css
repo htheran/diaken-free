@@ -1,0 +1,99 @@
+/* Botones con colores más tenues acordes al tema oscuro del proyecto */
+
+/* Info/View - Azul más oscuro y tenue */
+.btn-info {
+    background-color: #5a7a9d !important;
+    border-color: #4a6a8d !important;
+    color: #ffffff !important;
+}
+
+.btn-info:hover {
+    background-color: #4a6a8d !important;
+    border-color: #3a5a7d !important;
+}
+
+/* Warning/Edit - Naranja más oscuro y tenue */
+.btn-warning {
+    background-color: #b8860b !important;
+    border-color: #9a7209 !important;
+    color: #ffffff !important;
+}
+
+.btn-warning:hover {
+    background-color: #9a7209 !important;
+    border-color: #7a5d07 !important;
+}
+
+/* Success/Download - Verde más oscuro y tenue */
+.btn-success {
+    background-color: #5a8a5a !important;
+    border-color: #4a7a4a !important;
+    color: #ffffff !important;
+}
+
+.btn-success:hover {
+    background-color: #4a7a4a !important;
+    border-color: #3a6a3a !important;
+}
+
+/* Danger/Delete - Rojo más oscuro y tenue */
+.btn-danger {
+    background-color: #a85a5a !important;
+    border-color: #8a4a4a !important;
+    color: #ffffff !important;
+}
+
+.btn-danger:hover {
+    background-color: #8a4a4a !important;
+    border-color: #7a3a3a !important;
+}
+
+/* Primary - Azul oscuro profesional */
+.btn-primary {
+    background-color: #5a7a9d !important;
+    border-color: #4a6a8d !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover {
+    background-color: #4a6a8d !important;
+    border-color: #3a5a7d !important;
+}
+
+/* Secondary - Gris oscuro */
+.btn-secondary {
+    background-color: #6c757d !important;
+    border-color: #5a6268 !important;
+    color: #ffffff !important;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268 !important;
+    border-color: #4a5258 !important;
+}
+
+/* Estados active y focus sin outline molesto */
+.btn-info:active, .btn-info:focus,
+.btn-warning:active, .btn-warning:focus,
+.btn-success:active, .btn-success:focus,
+.btn-danger:active, .btn-danger:focus,
+.btn-primary:active, .btn-primary:focus,
+.btn-secondary:active, .btn-secondary:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Botones pequeños */
+.btn-sm {
+    font-weight: 500;
+}
+
+/* Asegurar que el texto sea blanco en todos los estados */
+.btn-info, .btn-warning, .btn-success, .btn-danger, .btn-primary, .btn-secondary {
+    color: #ffffff !important;
+}
+
+.btn-info:hover, .btn-warning:hover, .btn-success:hover, 
+.btn-danger:hover, .btn-primary:hover, .btn-secondary:hover {
+    color: #ffffff !important;
+}
