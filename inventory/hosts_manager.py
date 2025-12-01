@@ -65,8 +65,13 @@ def update_hosts_file():
         # Move temporary file to /etc/hosts using sudo (atomic operation)
         # The diaken user needs sudo permissions for this specific command
         try:
+            # Use full path to sudo since Django/Gunicorn may have limited PATH
+            sudo_path = '/usr/bin/sudo'
+            if not os.path.exists(sudo_path):
+                sudo_path = '/bin/sudo'
+            
             result = subprocess.run(
-                ['sudo', 'mv', temp_file.name, HOSTS_FILE],
+                [sudo_path, 'mv', temp_file.name, HOSTS_FILE],
                 capture_output=True,
                 text=True,
                 timeout=10

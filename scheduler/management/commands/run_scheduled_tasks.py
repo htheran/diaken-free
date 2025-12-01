@@ -400,14 +400,22 @@ class Command(BaseCommand):
         
         # Check if ssh command is available
         import shutil
-        if not shutil.which('ssh'):
+        ssh_path = shutil.which('ssh')
+        if not ssh_path:
+            # Try common paths
+            for path in ['/usr/bin/ssh', '/bin/ssh']:
+                if os.path.exists(path):
+                    ssh_path = path
+                    break
+        
+        if not ssh_path:
             error_msg = 'ssh command not found. Install openssh-clients package: sudo dnf install -y openssh-clients'
             logger.error(f'[SCRIPT-SCHEDULER] {error_msg}')
             raise Exception(error_msg)
         
         # Execute script via SSH
         cmd = [
-            'ssh',
+            ssh_path,
             '-i', ssh_key_path,
             '-o', 'StrictHostKeyChecking=no',
             '-o', 'UserKnownHostsFile=/dev/null',
