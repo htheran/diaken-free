@@ -398,6 +398,13 @@ class Command(BaseCommand):
         logger.info(f'[SCRIPT-SCHEDULER] Target host: {host.ip}')
         logger.info(f'[SCRIPT-SCHEDULER] Using user: {ansible_user}')
         
+        # Check if ssh command is available
+        import shutil
+        if not shutil.which('ssh'):
+            error_msg = 'ssh command not found. Install openssh-clients package: sudo dnf install -y openssh-clients'
+            logger.error(f'[SCRIPT-SCHEDULER] {error_msg}')
+            raise Exception(error_msg)
+        
         # Execute script via SSH
         cmd = [
             'ssh',
