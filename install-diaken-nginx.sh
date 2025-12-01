@@ -358,7 +358,6 @@ SUDOEOF
         exit 1
     fi
 }
-        exit 1
 
 create_system_user() {
     print_header "Creating System User for Diaken"
