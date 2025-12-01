@@ -81,6 +81,11 @@ def execute_playbook_async(self, history_id, inventory_content, execution_file, 
         venv_path = str(settings.BASE_DIR / 'venv')
         collections_path = f"{venv_path}/lib/python3.12/site-packages/ansible_collections:/usr/share/ansible/collections"
         
+        # Configure Ansible log file
+        ansible_log_dir = '/var/log/diaken/ansible'
+        os.makedirs(ansible_log_dir, exist_ok=True)
+        ansible_log_file = f"{ansible_log_dir}/playbook_{history_id}_{self.request.id[:8]}.log"
+        
         env.update({
             'ANSIBLE_LOCAL_TEMP': '/tmp/ansible-local',
             'ANSIBLE_REMOTE_TEMP': '~/.ansible/tmp',
@@ -89,7 +94,8 @@ def execute_playbook_async(self, history_id, inventory_content, execution_file, 
             'ANSIBLE_HOME_DIR': '/tmp',
             'ANSIBLE_HOST_KEY_CHECKING': 'False',
             'ANSIBLE_COLLECTIONS_PATH': collections_path,
-            'ANSIBLE_PYTHON_INTERPRETER': f"{venv_path}/bin/python3"
+            'ANSIBLE_PYTHON_INTERPRETER': f"{venv_path}/bin/python3",
+            'ANSIBLE_LOG_PATH': ansible_log_file
         })
         
         # Execute playbook with real-time output capture
@@ -271,12 +277,19 @@ def execute_group_playbook_async(self, history_id, host_ids, playbook_id):
             
             # Set environment variables for Ansible
             ansible_env = os.environ.copy()
+            
+            # Configure Ansible log file
+            ansible_log_dir = '/var/log/diaken/ansible'
+            os.makedirs(ansible_log_dir, exist_ok=True)
+            ansible_log_file = f"{ansible_log_dir}/group_playbook_{history_id}_{self.request.id[:8]}.log"
+            
             ansible_env['ANSIBLE_LOCAL_TEMP'] = '/tmp/ansible-local'
             ansible_env['ANSIBLE_REMOTE_TEMP'] = '~/.ansible/tmp'
             ansible_env['HOME'] = '/tmp'
             ansible_env['ANSIBLE_SSH_CONTROL_PATH_DIR'] = '/tmp/ansible-ssh'
             ansible_env['ANSIBLE_HOME_DIR'] = '/tmp'
             ansible_env['ANSIBLE_HOST_KEY_CHECKING'] = 'False'
+            ansible_env['ANSIBLE_LOG_PATH'] = ansible_log_file
             
             result = subprocess.run(
                 cmd,
@@ -574,13 +587,19 @@ def execute_windows_playbook_async(self, history_id, inventory_content, executio
         venv_path = str(settings.BASE_DIR / 'venv')
         collections_path = f"{venv_path}/lib/python3.12/site-packages/ansible_collections:/usr/share/ansible/collections"
         
+        # Configure Ansible log file
+        ansible_log_dir = '/var/log/diaken/ansible'
+        os.makedirs(ansible_log_dir, exist_ok=True)
+        ansible_log_file = f"{ansible_log_dir}/windows_playbook_{history_id}_{self.request.id[:8]}.log"
+        
         env.update({
             'ANSIBLE_LOCAL_TEMP': '/tmp/ansible-local',
             'ANSIBLE_REMOTE_TEMP': '~/.ansible/tmp',
             'HOME': '/tmp',
             'ANSIBLE_HOST_KEY_CHECKING': 'False',
             'ANSIBLE_COLLECTIONS_PATH': collections_path,
-            'ANSIBLE_PYTHON_INTERPRETER': f"{venv_path}/bin/python3"
+            'ANSIBLE_PYTHON_INTERPRETER': f"{venv_path}/bin/python3",
+            'ANSIBLE_LOG_PATH': ansible_log_file
         })
         
         # Execute playbook with real-time output capture (90 minutes)
