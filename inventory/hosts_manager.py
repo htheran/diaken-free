@@ -22,7 +22,7 @@ def update_hosts_file():
     
     try:
         # Get all active hosts from inventory
-        hosts = Host.objects.filter(is_active=True).order_by('name')
+        hosts = Host.objects.filter(active=True).order_by('name')
         
         # Read current /etc/hosts content
         with open(HOSTS_FILE, 'r') as f:
@@ -43,7 +43,7 @@ def update_hosts_file():
         managed_section = [MARKER_START + '\n']
         for host in hosts:
             # Use IP address for connection, but include hostname for reference
-            managed_section.append(f"{host.ip_address}    {host.name}\n")
+            managed_section.append(f"{host.ip}    {host.name}\n")
         managed_section.append(MARKER_END + '\n')
         
         # Reconstruct file

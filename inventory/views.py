@@ -195,22 +195,27 @@ def host_create(request):
                     try:
                         cred = form.cleaned_data.get('deployment_credential')
                         if cred and host.ip:
-                            result = subprocess.run([
-                                'ssh-keyscan', '-H', host.ip
-                            ], capture_output=True, text=True, timeout=10)
-                            if result.returncode == 0 and result.stdout:
-                                # Use current user's home directory instead of /root
-                                known_hosts_path = os.path.expanduser('~/.ssh/known_hosts')
-                                # Create .ssh directory if it doesn't exist
-                                ssh_dir = os.path.dirname(known_hosts_path)
-                                os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
-                                # Append SSH fingerprint
-                                with open(known_hosts_path, 'a') as kh:
-                                    kh.write(result.stdout)
-                                fingerprint_success = True
-                                messages.success(request, f"✓ Host '{host.name}' ({host.ip}) added successfully and SSH fingerprint accepted.")
+                            # Check if ssh-keyscan is available
+                            import shutil
+                            if not shutil.which('ssh-keyscan'):
+                                messages.warning(request, f"⚠ Host '{host.name}' added successfully, but ssh-keyscan is not installed. Install openssh-clients package.")
                             else:
-                                messages.warning(request, f"⚠ Host '{host.name}' added, but SSH fingerprint could not be retrieved. You may need to accept it manually.")
+                                result = subprocess.run([
+                                    'ssh-keyscan', '-H', host.ip
+                                ], capture_output=True, text=True, timeout=10)
+                                if result.returncode == 0 and result.stdout:
+                                    # Use current user's home directory instead of /root
+                                    known_hosts_path = os.path.expanduser('~/.ssh/known_hosts')
+                                    # Create .ssh directory if it doesn't exist
+                                    ssh_dir = os.path.dirname(known_hosts_path)
+                                    os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
+                                    # Append SSH fingerprint
+                                    with open(known_hosts_path, 'a') as kh:
+                                        kh.write(result.stdout)
+                                    fingerprint_success = True
+                                    messages.success(request, f"✓ Host '{host.name}' ({host.ip}) added successfully and SSH fingerprint accepted.")
+                                else:
+                                    messages.warning(request, f"⚠ Host '{host.name}' added, but SSH fingerprint could not be retrieved. You may need to accept it manually.")
                         else:
                             if not cred:
                                 messages.warning(request, f"⚠ Host '{host.name}' added successfully, but no deployment credential was selected.")
