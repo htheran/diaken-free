@@ -367,8 +367,10 @@ def execute_playbook(request):
             })
             
         else:  # script execution
-            # Execute script via SSH
-            logger.info(f'[SCRIPT] Executing script: {execution_file}')
+            # Execute script via Celery for real-time output
+            from deploy.tasks import execute_script_async
+            
+            logger.info(f'[SCRIPT] Executing script asynchronously: {execution_file}')
             
             # Read script content once
             with open(execution_file, 'r') as f:
@@ -382,116 +384,39 @@ def execute_playbook(request):
                 execution_hosts = list(hosts_in_group)
                 logger.info(f'[SCRIPT] Target: Group with {len(execution_hosts)} hosts')
             
-            # Execute script on each host
-            full_output = f"Script: {execution_name}\n"
-            full_output += f"Target: {target_name}\n"
-            full_output += f"OS Family: {os_family}\n"
-            if target_type == 'group':
-                full_output += f"Hosts in group: {len(execution_hosts)}\n"
-            full_output += "="*60 + "\n\n"
-            
-            all_success = True
-            for idx, exec_host in enumerate(execution_hosts, 1):
-                # Get SSH credentials for this specific host
+            # Prepare hosts data for Celery task
+            hosts_data = []
+            for exec_host in execution_hosts:
                 exec_ansible_user = exec_host.ansible_user if exec_host.ansible_user else ansible_user
                 exec_ssh_key = exec_host.ansible_ssh_private_key_file if exec_host.ansible_ssh_private_key_file else ssh_key_path
-                
-                logger.info(f'[SCRIPT] Executing on host {idx}/{len(execution_hosts)}: {exec_host.name} ({exec_host.ip})')
-                
-                full_output += f"[{idx}/{len(execution_hosts)}] Host: {exec_host.name} ({exec_host.ip})\n"
-                full_output += "-"*60 + "\n"
-                
-                try:
-                    # Find ssh command (Django/Gunicorn may have limited PATH)
-                    import shutil
-                    ssh_path = shutil.which('ssh')
-                    if not ssh_path:
-                        # Try common paths
-                        for path in ['/usr/bin/ssh', '/bin/ssh']:
-                            if os.path.exists(path):
-                                ssh_path = path
-                                break
-                    
-                    if not ssh_path:
-                        raise Exception('ssh command not found. Install openssh-clients package')
-                    
-                    # Copy script to remote host and execute with sudo
-                    # Wrap script execution in sudo bash to ensure all commands run with privileges
-                    cmd = [
-                        ssh_path,
-                        '-i', exec_ssh_key,
-                        '-o', 'StrictHostKeyChecking=no',
-                        '-o', 'UserKnownHostsFile=/dev/null',
-                        f'{exec_ansible_user}@{exec_host.ip}',
-                        'sudo bash -s'  # Execute with sudo
-                    ]
-                    
-                    result = subprocess.run(
-                        cmd,
-                        input=script_content,
-                        capture_output=True,
-                        text=True,
-                        timeout=600  # 10 minutes timeout
-                    )
-                    
-                    # Add output for this host
-                    full_output += "STDOUT:\n" + (result.stdout if result.stdout else "(no output)") + "\n\n"
-                    if result.stderr:
-                        full_output += "STDERR:\n" + result.stderr + "\n\n"
-                    full_output += f"Exit Code: {result.returncode}\n"
-                    
-                    if result.returncode != 0:
-                        all_success = False
-                        full_output += "❌ FAILED\n"
-                        logger.warning(f'[SCRIPT] Failed on {exec_host.name}: exit code {result.returncode}')
-                    else:
-                        full_output += "✅ SUCCESS\n"
-                        logger.info(f'[SCRIPT] Success on {exec_host.name}')
-                    
-                except subprocess.TimeoutExpired:
-                    full_output += "❌ ERROR: Script execution timed out (10 minutes)\n"
-                    all_success = False
-                    logger.error(f'[SCRIPT] Timeout on {exec_host.name}')
-                except Exception as e:
-                    full_output += f"❌ ERROR: {str(e)}\n"
-                    all_success = False
-                    logger.error(f'[SCRIPT] Exception on {exec_host.name}: {str(e)}')
-                
-                full_output += "\n"
+                hosts_data.append({
+                    'name': exec_host.name,
+                    'ip': exec_host.ip,
+                    'ansible_user': exec_ansible_user,
+                    'ssh_key': exec_ssh_key
+                })
             
-            full_output += "="*60 + "\n"
-            if target_type == 'group':
-                full_output += f"Summary: Executed on {len(execution_hosts)} hosts\n"
-                full_output += f"Overall Status: {'✅ ALL SUCCESS' if all_success else '❌ SOME FAILED'}\n"
+            # Dispatch to Celery
+            task = execute_script_async.delay(
+                history_id=history.id,
+                script_content=script_content,
+                hosts_data=hosts_data,
+                ansible_user=ansible_user,
+                ssh_key_path=ssh_key_path
+            )
             
-            # Use the result from the last host for the final return code
-            result = type('obj', (object,), {'returncode': 0 if all_success else 1})()
+            history.celery_task_id = task.id
+            history.save()
             
-            is_success = (result.returncode == 0)
-        
-        # Update history with results
-        history.status = 'success' if is_success else 'failed'
-        history.ansible_output = full_output
-        history.completed_at = timezone.now()
-        history.save()
-        
-        # Send notification
-        try:
-            from notifications.utils import send_playbook_notification
-            target_info = {
-                'type': 'host',
-                'name': host.name
-            }
-            send_playbook_notification(history, request.user, target_info)
-        except Exception as notif_error:
-            logger.warning(f'Failed to send notification: {notif_error}')
-        
-        return JsonResponse({
-            'success': is_success,  # Use actual success status, not always True
-            'history_id': history.id,
-            'status': history.status,
-            'output': history.ansible_output
-        })
+            logger.info(f'[SCRIPT] Dispatched to Celery: task_id={task.id}, history_id={history.id}')
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Script execution started in background',
+                'task_id': task.id,
+                'history_id': history.id,
+                'async': True
+            })
         
     except subprocess.TimeoutExpired:
         history.status = 'failed'

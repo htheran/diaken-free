@@ -326,6 +326,145 @@ def execute_group_playbook_async(self, history_id, host_ids, playbook_id):
 
 @shared_task(
     bind=True,
+    name='deploy.tasks.execute_script_async',
+    time_limit=900,  # 15 minutes hard limit
+    soft_time_limit=840  # 14 minutes soft limit
+)
+def execute_script_async(self, history_id, script_content, hosts_data, ansible_user, ssh_key_path):
+    """
+    Execute a script on multiple hosts asynchronously with real-time output.
+    
+    Args:
+        history_id: ID of the DeploymentHistory record
+        script_content: Script content to execute
+        hosts_data: List of dicts with host info: [{'name': 'host1', 'ip': '10.0.0.1', 'ansible_user': 'user', 'ssh_key': '/path'}, ...]
+        ansible_user: Default SSH user
+        ssh_key_path: Default SSH key path
+    """
+    from history.models import DeploymentHistory
+    import subprocess
+    import os
+    import shutil
+    
+    history_record = None
+    
+    try:
+        history_record = DeploymentHistory.objects.get(pk=history_id)
+        history_record.status = 'running'
+        history_record.celery_task_id = self.request.id
+        history_record.save()
+        
+        logger.info(f'[SCRIPT-ASYNC] Starting script execution on {len(hosts_data)} host(s)')
+        
+        # Build output
+        full_output = f"Script Execution\n"
+        full_output += f"Hosts: {len(hosts_data)}\n"
+        full_output += "="*60 + "\n\n"
+        
+        # Update initial output
+        history_record.output = full_output
+        history_record.save()
+        
+        all_success = True
+        
+        # Find ssh command
+        ssh_path = shutil.which('ssh')
+        if not ssh_path:
+            for path in ['/usr/bin/ssh', '/bin/ssh']:
+                if os.path.exists(path):
+                    ssh_path = path
+                    break
+        
+        if not ssh_path:
+            raise Exception('ssh command not found')
+        
+        # Execute on each host
+        for idx, host_data in enumerate(hosts_data, 1):
+            host_name = host_data['name']
+            host_ip = host_data['ip']
+            host_user = host_data.get('ansible_user', ansible_user)
+            host_key = host_data.get('ssh_key', ssh_key_path)
+            
+            logger.info(f'[SCRIPT-ASYNC] Executing on host {idx}/{len(hosts_data)}: {host_name} ({host_ip})')
+            
+            full_output += f"[{idx}/{len(hosts_data)}] Host: {host_name} ({host_ip})\n"
+            full_output += "-"*60 + "\n"
+            
+            # Update output in real-time
+            history_record.output = full_output
+            history_record.save()
+            
+            try:
+                cmd = [
+                    ssh_path,
+                    '-i', host_key,
+                    '-o', 'StrictHostKeyChecking=no',
+                    '-o', 'UserKnownHostsFile=/dev/null',
+                    f'{host_user}@{host_ip}',
+                    'sudo bash -s'
+                ]
+                
+                result = subprocess.run(
+                    cmd,
+                    input=script_content,
+                    capture_output=True,
+                    text=True,
+                    timeout=600
+                )
+                
+                if result.stdout:
+                    full_output += "STDOUT:\n" + result.stdout + "\n"
+                if result.stderr:
+                    full_output += "STDERR:\n" + result.stderr + "\n"
+                full_output += f"Exit Code: {result.returncode}\n"
+                
+                if result.returncode != 0:
+                    all_success = False
+                    full_output += f"❌ ERROR: Script failed on {host_name}\n"
+                else:
+                    full_output += f"✅ SUCCESS on {host_name}\n"
+                
+            except subprocess.TimeoutExpired:
+                all_success = False
+                full_output += f"❌ ERROR: Timeout on {host_name}\n"
+            except Exception as e:
+                all_success = False
+                full_output += f"❌ ERROR on {host_name}: {str(e)}\n"
+            
+            full_output += "\n"
+            
+            # Update output after each host
+            history_record.output = full_output
+            history_record.save()
+        
+        # Final update
+        full_output += "="*60 + "\n"
+        if all_success:
+            full_output += "✅ All hosts completed successfully\n"
+            history_record.status = 'success'
+        else:
+            full_output += "❌ Some hosts failed\n"
+            history_record.status = 'failed'
+        
+        history_record.output = full_output
+        history_record.completed_at = timezone.now()
+        history_record.save()
+        
+        logger.info(f'[SCRIPT-ASYNC] Completed with status: {history_record.status}')
+        return {'status': 'success', 'output': full_output}
+        
+    except Exception as e:
+        logger.error(f'[SCRIPT-ASYNC] Error: {str(e)}', exc_info=True)
+        if history_record:
+            history_record.status = 'failed'
+            history_record.output = f"Error: {str(e)}\n" + (history_record.output or '')
+            history_record.completed_at = timezone.now()
+            history_record.save()
+        return {'status': 'error', 'message': str(e)}
+
+
+@shared_task(
+    bind=True,
     name='deploy.tasks.execute_windows_playbook_async',
     time_limit=50400,  # 14 hours hard limit (for large groups)
     soft_time_limit=48600  # 13.5 hours soft limit
