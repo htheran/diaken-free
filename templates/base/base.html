@@ -343,22 +343,26 @@
     // ========== SIDEBAR: MANTENER MENÚS ABIERTOS ==========
     // Desactivar el auto-cierre de los menús del sidebar
     $('.nav-sidebar .has-treeview > a').on('click', function(e) {
-      e.preventDefault();
-      
       var $this = $(this);
       var $parent = $this.parent();
       var $treeview = $parent.find('> .nav-treeview');
       
-      // Toggle del menú actual
-      if ($parent.hasClass('menu-open')) {
-        $parent.removeClass('menu-open');
-        $treeview.slideUp();
-      } else {
-        $parent.addClass('menu-open');
-        $treeview.slideDown();
+      // Solo interceptar si tiene submenu
+      if ($treeview.length > 0) {
+        e.preventDefault();
+        
+        // Toggle del menú actual
+        if ($parent.hasClass('menu-open')) {
+          $parent.removeClass('menu-open');
+          $treeview.slideUp();
+        } else {
+          $parent.addClass('menu-open');
+          $treeview.slideDown();
+        }
+        
+        return false;
       }
-      
-      return false;
+      // Si no tiene submenu, dejar que el link funcione normalmente
     });
 
     // Mantener menú abierto si contiene la página actual
