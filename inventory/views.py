@@ -4,6 +4,7 @@ from django.db import models
 from .models import Environment, Group, Host
 from .forms import EnvironmentForm, GroupForm, HostForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import os
 
 # ENVIRONMENTS
 @login_required
@@ -198,7 +199,13 @@ def host_create(request):
                                 'ssh-keyscan', '-H', host.ip
                             ], capture_output=True, text=True, timeout=10)
                             if result.returncode == 0 and result.stdout:
-                                with open('/root/.ssh/known_hosts', 'a') as kh:
+                                # Use current user's home directory instead of /root
+                                known_hosts_path = os.path.expanduser('~/.ssh/known_hosts')
+                                # Create .ssh directory if it doesn't exist
+                                ssh_dir = os.path.dirname(known_hosts_path)
+                                os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
+                                # Append SSH fingerprint
+                                with open(known_hosts_path, 'a') as kh:
                                     kh.write(result.stdout)
                                 fingerprint_success = True
                                 messages.success(request, f"✓ Host '{host.name}' ({host.ip}) added successfully and SSH fingerprint accepted.")
