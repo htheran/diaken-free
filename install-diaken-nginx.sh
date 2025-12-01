@@ -98,7 +98,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -122,7 +126,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -146,7 +154,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -170,7 +182,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -194,7 +210,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -218,7 +238,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -242,7 +266,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -266,7 +294,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
@@ -290,7 +322,11 @@ create_system_user() {
         print_info "Creating system user '$INSTALL_USER'..."
         # Create system user without home directory, no login shell
         # Similar to nginx, postgresql, redis users
-        sudo useradd --system --no-create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
+        # Create .ssh directory for SSH operations (known_hosts)
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
     fi
     
