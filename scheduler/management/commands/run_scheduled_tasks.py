@@ -789,7 +789,12 @@ ansible_winrm_operation_timeout_sec=50
             
             # Try to find and snapshot VM by IP first, then by hostname
             vm_identifier = host.ip  # Try IP first
-            logger.info(f'[SCHEDULED-SNAPSHOT] Attempting to create snapshot for {host.name} using IP: {vm_identifier}')
+            logger.info(f'[SCHEDULED-SNAPSHOT] ═══════════════════════════════════════')
+            logger.info(f'[SCHEDULED-SNAPSHOT] Creating snapshot for HOST: {host.name}')
+            logger.info(f'[SCHEDULED-SNAPSHOT] Host IP in database: {host.ip}')
+            logger.info(f'[SCHEDULED-SNAPSHOT] Host vCenter: {host.vcenter_server}')
+            logger.info(f'[SCHEDULED-SNAPSHOT] ═══════════════════════════════════════')
+            logger.info(f'[SCHEDULED-SNAPSHOT] Attempt 1: Searching VM by IP: {vm_identifier}')
             success, message, snap_id = create_snapshot(
                 si, vm_identifier, snapshot_name,
                 f"Safety snapshot before {execution_name} (scheduled task)"
@@ -799,7 +804,8 @@ ansible_winrm_operation_timeout_sec=50
             
             # If VM not found by IP, try by hostname
             if not success and "not found" in message.lower():
-                logger.info(f'[SCHEDULED-SNAPSHOT] VM not found by IP, trying by hostname: {host.name}')
+                logger.warning(f'[SCHEDULED-SNAPSHOT] ✗ VM not found by IP {host.ip}')
+                logger.info(f'[SCHEDULED-SNAPSHOT] Attempt 2: Searching VM by hostname: {host.name}')
                 success, message, snap_id = create_snapshot(
                     si, host.name,  # Try hostname
                     snapshot_name,
@@ -807,7 +813,10 @@ ansible_winrm_operation_timeout_sec=50
                 )
                 logger.info(f'[SCHEDULED-SNAPSHOT] Second attempt (by hostname) - Success: {success}, Message: {message}, Snap ID: {snap_id}')
             else:
-                logger.info(f'[SCHEDULED-SNAPSHOT] Skipping hostname attempt - first attempt was successful or error was not "not found"')
+                if success:
+                    logger.info(f'[SCHEDULED-SNAPSHOT] ✓ Snapshot created successfully on first attempt (by IP)')
+                else:
+                    logger.error(f'[SCHEDULED-SNAPSHOT] ✗ First attempt failed but not a "not found" error: {message}')
             
             Disconnect(si)
             
