@@ -283,7 +283,54 @@ def deploy_vm(request):
                 while task.info.state not in ["success", "error"]:
                     sleep(2)
                 if task.info.state == "error":
-                    raise Exception(f"Error en el clonado: {task.info.error}")
+                    error_msg = str(task.info.error)
+                    
+                    # Mensajes de error más claros
+                    if 'CannotAccessVmConfig' in error_msg or 'CannotAccessFile' in error_msg:
+                        if '.vmtx' in error_msg:
+                            raise Exception(
+                                f"❌ Template Error: Cannot access template file.\n\n"
+                                f"The template '{template}' cannot be accessed in vCenter.\n\n"
+                                f"Possible causes:\n"
+                                f"• Template was deleted or moved\n"
+                                f"• Datastore is not accessible\n"
+                                f"• Insufficient permissions on datastore\n"
+                                f"• Template is corrupted\n\n"
+                                f"Solution:\n"
+                                f"1. Verify template exists in vCenter\n"
+                                f"2. Check datastore accessibility\n"
+                                f"3. Verify user permissions\n"
+                                f"4. Try using a different template\n\n"
+                                f"Technical details: {error_msg}"
+                            )
+                        else:
+                            raise Exception(
+                                f"❌ VM Configuration Error: Cannot access VM configuration file.\n\n"
+                                f"vCenter cannot access the VM configuration.\n\n"
+                                f"Possible causes:\n"
+                                f"• Datastore is offline or inaccessible\n"
+                                f"• Network connectivity issues\n"
+                                f"• Insufficient permissions\n\n"
+                                f"Technical details: {error_msg}"
+                            )
+                    elif 'InsufficientResourcesFault' in error_msg:
+                        raise Exception(
+                            f"❌ Insufficient Resources: Not enough resources to deploy VM.\n\n"
+                            f"The cluster/host does not have enough resources.\n\n"
+                            f"Check:\n"
+                            f"• Available CPU\n"
+                            f"• Available RAM\n"
+                            f"• Datastore space\n\n"
+                            f"Technical details: {error_msg}"
+                        )
+                    elif 'DuplicateName' in error_msg:
+                        raise Exception(
+                            f"❌ Duplicate Name: A VM with name '{hostname}' already exists.\n\n"
+                            f"Please use a different hostname.\n\n"
+                            f"Technical details: {error_msg}"
+                        )
+                    else:
+                        raise Exception(f"❌ Clone Error: {error_msg}")
                 
                 # Reconfigurar la VM clonada para conectar la interfaz de red
                 cloned_vm = task.info.result
