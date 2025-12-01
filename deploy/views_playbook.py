@@ -402,10 +402,23 @@ def execute_playbook(request):
                 full_output += "-"*60 + "\n"
                 
                 try:
+                    # Find ssh command (Django/Gunicorn may have limited PATH)
+                    import shutil
+                    ssh_path = shutil.which('ssh')
+                    if not ssh_path:
+                        # Try common paths
+                        for path in ['/usr/bin/ssh', '/bin/ssh']:
+                            if os.path.exists(path):
+                                ssh_path = path
+                                break
+                    
+                    if not ssh_path:
+                        raise Exception('ssh command not found. Install openssh-clients package')
+                    
                     # Copy script to remote host and execute with sudo
                     # Wrap script execution in sudo bash to ensure all commands run with privileges
                     cmd = [
-                        'ssh',
+                        ssh_path,
                         '-i', exec_ssh_key,
                         '-o', 'StrictHostKeyChecking=no',
                         '-o', 'UserKnownHostsFile=/dev/null',
