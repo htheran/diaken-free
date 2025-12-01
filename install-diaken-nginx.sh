@@ -727,9 +727,9 @@ EOF
     fi
     
     # Set permissions for .env file
-    chmod 600 "${INSTALL_DIR}/.env"
+    chmod 640 "${INSTALL_DIR}/.env"
     chown ${INSTALL_USER}:${INSTALL_USER} "${INSTALL_DIR}/.env"
-    print_success ".env file created with secure permissions (600)"
+    print_success ".env file created with secure permissions (640)"
 }
 
 run_migrations() {
@@ -1184,19 +1184,19 @@ configure_crontab() {
     chmod +x "${INSTALL_DIR}/sc/cleanup_stuck_deployments.sh" 2>/dev/null
     chmod +x "${INSTALL_DIR}/sc/cleanup_snapshots.sh" 2>/dev/null
     
-    # Check if crontab entries already exist
-    if crontab -l 2>/dev/null | grep -q "cleanup_stuck_deployments.sh"; then
-        print_info "Crontab entries already exist, skipping..."
+    # Check if crontab entries already exist for diaken user
+    if sudo crontab -u ${INSTALL_USER} -l 2>/dev/null | grep -q "cleanup_stuck_deployments.sh"; then
+        print_info "Crontab entries already exist for user ${INSTALL_USER}, skipping..."
         return 0
     fi
     
-    print_info "Adding crontab entries for automated cleanup tasks..."
+    print_info "Adding crontab entries for user ${INSTALL_USER}..."
     
     # Create temporary crontab file
     TEMP_CRON=$(mktemp)
     
-    # Get existing crontab (if any)
-    crontab -l 2>/dev/null > "$TEMP_CRON" || true
+    # Get existing crontab for diaken user (if any)
+    sudo crontab -u ${INSTALL_USER} -l 2>/dev/null > "$TEMP_CRON" || true
     
     # Add cleanup tasks
     cat >> "$TEMP_CRON" << EOF
@@ -1212,8 +1212,8 @@ configure_crontab() {
 * * * * * cd ${INSTALL_DIR} && ${INSTALL_DIR}/venv/bin/python manage.py run_scheduled_tasks >> ${LOG_DIR}/scheduler.log 2>&1
 EOF
     
-    # Install new crontab
-    crontab "$TEMP_CRON"
+    # Install new crontab for diaken user
+    sudo crontab -u ${INSTALL_USER} "$TEMP_CRON"
     rm "$TEMP_CRON"
     
     print_success "Crontab configured successfully"
