@@ -96,14 +96,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -124,14 +136,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -152,14 +176,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -180,14 +216,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -208,14 +256,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -236,14 +296,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -264,14 +336,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -292,14 +376,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
@@ -320,14 +416,26 @@ create_system_user() {
         print_info "User '$INSTALL_USER' already exists"
     else
         print_info "Creating system user '$INSTALL_USER'..."
-        # Create system user without home directory, no login shell
-        # Similar to nginx, postgresql, redis users
+        # Create system user WITH home directory for SSH operations
         sudo useradd --system --create-home --shell /sbin/nologin --comment "Diaken Application User" "$INSTALL_USER"
-        # Create .ssh directory for SSH operations (known_hosts)
-        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
-        sudo chown -R "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
-        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
         print_success "System user '$INSTALL_USER' created"
+    fi
+    
+    # Ensure home directory and .ssh directory exist with correct permissions
+    # This is needed both for new users and existing users
+    if [ ! -d "/home/$INSTALL_USER" ]; then
+        print_info "Creating home directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER"
+        sudo chmod 755 "/home/$INSTALL_USER"
+    fi
+    
+    if [ ! -d "/home/$INSTALL_USER/.ssh" ]; then
+        print_info "Creating .ssh directory for '$INSTALL_USER'..."
+        sudo mkdir -p "/home/$INSTALL_USER/.ssh"
+        sudo chown "$INSTALL_USER":"$INSTALL_USER" "/home/$INSTALL_USER/.ssh"
+        sudo chmod 700 "/home/$INSTALL_USER/.ssh"
+        print_success ".ssh directory created"
     fi
     
     # Verify user was created
