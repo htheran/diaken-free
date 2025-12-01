@@ -195,13 +195,21 @@ def host_create(request):
                     try:
                         cred = form.cleaned_data.get('deployment_credential')
                         if cred and host.ip:
-                            # Check if ssh-keyscan is available
+                            # Try to find ssh-keyscan in common locations
                             import shutil
-                            if not shutil.which('ssh-keyscan'):
+                            ssh_keyscan_path = shutil.which('ssh-keyscan')
+                            if not ssh_keyscan_path:
+                                # Try common paths
+                                for path in ['/usr/bin/ssh-keyscan', '/bin/ssh-keyscan']:
+                                    if os.path.exists(path):
+                                        ssh_keyscan_path = path
+                                        break
+                            
+                            if not ssh_keyscan_path:
                                 messages.warning(request, f"⚠ Host '{host.name}' added successfully, but ssh-keyscan is not installed. Install openssh-clients package.")
                             else:
                                 result = subprocess.run([
-                                    'ssh-keyscan', '-H', host.ip
+                                    ssh_keyscan_path, '-H', host.ip
                                 ], capture_output=True, text=True, timeout=10)
                                 if result.returncode == 0 and result.stdout:
                                     # Use current user's home directory instead of /root
